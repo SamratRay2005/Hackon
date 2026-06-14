@@ -29,32 +29,24 @@ function getSeededOrders(userId: string) {
     shuffled[j] = temp;
   }
 
-  const selected = shuffled.slice(0, 4);
+  const selected = shuffled.slice(0, 5);
   
   return selected.map((p) => {
-    let cat = "Other";
-    const sku = p.sku.toUpperCase();
-    if (sku.includes("DENIM") || sku.includes("TEE") || sku.includes("HOODIE") || sku.includes("FLANNEL") || sku.includes("PNT") || sku.includes("SWEATER") || sku.includes("PARKA") || sku.includes("SHORTS") || sku.includes("BLAZER") || sku.includes("DRESS") || sku.includes("JOGGER") || sku.includes("SKIRT") || sku.includes("CARDIGAN") || sku.includes("POLO") || sku.includes("VEST") || sku.includes("TRENCH") || sku.includes("JEAN") || sku.includes("SHIRT") || sku.includes("OVERALLS") || sku.includes("GLVS")) {
-      cat = "Apparel";
-    } else if (sku.includes("SHOE") || sku.includes("SNEAK") || sku.includes("BOOT") || sku.includes("SANDAL") || sku.includes("LOAFER") || sku.includes("CHELSEA") || sku.includes("TRAINER") || sku.includes("SLIP-ON") || sku.includes("OXFORD") || sku.includes("SLIPPER") || sku.includes("BROGUE") || sku.includes("ESPADRIL")) {
-      cat = "Footwear";
-    } else if (sku.includes("CF-MKR") || sku.includes("SPK-AIR") || sku.includes("BUDS") || sku.includes("HEADPHN") || sku.includes("KB-") || sku.includes("MOUSE") || sku.includes("MONITOR") || sku.includes("PWR-") || sku.includes("CHRG-") || sku.includes("HUB") || sku.includes("MIC") || sku.includes("WEBCAM") || sku.includes("HDD") || sku.includes("SSD") || sku.includes("CBL") || sku.includes("ROUTER") || sku.includes("TABLET") || sku.includes("E-READER") || sku.includes("SOUND-BAR") || sku.includes("TV-") || sku.includes("BAND")) {
-      cat = "Electronics";
-    } else if (sku.includes("BLENDER") || sku.includes("TOASTER") || sku.includes("KETTLE") || sku.includes("MUG") || sku.includes("SKILLET") || sku.includes("KNIFE") || sku.includes("PAN") || sku.includes("COOK") || sku.includes("FRYER") || sku.includes("JUICER") || sku.includes("SCALE") || sku.includes("OVEN") || sku.includes("GRNDR") || sku.includes("SLOW") || sku.includes("MIXER") || sku.includes("POT") || sku.includes("WAFFLE") || sku.includes("CONTAINR") || sku.includes("SPICE") || sku.includes("HUMID") || sku.includes("PURIFY") || sku.includes("VACUUM") || sku.includes("ROBO") || sku.includes("IRON") || sku.includes("STEAMER") || sku.includes("FAN") || sku.includes("HEAT") || sku.includes("DIFFUSE") || sku.includes("LBL")) {
-      cat = "Home & Kitchen";
-    } else {
-      cat = "Recreation & Lifestyle";
-    }
-
-    const day = Math.floor(1 + seedRandom() * 14);
-    const purchaseDate = `2026-06-${day < 10 ? '0' + day : day}`;
-
+    // Distribute purchase dates over the last 60 days to test expiration
+    const daysAgo = Math.floor(seedRandom() * 60);
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    
     return {
+      orderId: `ORD-${Math.floor(seedRandom() * 90000) + 10000}`,
       sku: p.sku,
       name: p.name,
       price: p.price,
-      purchaseDate,
-      category: cat
+      category: p.category,
+      brand: p.brand,
+      returnWindowDays: p.returnWindowDays,
+      purchaseDate: d.toISOString().split("T")[0],
+      status: "active"
     };
   });
 }
@@ -82,67 +74,55 @@ if (hasAWSCredentials) {
   }
 }
 
-// Simulated State (Mock DynamoDB & S3 Ledger)
+// Simulated State (Mock DynamoDB & S3 Ledger + Vector DB)
 // To keep data persistent across page reloads during the session, we use global state on the server.
 const globalState: {
   sessions: Record<string, any>;
   claims: Record<string, Array<any>>;
   ledger: Record<string, Array<any>>;
-  wallets: Record<string, { credits: number; sustainabilityScore: number; orders?: Array<any> }>;
+  wallets: Record<string, { credits: number; sustainabilityScore: number }>;
+  orders: Record<string, Array<any>>;
   buyerDemand: Array<any>;
+  marketplace: Array<any>;
+  reservations: Record<string, { userId: string, lockedAt: number, expiresAt: number, depositPaid: boolean }>;
+  vectorDb: Array<{ id: string, userId: string, text: string, vector: number[] }>;
 } = {
   sessions: {},
-  claims: {
-    "user_samrat": [
-      {
-        id: "claim-101",
-        userId: "user_samrat",
-        sku: "DENIM-JKT-001",
-        item: "Classic Denim Jacket",
-        imageUrl: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500",
-        riskScore: 22,
-        status: "APPROVED",
-        date: "2026-06-01"
-      },
-      {
-        id: "claim-99",
-        userId: "user_samrat",
-        sku: "SLIM-FIT-TEE",
-        item: "Eco-Cotton Tee",
-        imageUrl: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500",
-        riskScore: 85,
-        status: "MANUAL_REVIEW",
-        date: "2026-05-18"
-      }
-    ]
-  },
-  ledger: {
-    "user_samrat": [
-      {
-        id: "ph-771",
-        sku: "CF-Mkr-99",
-        itemName: "Smart Drip Coffee Maker",
-        grade: "B",
-        defects: ["Minor scratch on heating plate", "Water tank has hardwater stains"],
-        resaleCategory: "Open Box / Refurbished",
-        hash: "7f7ef04ca5cf0b04c8614578efbdca9e79435b80a187e148e658a5be89dbf7c0",
-        imageUrl: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
-        timestamp: "2026-06-13T10:15:00Z"
-      }
-    ]
-  },
-  wallets: {
-    "user_samrat": {
-      credits: 1250,
-      sustainabilityScore: 48
-    }
-  },
-  buyerDemand: [
-    { sku: "DENIM-JKT-001", name: "Classic Denim Jacket", buyerZip: "98004", nameBuyer: "Alice Chen", distance: 12, size: "L" },
-    { sku: "CF-Mkr-99", name: "Smart Drip Coffee Maker", buyerZip: "98105", nameBuyer: "David Kim", distance: 8, size: "Standard" },
-    { sku: "SPK-AIR-12", name: "HiFi Wireless Speaker", buyerZip: "98122", nameBuyer: "Marcus Aurelius", distance: 18, size: "Standard" }
-  ]
+  claims: {},
+  ledger: {},
+  wallets: {},
+  orders: {},
+  buyerDemand: [],
+  marketplace: [],
+  reservations: {},
+  vectorDb: []
 };
+
+// Simple In-Memory Vector Search Math (Cosine Similarity)
+function getEmbedding(text: string): number[] {
+  // Mock embedding generation using a simple hashing trick for deterministic 64-dim vectors
+  const vec = new Array(64).fill(0);
+  const words = text.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(' ');
+  for (let i = 0; i < words.length; i++) {
+    let hash = 0;
+    for (let j = 0; j < words[i].length; j++) {
+      hash = (hash << 5) - hash + words[i].charCodeAt(j);
+      hash |= 0;
+    }
+    vec[Math.abs(hash) % 64] += 1;
+  }
+  // Normalize
+  const magnitude = Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
+  return magnitude === 0 ? vec : vec.map(val => val / magnitude);
+}
+
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+  }
+  return dotProduct;
+}
 
 // ----------------------------------------------------
 // PRODUCT REFERENCE IMAGES CATALOG
@@ -160,20 +140,14 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
 export const db = {
   getSKUReferenceImage: (sku: string) => {
     if (SKU_REFERENCE_IMAGES[sku]) return SKU_REFERENCE_IMAGES[sku];
-    // Find product in catalog and return dynamic Unsplash image based on name/category keywords
+    // Find product in catalog and return dynamic Unsplash image based on category
     const p = PRODUCT_CATALOG.find(x => x.sku === sku);
     if (p) {
-      const name = p.name.toLowerCase();
-      if (name.includes("hoodie") || name.includes("pullover")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
-      if (name.includes("shirt") || name.includes("polo") || name.includes("tee")) return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500";
-      if (name.includes("jacket") || name.includes("parka") || name.includes("windbreaker") || name.includes("vest")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
-      if (name.includes("jean") || name.includes("pants") || name.includes("chinos") || name.includes("cargo") || name.includes("jogger") || name.includes("skirt")) return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
-      if (name.includes("shoe") || name.includes("sneaker") || name.includes("boot") || name.includes("sandal") || name.includes("loafer") || name.includes("chelsea") || name.includes("oxford")) return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
-      if (name.includes("coffee") || name.includes("kettle") || name.includes("grinder") || name.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
-      if (name.includes("speaker") || name.includes("headphone") || name.includes("earbuds") || name.includes("soundbar")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
-      if (name.includes("keyboard") || name.includes("mouse") || name.includes("monitor") || name.includes("webcam")) return "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500";
-      if (name.includes("blender") || name.includes("toaster") || name.includes("fryer") || name.includes("juicer") || name.includes("cooker") || name.includes("mixer")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
-      if (name.includes("backpack") || name.includes("bag") || name.includes("duffel") || name.includes("bottle")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+      if (p.category === "Apparel") return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
+      if (p.category === "Footwear") return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
+      if (p.category === "Electronics") return "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500";
+      if (p.category === "Home & Kitchen") return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
+      if (p.category === "Recreation & Lifestyle") return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
     }
     return "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500";
   },
@@ -193,29 +167,60 @@ export const db = {
 
   initUser: async (userId: string) => {
     if (!userId) return;
-    const userOrders = getSeededOrders(userId);
 
-    if (!useAWS) {
-      if (!globalState.claims[userId]) globalState.claims[userId] = [];
-      if (!globalState.ledger[userId]) globalState.ledger[userId] = [];
-      if (!globalState.wallets[userId]) {
-        globalState.wallets[userId] = {
-          credits: 1000,
-          sustainabilityScore: 0,
-          orders: userOrders
-        };
+    if (!globalState.wallets[userId]) {
+      globalState.wallets[userId] = { credits: 1000, sustainabilityScore: 0 };
+    }
+    if (!globalState.claims[userId]) globalState.claims[userId] = [];
+    if (!globalState.ledger[userId]) globalState.ledger[userId] = [];
+    
+    // Seed real deterministic orders
+    if (!globalState.orders[userId]) {
+      globalState.orders[userId] = getSeededOrders(userId);
+      
+      // Seed Vector DB with user history
+      globalState.orders[userId].forEach(o => {
+        db.addVectorContext(userId, `Purchased ${o.name} in category ${o.category}. Price ${o.price}.`);
+      });
+    }
+
+    if (useAWS && ddbDocClient) {
+      try {
+        await ddbDocClient.send(new PutCommand({
+          TableName: "Users",
+          Item: { userId, credits: 1000, sustainabilityScore: 0 },
+          ConditionExpression: "attribute_not_exists(userId)"
+        }));
+      } catch (e) {
+        // User already exists
       }
-      return;
     }
-    try {
-      await ddbDocClient.send(new PutCommand({
-        TableName: "Users",
-        Item: { userId, credits: 1000, sustainabilityScore: 0, orders: userOrders },
-        ConditionExpression: "attribute_not_exists(userId)"
-      }));
-    } catch (e) {
-      // User already initialized in DB
-    }
+  },
+  
+  getOrders: async (userId: string) => {
+    await db.initUser(userId);
+    return globalState.orders[userId] || [];
+  },
+
+  // Vector DB Interface
+  addVectorContext: (userId: string, text: string) => {
+    const vector = getEmbedding(text);
+    globalState.vectorDb.push({
+      id: `v_${Date.now()}_${Math.random()}`,
+      userId,
+      text,
+      vector
+    });
+  },
+
+  queryVectorContext: (userId: string, queryText: string, limit = 3) => {
+    const queryVec = getEmbedding(queryText);
+    const results = globalState.vectorDb
+      .filter(v => v.userId === userId || v.userId === "system")
+      .map(v => ({ text: v.text, score: cosineSimilarity(queryVec, v.vector) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+    return results.map(r => r.text);
   },
 
   // Cart session for bracketing
@@ -396,7 +401,6 @@ export const db = {
   // Wallet and Loyalty
   getWallet: async (userId: string) => {
     await db.initUser(userId);
-    const userOrders = getSeededOrders(userId);
 
     if (!useAWS) {
       return globalState.wallets[userId];
@@ -409,11 +413,10 @@ export const db = {
       if (res.Item) {
         return { 
           credits: res.Item.credits, 
-          sustainabilityScore: res.Item.sustainabilityScore,
-          orders: res.Item.orders || userOrders
+          sustainabilityScore: res.Item.sustainabilityScore
         };
       }
-      return { credits: 1000, sustainabilityScore: 0, orders: userOrders };
+      return { credits: 1000, sustainabilityScore: 0 };
     } catch (e) {
       console.error("Failed to get wallet from DynamoDB:", e);
       return globalState.wallets[userId];

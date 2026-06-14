@@ -4,9 +4,19 @@ export interface Product {
   name: string;
   price: number;
   sizes: string[];
+  category: "Apparel" | "Footwear" | "Electronics" | "Home & Kitchen" | "Recreation & Lifestyle" | "Other";
+  brand: string;
+  description: string;
+  returnWindowDays: number;
+  weight: number;
+  reviewScore: number;
+  reviewCount: number;
+  colors: string[];
+  features: string[];
+  baseTrustScore: number;
 }
 
-export const PRODUCT_CATALOG: Product[] = [
+const RAW_PRODUCT_CATALOG = [
   // --- APPAREL (Sizes: S, M, L, XL) ---
   { sku: "DENIM-JKT-001", name: "Classic Denim Jacket", price: 120.00, sizes: ["S", "M", "L", "XL"] },
   { sku: "SLIM-FIT-TEE", name: "Eco-Cotton Tee", price: 40.00, sizes: ["S", "M", "L", "XL"] },
@@ -144,3 +154,76 @@ export const PRODUCT_CATALOG: Product[] = [
   { sku: "ROPE-JMP-148", name: "Adjustable Speed Ball-Bearing Jump Rope", price: 15.00, sizes: ["Standard"] },
   { sku: "MASSAGE-149", name: "Deep Tissue Percussion Muscle Massage Gun", price: 99.00, sizes: ["Standard"] }
 ];
+
+// Dynamically augment the flat catalog into a rich Amazon-like schema
+export const PRODUCT_CATALOG: Product[] = RAW_PRODUCT_CATALOG.map((raw) => {
+  let category: Product["category"] = "Other";
+  let brand = "Generic";
+  let description = `Premium quality ${raw.name.toLowerCase()} designed for everyday use.`;
+  let returnWindowDays = 30;
+  let weight = 1.0;
+
+  const sku = raw.sku.toUpperCase();
+  if (sku.includes("DENIM") || sku.includes("TEE") || sku.includes("HOODIE") || sku.includes("FLANNEL") || sku.includes("PNT") || sku.includes("SWEATER") || sku.includes("PARKA") || sku.includes("SHORTS") || sku.includes("BLAZER") || sku.includes("DRESS") || sku.includes("JOGGER") || sku.includes("SKIRT") || sku.includes("CARDIGAN") || sku.includes("POLO") || sku.includes("VEST") || sku.includes("TRENCH") || sku.includes("JEAN") || sku.includes("SHIRT") || sku.includes("OVERALLS") || sku.includes("GLVS")) {
+    category = "Apparel";
+    brand = "Vantage Threads";
+    weight = 0.4;
+    description = `Stay stylish and comfortable with our ${raw.name}. Made with premium sustainable fabrics.`;
+  } else if (sku.includes("SHOE") || sku.includes("SNEAK") || sku.includes("BOOT") || sku.includes("SANDAL") || sku.includes("LOAFER") || sku.includes("CHELSEA") || sku.includes("TRAINER") || sku.includes("SLIP-ON") || sku.includes("OXFORD") || sku.includes("SLIPPER") || sku.includes("BROGUE") || sku.includes("ESPADRIL")) {
+    category = "Footwear";
+    brand = "Stride Dynamics";
+    weight = 1.2;
+    description = `Step into comfort with the ${raw.name}. Ergonomic support and durable materials for all-day wear.`;
+  } else if (sku.includes("CF-MKR") || sku.includes("SPK-AIR") || sku.includes("BUDS") || sku.includes("HEADPHN") || sku.includes("KB-") || sku.includes("MOUSE") || sku.includes("MONITOR") || sku.includes("PWR-") || sku.includes("CHRG-") || sku.includes("HUB") || sku.includes("MIC") || sku.includes("WEBCAM") || sku.includes("HDD") || sku.includes("SSD") || sku.includes("CBL") || sku.includes("ROUTER") || sku.includes("TABLET") || sku.includes("E-READER") || sku.includes("SOUND-BAR") || sku.includes("TV-") || sku.includes("BAND")) {
+    category = "Electronics";
+    brand = "TechNova";
+    weight = sku.includes("MONITOR") || sku.includes("TV") ? 8.5 : 0.8;
+    returnWindowDays = 15; // Shorter return window for electronics
+    description = `Experience cutting-edge technology with the ${raw.name}. Reliable, fast, and engineered for high performance.`;
+  } else if (sku.includes("BLENDER") || sku.includes("TOASTER") || sku.includes("KETTLE") || sku.includes("MUG") || sku.includes("SKILLET") || sku.includes("KNIFE") || sku.includes("PAN") || sku.includes("COOK") || sku.includes("FRYER") || sku.includes("JUICER") || sku.includes("SCALE") || sku.includes("OVEN") || sku.includes("GRNDR") || sku.includes("SLOW") || sku.includes("MIXER") || sku.includes("POT") || sku.includes("WAFFLE") || sku.includes("CONTAINR") || sku.includes("SPICE") || sku.includes("HUMID") || sku.includes("PURIFY") || sku.includes("VACUUM") || sku.includes("ROBO") || sku.includes("IRON") || sku.includes("STEAMER") || sku.includes("FAN") || sku.includes("HEAT") || sku.includes("DIFFUSE") || sku.includes("LBL")) {
+    category = "Home & Kitchen";
+    brand = "Culinary Crate";
+    weight = 3.5;
+    description = `Elevate your home with the ${raw.name}. Built for durability and everyday convenience.`;
+  } else {
+    category = "Recreation & Lifestyle";
+    brand = "Outdoor Ascent";
+    weight = 2.0;
+  }
+
+  // Deterministic pseudo-random review generation based on SKU string
+  const hash = sku.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const reviewScore = 3.5 + ((hash % 15) / 10); // Between 3.5 and 4.9
+  const reviewCount = 12 + (hash % 500);
+
+  // Generate colors and features based on category
+  let colors = ["Black", "White", "Grey"];
+  let features = ["Premium Materials", "Eco-Friendly Packaging", "1-Year Warranty"];
+  
+  if (category === "Apparel" || category === "Footwear") {
+    colors = ["Navy", "Olive", "Black", "Charcoal", "Burgundy"].slice(0, 2 + (hash % 3));
+    features = ["Machine Washable", "Breathable Fabric", "Sustainable Cotton", "Wrinkle Resistant"];
+  } else if (category === "Electronics") {
+    colors = ["Matte Black", "Space Grey", "Silver"];
+    features = ["Fast Charging", "Bluetooth 5.0", "Energy Star Certified", "Smart Home Compatible"];
+  } else if (category === "Home & Kitchen") {
+    colors = ["Stainless Steel", "Matte White", "Charcoal"];
+    features = ["Dishwasher Safe", "BPA Free", "Durable Construction"];
+  }
+
+  const baseTrustScore = 80 + (hash % 20); // 80 - 99
+
+  return {
+    ...raw,
+    category,
+    brand,
+    description,
+    returnWindowDays,
+    weight,
+    reviewScore: Number(reviewScore.toFixed(1)),
+    reviewCount,
+    colors,
+    features,
+    baseTrustScore
+  };
+});

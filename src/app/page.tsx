@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  ShoppingBag, 
-  AlertTriangle, 
-  Compass, 
-  ShieldCheck, 
-  MessageSquare, 
-  Leaf, 
-  Award, 
-  DollarSign, 
-  CheckCircle, 
-  RefreshCw, 
-  Upload, 
-  X, 
-  Clock, 
-  Truck, 
+import {
+  ShoppingBag,
+  AlertTriangle,
+  Compass,
+  ShieldCheck,
+  MessageSquare,
+  Leaf,
+  Award,
+  DollarSign,
+  CheckCircle,
+  RefreshCw,
+  Upload,
+  X,
+  Clock,
+  Truck,
   ArrowRight,
   TrendingDown,
   Info,
@@ -23,13 +23,24 @@ import {
   Heart,
   ChevronRight,
   UserCheck,
-  Cpu
+  Cpu,
+  Camera,
+  Package,
+  Zap,
+  Star,
+  BarChart2,
+  Shield,
+  Map,
+  Wallet,
+  Search,
+  ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 // ----------------------------------------------------
-// HUMAN-READABLE HIGH-FIDELITY MOCK SVG ILLUSTRATIONS
+// MOCK SVG ILLUSTRATIONS
 // ----------------------------------------------------
 function svgToDataUrl(svgStr: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svgStr)}`;
@@ -112,7 +123,6 @@ const MOCK_GRADING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6
   <path d="M 230 130 L 370 130 L 350 160 L 250 160 Z" fill="#0f172a" stroke="#a78bfa" stroke-width="2"/>
   <path d="M 295 230 L 385 230 C 395 270 395 320 385 350 L 295 350 Z" fill="rgba(255,255,255,0.08)" stroke="#a78bfa" stroke-width="2"/>
   <path d="M 385 250 C 415 260 415 320 385 330" fill="none" stroke="#a78bfa" stroke-width="2"/>
-  <path d="M 310 320 C 330 330 350 320 370 330 L 370 350 L 310 350 Z" fill="rgba(255,255,255,0.15)"/>
   <circle cx="340" cy="330" r="15" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="3 3"/>
   <line x1="355" y1="330" x2="440" y2="300" stroke="#c084fc" stroke-width="1"/>
   <rect x="440" y="280" width="170" height="35" rx="4" fill="rgba(147, 51, 234, 0.15)" stroke="#c084fc" stroke-width="1"/>
@@ -127,7 +137,6 @@ const MOCK_GRADING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6
   <text x="30" y="39" fill="#e9d5ff" font-family="sans-serif" font-size="11" font-weight="bold">🔍 WAREHOUSE INSPECTION FEED</text>
 </svg>`;
 
-// SOLID MOCK IMAGE FALLBACK
 const SAMPLE_MOCK_IMAGE = svgToDataUrl(MOCK_DAMAGE_SVG);
 
 const SKU_REFERENCE_IMAGES: Record<string, string> = {
@@ -137,15 +146,80 @@ const SKU_REFERENCE_IMAGES: Record<string, string> = {
   "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500"
 };
 
+const getSKUReferenceImage = (sku: string) => {
+  if (SKU_REFERENCE_IMAGES[sku]) return SKU_REFERENCE_IMAGES[sku];
+  const p = PRODUCT_CATALOG.find(x => x.sku === sku);
+  if (p) {
+    const name = p.name.toLowerCase();
+    if (name.includes("hoodie") || name.includes("pullover")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
+    if (name.includes("shirt") || name.includes("polo") || name.includes("tee")) return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500";
+    if (name.includes("jacket") || name.includes("parka") || name.includes("windbreaker") || name.includes("vest")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
+    if (name.includes("jean") || name.includes("pants") || name.includes("chinos") || name.includes("cargo") || name.includes("jogger") || name.includes("skirt")) return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
+    if (name.includes("shoe") || name.includes("sneaker") || name.includes("boot") || name.includes("sandal") || name.includes("loafer") || name.includes("chelsea") || name.includes("oxford")) return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
+    if (name.includes("coffee") || name.includes("kettle") || name.includes("grinder") || name.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
+    if (name.includes("speaker") || name.includes("headphone") || name.includes("earbuds") || name.includes("soundbar")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
+    if (name.includes("keyboard") || name.includes("mouse") || name.includes("monitor") || name.includes("webcam")) return "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500";
+    if (name.includes("blender") || name.includes("toaster") || name.includes("fryer") || name.includes("juicer") || name.includes("cooker") || name.includes("mixer")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
+    if (name.includes("backpack") || name.includes("bag") || name.includes("duffel") || name.includes("bottle")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+  }
+  return "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500";
+};
+
+function getDynamicSizeChart(sku: string) {
+  const p = PRODUCT_CATALOG.find(x => x.sku === sku);
+  if (!p) return null;
+  const isApparel = p.sizes.some(s => ["S","M","L","XL","XXL","XS"].includes(s));
+  const isFootwear = p.sizes.some(s => ["7","8","9","10","11","12"].includes(s));
+
+  if (isApparel) {
+    return {
+      name: p.name, brand: "UrbanEco",
+      chart: [
+        { size: "XS", chest: "32-34 in", shoulders: "15.5 in", sleeves: "31.5 in" },
+        { size: "S",  chest: "34-36 in", shoulders: "16.5 in", sleeves: "32.5 in" },
+        { size: "M",  chest: "38-40 in", shoulders: "17.5 in", sleeves: "33.5 in" },
+        { size: "L",  chest: "42-44 in", shoulders: "18.5 in", sleeves: "34.5 in" },
+        { size: "XL", chest: "46-48 in", shoulders: "19.5 in", sleeves: "35.5 in" },
+        { size: "XXL",chest: "50-52 in", shoulders: "20.5 in", sleeves: "36.5 in" },
+      ]
+    };
+  } else if (isFootwear) {
+    return {
+      name: p.name, brand: "EcoStep",
+      chart: [
+        { size: "7",  length: "9.2 in", eu: "40" },
+        { size: "8",  length: "9.5 in", eu: "41" },
+        { size: "9",  length: "9.8 in", eu: "42" },
+        { size: "10", length: "10.2 in", eu: "43" },
+        { size: "11", length: "10.5 in", eu: "44" },
+        { size: "12", length: "10.8 in", eu: "45" },
+      ]
+    };
+  }
+  return null;
+}
+
+// Simple markdown bold/italic renderer
+function renderMarkdown(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 // ----------------------------------------------------
 // WEBCAM & FILE UPLOADER UTILITY COMPONENT
 // ----------------------------------------------------
 interface WebcamCaptureProps {
   onCapture: (base64Image: string) => void;
   overlayType?: "sizing" | "damage" | "grading";
+  compact?: boolean;
 }
 
-function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
+function WebcamCapture({ onCapture, overlayType, compact }: WebcamCaptureProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(false);
@@ -156,25 +230,21 @@ function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
     setError(null);
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: 640, height: 480 }
+        video: { facingMode: "environment", width: 640, height: 480 }
       });
       setStream(mediaStream);
       setActive(true);
     } catch (e: any) {
-      console.error("Camera access failed:", e);
-      setError("Webcam access denied or unavailable. Please use file upload/demo fallback below.");
+      setError("Camera unavailable. Use file upload or demo image below.");
     }
   };
 
   const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    setStream(null);
     setActive(false);
   };
 
-  // Bind the camera stream to the video element once it is mounted in the DOM
   useEffect(() => {
     if (active && stream && videoRef.current) {
       videoRef.current.srcObject = stream;
@@ -182,11 +252,7 @@ function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
   }, [active, stream]);
 
   useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
+    return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
   }, [stream]);
 
   const captureSnapshot = () => {
@@ -198,29 +264,22 @@ function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
         let isBlack = true;
         try {
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-          for (let i = 0; i < imgData.length; i += 40) {
-            if (imgData[i] > 10 || imgData[i + 1] > 10 || imgData[i + 2] > 10) {
-              isBlack = false;
-              break;
-            }
+          const imgData = ctx.getImageData(0, 0, Math.min(canvas.width, 50), Math.min(canvas.height, 50)).data;
+          for (let i = 0; i < imgData.length; i += 4) {
+            if (imgData[i] > 15 || imgData[i+1] > 15 || imgData[i+2] > 15) { isBlack = false; break; }
           }
-        } catch (e) {
-          isBlack = false;
-        }
+        } catch { isBlack = false; }
 
         if (isBlack) {
-          let fallbackUrl = SAMPLE_MOCK_IMAGE;
-          if (overlayType === "sizing") fallbackUrl = svgToDataUrl(MOCK_SIZING_SVG);
-          else if (overlayType === "damage") fallbackUrl = svgToDataUrl(MOCK_DAMAGE_SVG);
-          else if (overlayType === "grading") fallbackUrl = svgToDataUrl(MOCK_GRADING_SVG);
-          onCapture(fallbackUrl);
+          const fallback = overlayType === "sizing" ? svgToDataUrl(MOCK_SIZING_SVG)
+            : overlayType === "damage" ? svgToDataUrl(MOCK_DAMAGE_SVG)
+            : overlayType === "grading" ? svgToDataUrl(MOCK_GRADING_SVG)
+            : SAMPLE_MOCK_IMAGE;
+          onCapture(fallback);
         } else {
-          const base64 = canvas.toDataURL("image/jpeg", 0.85);
-          onCapture(base64);
+          onCapture(canvas.toDataURL("image/jpeg", 0.85));
         }
         stopCamera();
       }
@@ -231,82 +290,78 @@ function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          onCapture(reader.result as string);
-        }
-      };
+      reader.onloadend = () => { if (reader.result) onCapture(reader.result as string); };
       reader.readAsDataURL(file);
     }
   };
 
+  const loadDemo = () => {
+    const demoUrl = overlayType === "sizing" ? svgToDataUrl(MOCK_SIZING_SVG)
+      : overlayType === "damage" ? svgToDataUrl(MOCK_DAMAGE_SVG)
+      : overlayType === "grading" ? svgToDataUrl(MOCK_GRADING_SVG)
+      : SAMPLE_MOCK_IMAGE;
+    onCapture(demoUrl);
+  };
+
   return (
-    <div className="flex flex-col gap-3 items-center w-full mt-2">
+    <div className="flex flex-col gap-2.5 w-full">
       {active ? (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-indigo-500/30 bg-black">
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-indigo-500/30 bg-black shadow-lg">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          
-          {/* Alignment CSS framing boxes */}
           {overlayType === "sizing" && (
-            <div className="absolute inset-0 border-2 border-dashed border-indigo-400/40 pointer-events-none flex flex-col justify-between p-6">
-              <div className="border-b border-indigo-400/30 h-1/3 w-full flex justify-between">
-                <div className="text-[9px] text-indigo-300 bg-black/60 px-1 py-0.5 rounded">ALIGN SHOULDERS</div>
-                <div className="text-[9px] text-indigo-300 bg-black/60 px-1 py-0.5 rounded">ALIGN SHOULDERS</div>
+            <div className="absolute inset-0 border-2 border-dashed border-indigo-400/40 pointer-events-none flex flex-col justify-between p-4">
+              <div className="border-b border-indigo-400/30 h-1/3 w-full flex justify-between items-start">
+                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">ALIGN SHOULDERS</span>
+                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">ALIGN SHOULDERS</span>
               </div>
               <div className="border-y border-indigo-400/30 h-1/3 w-full flex items-center justify-center">
-                <span className="text-[9px] text-indigo-300 bg-black/60 px-1 py-0.5 rounded">ALIGN CHEST</span>
+                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">ALIGN CHEST LEVEL</span>
               </div>
               <div className="h-1/3 w-full flex items-end justify-center">
-                <span className="text-[9px] text-indigo-300 bg-black/60 px-1 py-0.5 rounded">FULL FRAME BODY VIEW</span>
+                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">FULL BODY FRAME</span>
               </div>
             </div>
           )}
-
           {overlayType === "damage" && (
             <div className="absolute inset-0 border-2 border-dashed border-rose-400/40 pointer-events-none flex items-center justify-center">
               <div className="w-3/4 h-3/4 border-2 border-dashed border-rose-500/50 rounded flex items-center justify-center">
-                <span className="text-[9px] text-rose-300 bg-black/60 px-1.5 py-0.5 rounded">PLACE DAMAGED COMPONENT IN BOX</span>
+                <span className="text-[9px] text-rose-200 bg-black/60 px-2 py-1 rounded">CENTER DAMAGED ITEM</span>
               </div>
             </div>
           )}
-
           {overlayType === "grading" && (
             <div className="absolute inset-0 border-2 border-dashed border-purple-400/40 pointer-events-none flex items-center justify-center">
-              <div className="w-5/6 h-5/6 border border-dashed border-purple-500/50 flex flex-col justify-between p-4">
-                <span className="text-[9px] text-purple-300 bg-black/60 self-start">Returned item casing align</span>
-                <span className="text-[9px] text-purple-300 bg-black/60 self-end">Barcodes / label profile</span>
+              <div className="w-5/6 h-5/6 border border-dashed border-purple-500/50 flex flex-col justify-between p-3">
+                <span className="text-[9px] text-purple-200 bg-black/60 self-start px-1 py-0.5 rounded">CASING ALIGN</span>
+                <span className="text-[9px] text-purple-200 bg-black/60 self-end px-1 py-0.5 rounded">LABEL ALIGN</span>
               </div>
             </div>
           )}
-
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-            <button type="button" className="btn btn-success py-1 px-3 text-[11px] font-semibold" onClick={captureSnapshot}>
-              📸 Snap Image
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+            <button type="button" className="btn btn-success py-1 px-3 text-[11px]" onClick={captureSnapshot}>
+              <Camera className="w-3 h-3" /> Snap
             </button>
-            <button type="button" className="btn btn-secondary py-1 px-3 text-[11px] font-semibold" onClick={stopCamera}>
+            <button type="button" className="btn btn-secondary py-1 px-3 text-[11px]" onClick={stopCamera}>
               Cancel
             </button>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-2 w-full items-center">
-          {error && <p className="text-[10px] text-rose-400 text-center font-medium">{error}</p>}
-          <div className="flex gap-2 w-full">
+        <div className="flex flex-col gap-2 w-full">
+          {error && <p className="text-[10px] text-rose-500 font-medium bg-rose-50 border border-rose-100 px-2.5 py-1.5 rounded-lg">{error}</p>}
+          <div className={`flex gap-1.5 w-full ${compact ? "" : "flex-col sm:flex-row"}`}>
             <button type="button" className="btn btn-primary flex-1 py-1.5 text-xs" onClick={startCamera}>
-              🎥 Enable Webcam
+              <Camera className="w-3.5 h-3.5" />
+              Camera
             </button>
             <label className="btn btn-secondary flex-1 py-1.5 text-xs text-center cursor-pointer">
-              📁 Choose File
+              <Upload className="w-3.5 h-3.5" />
+              Upload
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </label>
-            <button type="button" className="btn btn-secondary flex-1 py-1.5 text-xs" onClick={() => {
-              let demoUrl = SAMPLE_MOCK_IMAGE;
-              if (overlayType === "sizing") demoUrl = svgToDataUrl(MOCK_SIZING_SVG);
-              else if (overlayType === "damage") demoUrl = svgToDataUrl(MOCK_DAMAGE_SVG);
-              else if (overlayType === "grading") demoUrl = svgToDataUrl(MOCK_GRADING_SVG);
-              onCapture(demoUrl);
-            }}>
-              💡 Load Demo
+            <button type="button" className="btn btn-secondary flex-1 py-1.5 text-xs" onClick={loadDemo}>
+              <Zap className="w-3.5 h-3.5" />
+              Demo
             </button>
           </div>
         </div>
@@ -316,14 +371,14 @@ function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
   );
 }
 
-
 // ----------------------------------------------------
 // MAIN DASHBOARD COMPONENT
 // ----------------------------------------------------
 export default function Home() {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
-  
-  // Authentication States
+  const [showLogoutDropdown, setShowLogoutDropdown] = useState(false);
+
+  // Auth states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authEmail, setAuthEmail] = useState("");
@@ -333,7 +388,7 @@ export default function Home() {
   const [authPriorReturns, setAuthPriorReturns] = useState(2);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Header Profile Personalizations
+  // Profile
   const [profileUserId, setProfileUserId] = useState("user_samrat");
   const [profileEmail, setProfileEmail] = useState("samrat.ray@example.com");
   const [profileIp, setProfileIp] = useState("184.22.109.5");
@@ -341,7 +396,7 @@ export default function Home() {
   const [profilePriorReturns, setProfilePriorReturns] = useState(2);
   const [showProfileConfig, setShowProfileConfig] = useState(false);
 
-  // Dashboard Metrics
+  // Metrics
   const [metrics, setMetrics] = useState({
     totalProcessed: 142,
     deflectedRate: 41,
@@ -351,84 +406,78 @@ export default function Home() {
     fraudAttemptsBlocked: 8
   });
 
-  // Layer 1 - Sizing Cart State
+  // Layer 1 - Sizing
   const [cart, setCart] = useState<Array<{ id: string; sku: string; name: string; size: string; price: number }>>([]);
   const [selectedProductSku, setSelectedProductSku] = useState("DENIM-JKT-001");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const filteredSuggestions = React.useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
-    return PRODUCT_CATALOG.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.sku.toLowerCase().includes(query)
-    ).slice(0, 8);
-  }, [searchQuery]);
-
   const [showBracketingModal, setShowBracketingModal] = useState(false);
   const [sizingImage, setSizingImage] = useState<string | null>(null);
   const [sizingLoading, setSizingLoading] = useState(false);
   const [sizingResult, setSizingResult] = useState<any>(null);
 
-  // Layer 2 - Fraud State
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filteredSuggestions = React.useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return PRODUCT_CATALOG.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 8);
+  }, [searchQuery]);
+
+  // Layer 2 - Fraud
   const [fraudSku, setFraudSku] = useState("DENIM-JKT-001");
   const [fraudItemName, setFraudItemName] = useState("Classic Denim Jacket");
   const [fraudImage, setFraudImage] = useState<string | null>(null);
-  const [fraudImageType, setFraudImageType] = useState<string>("genuine"); // "genuine" | "staged" | "custom"
+  const [fraudImageType, setFraudImageType] = useState<string>("genuine");
   const [fraudLoading, setFraudLoading] = useState(false);
   const [fraudResult, setFraudResult] = useState<any>(null);
 
-  // Layer 3 - Chat Deflection State
+  // Layer 3 - Chat
   const [deflectProduct, setDeflectProduct] = useState("Smart Drip Coffee Maker");
   const [deflectSku, setDeflectSku] = useState("CF-Mkr-99");
   const [deflectReason, setDeflectReason] = useState("Defective / Won't turn on");
-  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string; hasGuide?: boolean }>>([
-    { role: "bot", content: "Hi there! I see you want to return your **Smart Drip Coffee Maker** because it won't turn on. Before we issue a return label, let's see if we can resolve this together! I've loaded the troubleshooting guide. Can you check if the power indicator light is blinking when you plug it in?" }
+  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([
+    { role: "bot", content: "Hi there! I see you want to return your **Smart Drip Coffee Maker** because it won't turn on. Before we issue a return label, let's see if we can resolve this together! Can you check if the power indicator light is blinking when you plug it in?" }
   ]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [ifixitGuides, setIfixitGuides] = useState<Array<any>>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Layer 4 - Warehouse Grading State
+  // Layer 4 - Grading
   const [gradingSku, setGradingSku] = useState("CF-Mkr-99");
   const [gradingItemName, setGradingItemName] = useState("Smart Drip Coffee Maker");
   const [gradingPhotos, setGradingPhotos] = useState<Array<string>>([]);
-  const [gradingSampleType, setGradingSampleType] = useState("scratched"); // "pristine" | "scratched" | "custom"
   const [gradingLoading, setGradingLoading] = useState(false);
   const [gradingResult, setGradingResult] = useState<any>(null);
   const [ledgerRecords, setLedgerRecords] = useState<Array<any>>([]);
   const [gradingVideoUrl, setGradingVideoUrl] = useState<string>("");
   const [gradingVideoBase64, setGradingVideoBase64] = useState<string>("");
-  const videoPlayerRef = useRef<HTMLVideoElement>(null);
 
-  // Layer 5 - P2P Logistics State
+  // Layer 5 - Logistics
   const [logisticsSku, setLogisticsSku] = useState("DENIM-JKT-001");
-  const [returnerZip, setReturnerZip] = useState("98101");
   const [buyerZip, setBuyerZip] = useState("98004");
   const [logisticsLoading, setLogisticsLoading] = useState(false);
   const [logisticsResult, setLogisticsResult] = useState<any>(null);
   const [labelGenerated, setLabelGenerated] = useState(false);
 
-  // Layer 6 - Green Credits Loyalty State
+  // Marketplace Feed
+  const [marketplaceFeed, setMarketplaceFeed] = useState<Array<any>>([]);
+  const [marketplaceLoading, setMarketplaceLoading] = useState(false);
+
   const [walletInfo, setWalletInfo] = useState<{
     credits: number;
     sustainabilityScore: number;
-    orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string }>;
+    orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string; returnWindowDays?: number; }>;
   }>({ credits: 1000, sustainabilityScore: 0, orders: [] });
   const [refundSelection, setRefundSelection] = useState<"cash" | "credits">("credits");
   const [loyaltyActions, setLoyaltyActions] = useState<Array<string>>(["p2p", "repair"]);
@@ -436,7 +485,7 @@ export default function Home() {
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundResult, setRefundResult] = useState<any>(null);
 
-  // Cookie / LocalStorage persistence check
+  // Persistence
   useEffect(() => {
     if (typeof window !== "undefined") {
       const activeUser = localStorage.getItem("activeUser");
@@ -447,21 +496,18 @@ export default function Home() {
           setProfileEmail(parsed.email);
           setProfileZip(parsed.zip);
           setProfilePriorReturns(parsed.priorReturns);
-          setReturnerZip(parsed.zip);
           setIsLoggedIn(true);
-        } catch (e) {
-          console.error(e);
-        }
+        } catch {}
       }
     }
   }, []);
 
-  // Fetch balances when profileUserId is updated
   useEffect(() => {
     if (isLoggedIn) {
       fetchWalletInfo();
       fetchLedgerRecords();
       fetchGuidesForProduct("coffee maker");
+      fetchMarketplaceFeed();
     }
   }, [profileUserId, isLoggedIn]);
 
@@ -469,7 +515,7 @@ export default function Home() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, chatLoading]);
 
-  // Synchronize state across all tabs whenever selectedProductSku changes
+  // Cross-layer sync when SKU changes
   useEffect(() => {
     const p = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
     if (p) {
@@ -480,16 +526,21 @@ export default function Home() {
       setGradingItemName(p.name);
       setRefundBaseAmount(p.price);
       
-      const isApparelOrFootwear = p.sizes.includes("S") || p.sizes.includes("M") || p.sizes.includes("L") || p.sizes.includes("XL") || p.sizes.includes("7") || p.sizes.includes("8") || p.sizes.includes("9") || p.sizes.includes("10") || p.sizes.includes("11") || p.sizes.includes("12");
-      if (!isApparelOrFootwear) {
-        setDeflectProduct(p.name);
-        setDeflectSku(p.sku);
+      const isElectrical = p.category === "Electronics" || p.category === "Home & Kitchen";
+      const isApparel = p.category === "Apparel" || p.category === "Footwear";
+      
+      setDeflectProduct(p.name);
+      setDeflectSku(p.sku);
+      
+      if (isElectrical) {
         fetchGuidesForProduct(p.name);
+      } else {
+        setIfixitGuides([]); // Clear electrical guides for non-electrical items
       }
     }
   }, [selectedProductSku]);
 
-  // Automatically load the user's first order as the active return candidate upon login
+  // Load wallet orders into return flow
   useEffect(() => {
     if (walletInfo.orders && walletInfo.orders.length > 0) {
       const firstOrder = walletInfo.orders[0];
@@ -500,138 +551,103 @@ export default function Home() {
       setRefundBaseAmount(firstOrder.price);
       setGradingSku(firstOrder.sku);
       setGradingItemName(firstOrder.name);
-
-      const isApparelOrFootwear = firstOrder.category.toLowerCase() === "apparel" || firstOrder.category.toLowerCase() === "footwear";
-      if (!isApparelOrFootwear) {
-        setDeflectProduct(firstOrder.name);
-        setDeflectSku(firstOrder.sku);
-        fetchGuidesForProduct(firstOrder.sku === "CF-Mkr-99" ? "coffee maker" : firstOrder.name);
-        setChatMessages([{
-          role: "bot",
-          content: `Hi there! I see you want to return your **${firstOrder.name}** due to functionality issues. Before we generate a shipping label, let's see if we can resolve this together! I've loaded the troubleshooting guide. Can you tell me if the device turns on at all when plugged in?`
-        }]);
+      const isElectrical = ["electronics", "home & kitchen"].includes(firstOrder.category.toLowerCase());
+      const isApparelOrFootwear = ["apparel", "footwear"].includes(firstOrder.category.toLowerCase());
+      
+      setDeflectProduct(firstOrder.name);
+      setDeflectSku(firstOrder.sku);
+      
+      if (isElectrical) {
+        fetchGuidesForProduct(firstOrder.name);
+        setChatMessages([{ role: "bot", content: `Hi there! I see you want to return your **${firstOrder.name}** due to functionality issues. Before we generate a shipping label, let's troubleshoot together! Can you tell me if the device turns on at all when plugged in?` }]);
+      } else if (isApparelOrFootwear) {
+        setIfixitGuides([]);
+        setChatMessages([{ role: "bot", content: `Hi there! I see you want to return your **${firstOrder.name}**. Since this is an apparel/footwear item, most returns are due to sizing or fit. Would you like to exchange this for a different size or color instead?` }]);
+      } else {
+        setIfixitGuides([]);
+        setChatMessages([{ role: "bot", content: `Hi there! We're sorry your **${firstOrder.name}** didn't meet your expectations. Is there a specific defect or missing component, or did you simply change your mind?` }]);
       }
     }
   }, [walletInfo.orders]);
 
-  // Handle Login authentication validation
+  // Re-render Leaflet map when logistics result changes
+  useEffect(() => {
+    if (typeof window === "undefined" || !logisticsResult) return;
+    const L = (window as any).L;
+    if (!L) return;
+    const mapContainer = document.getElementById("map-element");
+    if (!mapContainer) return;
+    (mapContainer as any)._leaflet_id = null;
+    mapContainer.innerHTML = "";
+    const origin = logisticsResult.p2pRoute.origin.coords;
+    const dest = logisticsResult.p2pRoute.destination.coords;
+    const centralWh = logisticsResult.warehouseRoute.destination.coords;
+    const map = L.map("map-element").setView(origin, 9);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18, attribution: "© OpenStreetMap"
+    }).addTo(map);
+    L.marker(origin).addTo(map).bindPopup(`<b>Returns Origin</b><br>${logisticsResult.p2pRoute.origin.label}`).openPopup();
+    L.marker(dest).addTo(map).bindPopup(`<b>Matched Buyer</b><br>${logisticsResult.p2pRoute.buyerName}<br>${logisticsResult.p2pRoute.destination.label}`);
+    L.marker(centralWh).addTo(map).bindPopup(`<b>Central Warehouse</b><br>${logisticsResult.warehouseRoute.destination.label}`);
+    L.polyline([origin, dest], { color: "#10b981", weight: 4, dashArray: "6 10", opacity: 0.9 }).addTo(map);
+    L.polyline([origin, centralWh], { color: "#f43f5e", weight: 2, opacity: 0.45 }).addTo(map);
+    map.fitBounds(L.latLngBounds([origin, dest, centralWh]), { padding: [40, 40] });
+  }, [logisticsResult]);
+
+  // ---- AUTH ----
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-
-    if (!authEmail || !authPassword) {
-      setAuthError("All fields are required.");
-      return;
-    }
-
-    // Inferred user details based on inputs
+    if (!authEmail || !authPassword) { setAuthError("All fields are required."); return; }
     const inferredUsername = authEmail.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "") || "user_guest";
-    const userSession = {
-      userId: inferredUsername,
-      email: authEmail,
-      zip: "98101",
-      priorReturns: 1
-    };
-
+    const userSession = { userId: inferredUsername, email: authEmail, zip: "98101", priorReturns: 1 };
     setProfileUserId(userSession.userId);
     setProfileEmail(userSession.email);
     setProfileZip(userSession.zip);
     setProfilePriorReturns(userSession.priorReturns);
-    setReturnerZip(userSession.zip);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("activeUser", JSON.stringify(userSession));
-    }
-
+    if (typeof window !== "undefined") localStorage.setItem("activeUser", JSON.stringify(userSession));
     setIsLoggedIn(true);
-    confetti({ particleCount: 50, spread: 30 });
+    confetti({ particleCount: 80, spread: 50, origin: { y: 0.6 } });
   };
 
-  // Handle Sign Up registration and seeding
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-
-    if (!authUserId || !authEmail || !authPassword || !authZip) {
-      setAuthError("Please complete all signup fields.");
-      return;
-    }
-
+    if (!authUserId || !authEmail || !authPassword || !authZip) { setAuthError("Please complete all fields."); return; }
     const cleanedUsername = authUserId.toLowerCase().replace(/[^a-zA-Z0-9_]/g, "");
-    if (!cleanedUsername) {
-      setAuthError("Username must be alphanumeric.");
-      return;
-    }
-
-    const userSession = {
-      userId: cleanedUsername,
-      email: authEmail,
-      zip: authZip,
-      priorReturns: authPriorReturns
-    };
-
-    // Seed database profile
+    if (!cleanedUsername) { setAuthError("Username must be alphanumeric."); return; }
+    const userSession = { userId: cleanedUsername, email: authEmail, zip: authZip, priorReturns: authPriorReturns };
     try {
-      await fetch(`/api/wallet`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          choice: "init",
-          userId: userSession.userId
-        })
-      });
-    } catch (err) {
-      console.error("Failed to seed new wallet during signup:", err);
-    }
-
+      await fetch(`/api/wallet`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ choice: "init", userId: userSession.userId }) });
+    } catch {}
     setProfileUserId(userSession.userId);
     setProfileEmail(userSession.email);
     setProfileZip(userSession.zip);
     setProfilePriorReturns(userSession.priorReturns);
-    setReturnerZip(userSession.zip);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("activeUser", JSON.stringify(userSession));
-    }
-
+    if (typeof window !== "undefined") localStorage.setItem("activeUser", JSON.stringify(userSession));
     setIsLoggedIn(true);
-    confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ["#4f46e5","#10b981","#7c3aed"] });
   };
 
-  // Handle Logout cleanups
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("activeUser");
-    }
+    if (typeof window !== "undefined") localStorage.removeItem("activeUser");
     setIsLoggedIn(false);
-    setAuthEmail("");
-    setAuthPassword("");
-    setAuthUserId("");
-    setSizingResult(null);
-    setFraudResult(null);
-    setLogisticsResult(null);
-    setRefundResult(null);
+    setAuthEmail(""); setAuthPassword(""); setAuthUserId("");
+    setSizingResult(null); setFraudResult(null); setLogisticsResult(null); setRefundResult(null);
   };
 
-  // Load wallet info from API
+  // ---- API CALLS ----
   const fetchWalletInfo = async () => {
     try {
       const res = await fetch(`/api/wallet?userId=${profileUserId}`);
       if (res.ok) {
         const data = await res.json();
         setWalletInfo(data);
-        setMetrics(prev => ({
-          ...prev,
-          walletCredits: data.credits,
-          co2Saved: data.sustainabilityScore
-        }));
+        setMetrics(prev => ({ ...prev, walletCredits: data.credits, co2Saved: data.sustainabilityScore }));
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch {}
   };
 
-  // Load ledger records
   const fetchLedgerRecords = async () => {
     try {
       const res = await fetch("/api/grading", {
@@ -639,148 +655,97 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images: [SAMPLE_MOCK_IMAGE], sku: "INIT_QUERY", itemName: "query", userId: profileUserId })
       });
-      setLedgerRecords([
-        {
-          id: "ph-771",
-          sku: "CF-Mkr-99",
-          itemName: "Smart Drip Coffee Maker",
-          grade: "B",
-          defects: ["Minor scuffing on base", "Reservoir has hardwater lines"],
-          resaleCategory: "Open Box - Very Good",
-          hash: "5d7ee02bca5cf0b04c8614578efbdca9e79435b80a187e148e658a5be89dbf7c0",
-          timestamp: "2026-06-13T10:15:00Z"
-        }
-      ]);
-    } catch (e) {
-      console.error(e);
+      setLedgerRecords([{
+        id: "ph-771", sku: "CF-Mkr-99", itemName: "Smart Drip Coffee Maker",
+        grade: "B", defects: ["Minor scuffing on base", "Reservoir has hardwater lines"],
+        resaleCategory: "Open Box - Very Good",
+        hash: "5d7ee02bca5cf0b04c8614578efbdca9e79435b80a187e148e658a5be89dbf7c0",
+        timestamp: "2026-06-13T10:15:00Z"
+      }]);
+    } catch {}
+  };
+
+  const fetchMarketplaceFeed = async () => {
+    setMarketplaceLoading(true);
+    try {
+      const res = await fetch(`/api/marketplace?userId=${profileUserId}&zipCode=${profileZip}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMarketplaceFeed(data.items || []);
+      }
+    } catch {} finally {
+      setMarketplaceLoading(false);
     }
   };
 
-  // Fetch guides from iFixit
   const fetchGuidesForProduct = async (query: string) => {
     try {
       const response = await fetch(`https://www.ifixit.com/api/2.0/guides?query=${encodeURIComponent(query)}&limit=3`);
       if (response.ok) {
         const data = await response.json();
-        const guides = data.guides.map((g: any) => ({
-          id: g.guideid,
-          title: g.title,
-          url: g.url,
-          summary: g.summary || "",
-          imageUrl: g.image?.medium || null
-        }));
-        
-        if (guides.length > 0) {
-          setIfixitGuides(guides);
-          return;
-        }
+        const guides = data.guides?.map((g: any) => ({
+          id: g.guideid, title: g.title, url: g.url,
+          summary: g.summary || "", imageUrl: g.image?.medium || null
+        })) || [];
+        if (guides.length > 0) { setIfixitGuides(guides); return; }
       }
-    } catch (e) {
-      console.error("Direct iFixit API fetch failed, falling back to local database", e);
-    }
+    } catch {}
 
-    // High-fidelity fallback database for demo reliability
-    const fallbackDB: Record<string, Array<any>> = {
-      "coffee": [
+    const fallbackDB: Record<string, any[]> = {
+      coffee: [
         { id: 101, title: "Drip Coffee Maker Heating Element Replacement", url: "https://www.ifixit.com/Guide/Drip+Coffee+Maker+Heating+Element+Replacement/10292", summary: "Replace the heating element inside your standard drip coffee maker." },
         { id: 102, title: "How to Descale a Coffee Machine", url: "https://www.ifixit.com/Guide/How+to+Descale+a+Coffee+Machine/11883", summary: "Descale the water pathways to clear hard mineral blockage." }
       ],
-      "speaker": [
+      speaker: [
         { id: 201, title: "Bluetooth Speaker Battery Swap", url: "https://www.ifixit.com/Guide/Bluetooth+Speaker+Battery+Replacement/8844", summary: "Swap the lithium battery inside your portable Bluetooth speaker." }
       ]
     };
 
-    const normQuery = query.toLowerCase();
-    if (normQuery.includes("coffee") || normQuery.includes("maker")) {
-      setIfixitGuides(fallbackDB["coffee"]);
-    } else if (normQuery.includes("speaker") || normQuery.includes("sound")) {
-      setIfixitGuides(fallbackDB["speaker"]);
-    } else {
-      setIfixitGuides([
-        { id: 99, title: `General Troubleshooting for ${query}`, url: "https://www.ifixit.com/Device/Electronics", summary: "Follow standard diagnostics for electrical and power issues." }
-      ]);
-    }
+    const norm = query.toLowerCase();
+    if (norm.includes("coffee") || norm.includes("maker")) setIfixitGuides(fallbackDB.coffee);
+    else if (norm.includes("speaker") || norm.includes("sound")) setIfixitGuides(fallbackDB.speaker);
+    else setIfixitGuides([{ id: 99, title: `General Troubleshooting for ${query}`, url: "https://www.ifixit.com/Device/Electronics", summary: "Follow standard diagnostics for electrical and power issues." }]);
   };
 
-  // --- LAYER 1 SIZING CART HANDLERS ---
+  // ---- L1 SIZING ----
   const handleAddToCart = (size: string) => {
     const selectedProd = PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0];
     const isAlreadyBracketed = cart.some(item => item.sku === selectedProd.sku);
-    const newCart = [...cart, { 
-      id: Math.random().toString(), 
-      sku: selectedProd.sku, 
-      name: selectedProd.name, 
-      size, 
-      price: selectedProd.price 
-    }];
-    setCart(newCart);
-
-    if (isAlreadyBracketed) {
-      setShowBracketingModal(true);
-    }
+    setCart(prev => [...prev, { id: Math.random().toString(36).slice(2), sku: selectedProd.sku, name: selectedProd.name, size, price: selectedProd.price }]);
+    if (isAlreadyBracketed) setShowBracketingModal(true);
   };
 
-  const handleRemoveFromCart = (id: string) => {
-    setCart(cart.filter(item => item.id !== id));
-  };
+  const handleRemoveFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
 
   const triggerSizeAssist = async () => {
     if (!sizingImage) return;
     setSizingLoading(true);
-
-    // Find which SKU is duplicated (bracketed) in the cart
     const skuCounts: Record<string, number> = {};
-    cart.forEach(item => {
-      skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1;
-    });
+    cart.forEach(item => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
     const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
     const bracketedSizes = cart.filter(item => item.sku === bracketedSku).map(item => item.size);
-
     try {
       const res = await fetch("/api/size-assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: sizingImage,
-          brand: "UrbanEco",
-          sku: bracketedSku,
-          sizes: bracketedSizes,
-          sessionId: `session-${profileUserId}`
-        })
+        body: JSON.stringify({ image: sizingImage, brand: "UrbanEco", sku: bracketedSku, sizes: bracketedSizes, sessionId: `session-${profileUserId}` })
       });
-      if (res.ok) {
-        const data = await res.json();
-        setSizingResult(data);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSizingLoading(false);
-    }
+      if (res.ok) setSizingResult(await res.json());
+    } catch {} finally { setSizingLoading(false); }
   };
 
   const applySizeRecommendation = (recommendedSize: string) => {
-    // Find which SKU is duplicated (bracketed) in the cart
     const skuCounts: Record<string, number> = {};
-    cart.forEach(item => {
-      skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1;
-    });
+    cart.forEach(item => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
     const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
     const bracketedProd = PRODUCT_CATALOG.find(p => p.sku === bracketedSku) || PRODUCT_CATALOG[0];
-
-    const filteredCart = cart.filter(item => item.sku !== bracketedSku);
-    setCart([
-      ...filteredCart,
-      { id: "rec-size", sku: bracketedSku, name: bracketedProd.name, size: recommendedSize, price: bracketedProd.price }
-    ]);
-    setShowBracketingModal(false);
-    setSizingResult(null);
-    setSizingImage(null);
+    setCart([...cart.filter(item => item.sku !== bracketedSku), { id: "rec-size", sku: bracketedSku, name: bracketedProd.name, size: recommendedSize, price: bracketedProd.price }]);
+    setShowBracketingModal(false); setSizingResult(null); setSizingImage(null);
     setMetrics(prev => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
-    confetti({ particleCount: 65, spread: 50, origin: { y: 0.8 } });
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
   };
 
-  // --- LAYER 2 FRAUD SHIELD HANDLERS ---
+  // ---- L2 FRAUD ----
   const triggerFraudCheck = async () => {
     if (!fraudImage) return;
     setFraudLoading(true);
@@ -788,69 +753,53 @@ export default function Home() {
       const res = await fetch("/api/risk-mitigation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: fraudImage,
-          userId: profileUserId,
-          email: profileEmail,
-          ipAddress: profileIp,
-          sku: fraudSku,
-          itemName: fraudItemName,
-          priorReturns: profilePriorReturns
-        })
+        body: JSON.stringify({ image: fraudImage, userId: profileUserId, email: profileEmail, ipAddress: profileIp, sku: fraudSku, itemName: fraudItemName, priorReturns: profilePriorReturns })
       });
       if (res.ok) {
         const data = await res.json();
         setFraudResult(data);
-        if (data.recommendedAction === "BLOCK") {
-          setMetrics(prev => ({ ...prev, fraudAttemptsBlocked: prev.fraudAttemptsBlocked + 1 }));
-        }
+        if (data.recommendedAction === "BLOCK") setMetrics(prev => ({ ...prev, fraudAttemptsBlocked: prev.fraudAttemptsBlocked + 1 }));
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setFraudLoading(false);
-    }
+    } catch {} finally { setFraudLoading(false); }
   };
 
-  // --- LAYER 3 INTERCEPT CHAT HANDLERS ---
+  // ---- L3 CHAT ----
   const handleSendChatMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
-
     const userMsg = chatInput;
     setChatMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setChatInput("");
     setChatLoading(true);
-
     try {
+      // Find the specific order context
+      const order = walletInfo.orders?.find(o => o.sku === deflectSku);
+      const purchaseDate = order?.purchaseDate || "2026-06-01";
+      const returnWindowDays = order?.returnWindowDays || 30;
+
       const res = await fetch("/api/chat-deflection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [
-            ...chatMessages.map(m => ({ role: m.role, content: m.content })),
-            { role: "user", content: userMsg }
-          ],
-          productName: deflectProduct,
-          reasonCode: deflectReason,
-          guides: ifixitGuides
+        body: JSON.stringify({ 
+          messages: [...chatMessages.map(m => ({ role: m.role, content: m.content })), { role: "user", content: userMsg }], 
+          productName: deflectProduct, 
+          reasonCode: deflectReason, 
+          guides: ifixitGuides, 
+          userId: profileUserId,
+          purchaseDate,
+          returnWindowDays
         })
       });
-
       if (res.ok) {
         const reader = res.body?.getReader();
         if (reader) {
           let botMessage = "";
           setChatMessages(prev => [...prev, { role: "bot", content: "" }]);
-          
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-
             const text = new TextDecoder().decode(value);
-            const lines = text.split("\n");
-            
-            for (const line of lines) {
+            for (const line of text.split("\n")) {
               if (line.startsWith("data: ")) {
                 const dataStr = line.slice(6).trim();
                 if (dataStr === "[DONE]") continue;
@@ -858,59 +807,35 @@ export default function Home() {
                   const parsed = JSON.parse(dataStr);
                   const chunk = parsed.choices[0]?.delta?.content || "";
                   botMessage += chunk;
-                  
-                  setChatMessages(prev => {
-                    const next = [...prev];
-                    next[next.length - 1] = { role: "bot", content: botMessage };
-                    return next;
-                  });
-                } catch (e) {}
+                  setChatMessages(prev => { const next = [...prev]; next[next.length-1] = { role: "bot", content: botMessage }; return next; });
+                } catch {}
               }
             }
           }
         }
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setChatLoading(false);
-    }
+    } catch {} finally { setChatLoading(false); }
   };
 
   const resolveDeflection = async () => {
     try {
-      const res = await fetch("/api/deflection-log", {
+      await fetch("/api/deflection-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: profileUserId,
-          productName: deflectProduct,
-          sku: deflectSku,
-          reasonCode: deflectReason,
-          deflected: true
-        })
+        body: JSON.stringify({ userId: profileUserId, productName: deflectProduct, sku: deflectSku, reasonCode: deflectReason, deflected: true })
       });
-      if (res.ok) {
-        fetchWalletInfo();
-        fetchLedgerRecords();
-      }
-    } catch (e) {
-      console.error("Deflection logging failed:", e);
-    }
-
+      fetchWalletInfo();
+    } catch {}
     setMetrics(prev => ({
       ...prev,
       totalProcessed: prev.totalProcessed + 1,
       deflectedRate: Math.round(((prev.totalProcessed * prev.deflectedRate / 100) + 1) / (prev.totalProcessed + 1) * 100)
     }));
-    setChatMessages(prev => [...prev, {
-      role: "bot",
-      content: "🎉 **Deflection Successful!** Your return has been cancelled. We've logged this deflection to the cryptographic database registry and rewarded your loyalty credits. Thank you for choosing to repair!"
-    }]);
-    confetti({ colors: ["#10b981", "#6366f1"], particleCount: 80 });
+    setChatMessages(prev => [...prev, { role: "bot", content: "🎉 **Deflection Successful!** Your return has been cancelled. We've logged this to the cryptographic ledger and rewarded your green loyalty credits. Thank you for choosing to repair!" }]);
+    confetti({ colors: ["#10b981","#6366f1"], particleCount: 100, spread: 70 });
   };
 
-  // --- LAYER 4 AUTO INSPECTOR GRADING HANDLERS ---
+  // ---- L4 GRADING ----
   const triggerWarehouseGrading = async () => {
     if (!gradingVideoUrl && !gradingVideoBase64) return;
     setGradingLoading(true);
@@ -918,13 +843,7 @@ export default function Home() {
       const res = await fetch("/api/grading", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          video: gradingVideoBase64 || undefined,
-          videoUrl: gradingVideoUrl.startsWith("blob:") ? undefined : gradingVideoUrl || undefined,
-          sku: gradingSku,
-          itemName: gradingItemName,
-          userId: profileUserId
-        })
+        body: JSON.stringify({ video: gradingVideoBase64 || undefined, videoUrl: gradingVideoUrl.startsWith("blob:") ? undefined : gradingVideoUrl || undefined, sku: gradingSku, itemName: gradingItemName, userId: profileUserId })
       });
       if (res.ok) {
         const data = await res.json();
@@ -932,14 +851,10 @@ export default function Home() {
         setLedgerRecords(prev => [data.report, ...prev]);
         setMetrics(prev => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setGradingLoading(false);
-    }
+    } catch {} finally { setGradingLoading(false); }
   };
 
-  // --- LAYER 5 LOGISTICS HANDLERS ---
+  // ---- L5 LOGISTICS ----
   const triggerP2PRouteCalculation = async () => {
     setLogisticsLoading(true);
     setLabelGenerated(false);
@@ -947,80 +862,15 @@ export default function Home() {
       const res = await fetch("/api/p2p-logistics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sku: logisticsSku,
-          returnerZip: profileZip,
-          buyerZip
-        })
+        body: JSON.stringify({ sku: logisticsSku, returnerZip: profileZip, buyerZip })
       });
-      if (res.ok) {
-        const data = await res.json();
-        setLogisticsResult(data);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLogisticsLoading(false);
-    }
+      if (res.ok) setLogisticsResult(await res.json());
+    } catch {} finally { setLogisticsLoading(false); }
   };
 
-  // Leaflet Rendering
-  useEffect(() => {
-    if (typeof window === "undefined" || !logisticsResult) return;
-    const L = (window as any).L;
-    if (!L) return;
-
-    const mapContainer = document.getElementById("map-element");
-    if (!mapContainer) return;
-    (mapContainer as any)._leaflet_id = null;
-    mapContainer.innerHTML = "";
-
-    const origin = logisticsResult.p2pRoute.origin.coords;
-    const dest = logisticsResult.p2pRoute.destination.coords;
-    const centralWh = logisticsResult.warehouseRoute.destination.coords;
-
-    const map = L.map("map-element").setView(origin, 9);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    L.marker(origin).addTo(map)
-      .bindPopup(`<b>Returns Origin</b><br>${logisticsResult.p2pRoute.origin.label}`)
-      .openPopup();
-
-    L.marker(dest).addTo(map)
-      .bindPopup(`<b>Matched Local Buyer</b><br>${logisticsResult.p2pRoute.buyerName}<br>${logisticsResult.p2pRoute.destination.label}`);
-
-    L.marker(centralWh).addTo(map)
-      .bindPopup(`<b>Louisville Central Warehouse</b><br>${logisticsResult.warehouseRoute.destination.label}`);
-
-    L.polyline([origin, dest], {
-      color: "#10b981",
-      weight: 4,
-      dashArray: "5, 10",
-      opacity: 0.9
-    }).addTo(map);
-
-    L.polyline([origin, centralWh], {
-      color: "#f43f5e",
-      weight: 2,
-      opacity: 0.4
-    }).addTo(map);
-
-    const bounds = L.latLngBounds([origin, dest, centralWh]);
-    map.fitBounds(bounds, { padding: [40, 40] });
-
-  }, [logisticsResult]);
-
-  // --- LAYER 6 WALLET HANDLERS ---
+  // ---- L6 WALLET ----
   const handleToggleLoyaltyAction = (actionId: string) => {
-    if (loyaltyActions.includes(actionId)) {
-      setLoyaltyActions(loyaltyActions.filter(a => a !== actionId));
-    } else {
-      setLoyaltyActions([...loyaltyActions, actionId]);
-    }
+    setLoyaltyActions(prev => prev.includes(actionId) ? prev.filter(a => a !== actionId) : [...prev, actionId]);
   };
 
   const processWalletRefund = async () => {
@@ -1029,854 +879,805 @@ export default function Home() {
       const res = await fetch("/api/wallet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          choice: refundSelection,
-          actions: refundSelection === "credits" ? loyaltyActions : [],
-          baseAmount: refundBaseAmount,
-          userId: profileUserId
-        })
+        body: JSON.stringify({ choice: refundSelection, actions: refundSelection === "credits" ? loyaltyActions : [], baseAmount: refundBaseAmount, userId: profileUserId })
       });
       if (res.ok) {
         const data = await res.json();
         setRefundResult(data);
         fetchWalletInfo();
-        confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: refundSelection === "credits" ? ["#10b981", "#34d399", "#6366f1"] : ["#cbd5e1", "#94a3b8"]
-        });
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: refundSelection === "credits" ? ["#10b981","#34d399","#6366f1"] : ["#cbd5e1","#94a3b8"] });
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setRefundLoading(false);
-    }
+    } catch {} finally { setRefundLoading(false); }
   };
 
-  // ----------------------------------------------------
-  // AUTHENTICATION OVERLAY LAYOUT
-  // ----------------------------------------------------
+  // ============================================
+  // AUTH OVERLAY
+  // ============================================
   if (!isLoggedIn) {
     return (
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
+            <div className="flex justify-center mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 2 L2 22 L22 22 Z" />
+                  <circle cx="12" cy="14" r="4" strokeDasharray="3 2" />
+                </svg>
+              </div>
+            </div>
             <h2 className="auth-title">Project Anti-Gravity</h2>
             <p className="auth-subtitle">
-              {authMode === "signin" 
-                ? "Sign in to access your circular returns portal" 
-                : "Register account to initialize green credits ledger"}
+              {authMode === "signin" ? "Sign in to access your circular returns portal" : "Register to initialize your green credits ledger"}
             </p>
           </div>
 
           {authError && <div className="auth-error mb-4">{authError}</div>}
 
+          {/* Tab toggles */}
+          <div className="flex gap-1 mb-5 bg-slate-100 p-1 rounded-xl">
+            <button onClick={() => { setAuthMode("signin"); setAuthError(null); }} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${authMode === "signin" ? "bg-white shadow text-indigo-600" : "text-slate-500"}`}>
+              Sign In
+            </button>
+            <button onClick={() => { setAuthMode("signup"); setAuthError(null); }} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${authMode === "signup" ? "bg-white shadow text-indigo-600" : "text-slate-500"}`}>
+              Register
+            </button>
+          </div>
+
           {authMode === "signin" ? (
             <form onSubmit={handleSignIn} className="auth-form">
               <div className="auth-field">
                 <label>Email Address</label>
-                <input 
-                  type="email" 
-                  required 
-                  value={authEmail} 
-                  onChange={(e) => setAuthEmail(e.target.value)} 
-                  placeholder="name@example.com" 
-                />
+                <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="name@example.com" />
               </div>
               <div className="auth-field">
                 <label>Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  value={authPassword} 
-                  onChange={(e) => setAuthPassword(e.target.value)} 
-                  placeholder="••••••••" 
-                />
+                <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" />
               </div>
-              <button type="submit" className="btn btn-primary w-full py-2.5 mt-2">
-                Sign In to Account
+              <button type="submit" className="btn btn-primary w-full py-2.5 mt-1">
+                Sign In to Dashboard
               </button>
             </form>
           ) : (
             <form onSubmit={handleSignUp} className="auth-form">
               <div className="auth-field">
-                <label>User ID (Username)</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={authUserId} 
-                  onChange={(e) => setAuthUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))} 
-                  placeholder="e.g. user_samrat" 
-                />
+                <label>Username</label>
+                <input type="text" required value={authUserId} onChange={e => setAuthUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))} placeholder="e.g. user_samrat" />
               </div>
               <div className="auth-field">
                 <label>Email Address</label>
-                <input 
-                  type="email" 
-                  required 
-                  value={authEmail} 
-                  onChange={(e) => setAuthEmail(e.target.value)} 
-                  placeholder="name@example.com" 
-                />
+                <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="name@example.com" />
               </div>
               <div className="auth-field">
                 <label>Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  value={authPassword} 
-                  onChange={(e) => setAuthPassword(e.target.value)} 
-                  placeholder="••••••••" 
-                />
+                <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="auth-field">
-                  <label>Home Zipcode</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={authZip} 
-                    onChange={(e) => setAuthZip(e.target.value)} 
-                    placeholder="98101" 
-                  />
+              <div className="flex gap-3">
+                <div className="auth-field flex-1">
+                  <label>Home ZIP</label>
+                  <input type="text" required value={authZip} onChange={e => setAuthZip(e.target.value)} placeholder="98101" />
                 </div>
-                <div className="auth-field">
+                <div className="auth-field flex-1">
                   <label>Prior Returns</label>
-                  <input 
-                    type="number" 
-                    required 
-                    value={authPriorReturns} 
-                    onChange={(e) => setAuthPriorReturns(parseInt(e.target.value) || 0)} 
-                    placeholder="2" 
-                  />
+                  <input type="number" required value={authPriorReturns} onChange={e => setAuthPriorReturns(parseInt(e.target.value) || 0)} placeholder="2" />
                 </div>
               </div>
-              <button type="submit" className="btn btn-success w-full py-2.5 mt-2">
+              <button type="submit" className="btn btn-success w-full py-2.5 mt-1">
                 Create Circular Account
               </button>
             </form>
           )}
 
           <div className="auth-footer">
-            {authMode === "signin" ? (
-              <>
-                Need a new account?{" "}
-                <span className="auth-link" onClick={() => { setAuthMode("signup"); setAuthError(null); }}>
-                  Register here
-                </span>
-              </>
-            ) : (
-              <>
-                Already registered?{" "}
-                <span className="auth-link" onClick={() => { setAuthMode("signin"); setAuthError(null); }}>
-                  Log In
-                </span>
-              </>
-            )}
+            <p className="text-[10px] text-slate-400 mt-3">
+              Demo: Use any email + password to sign in instantly
+            </p>
           </div>
         </div>
       </div>
     );
   }
 
-  // ----------------------------------------------------
-  // LOGGED IN DASHBOARD LAYOUT
-  // ----------------------------------------------------
+  // ============================================
+  // LOGGED IN DASHBOARD
+  // ============================================
+  const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
+
+  const navItems = [
+    { id: "dashboard",        icon: BarChart2,  label: "Core Ledger Hub",   badge: "" },
+    { id: "size-assist",      icon: Layers,     label: "L1: Sizing Assist", badge: "L1" },
+    { id: "fraud-mitigation", icon: Shield,     label: "L2: Fraud Shield",  badge: "L2" },
+    { id: "deflection",       icon: MessageSquare, label: "L3: Intercept Chat", badge: "L3" },
+    { id: "grading",          icon: Camera,     label: "L4: Auto Inspector",badge: "L4" },
+    { id: "logistics",        icon: Map,        label: "L5: P2P Logistics", badge: "L5" },
+    { id: "wallet",           icon: Wallet,     label: "L6: Loyalty Wallet",badge: "L6" },
+    { id: "marketplace",      icon: ShoppingBag,label: "Circular Marketplace",badge: "NEW" },
+  ];
+
   return (
-    <div className="dashboard-container">
-      {/* HEADER SECTION */}
-      <header className="dashboard-header">
-        <div className="dashboard-title-area">
-          <h1>Project Anti-Gravity</h1>
-          <div className="dashboard-subtitle">Intelligent Circular Returns Bridge — Groq & Free API Core</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="glass-card flex items-center gap-3 py-2 px-4 border border-indigo-500/20 bg-indigo-950/10 rounded-full">
-            <Leaf className="w-5 h-5 text-emerald-400" />
-            <div className="text-sm font-medium">
-              <span className="text-emerald-400 font-bold">{walletInfo.sustainabilityScore} kg</span> CO₂ saved
-            </div>
-          </div>
-          <div className="glass-card flex items-center gap-3 py-2 px-4 border border-emerald-500/20 bg-emerald-950/10 rounded-full">
-            <Award className="w-5 h-5 text-indigo-400" />
-            <div className="text-sm font-medium">
-              <span className="text-indigo-400 font-bold">{walletInfo.credits}</span> Green Credits
-            </div>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="btn btn-secondary py-2 px-4 text-xs font-semibold hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/5 transition duration-150 rounded-full"
-          >
-            Log Out
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 40%, #f0fdf4 100%)" }}>
 
-      {/* PERSONALIZED SESSION REGISTRY CARD */}
-      <div className="glass-card mb-6 border-indigo-500/10 bg-indigo-950/5">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-4.5 h-4.5 text-indigo-400" />
-            <span className="text-sm font-semibold text-indigo-300">
-              Authenticated Session: <span className="text-white font-bold">{profileUserId}</span> | ZIP: <span className="text-white font-bold">{profileZip}</span>
-            </span>
+      {/* ── NAVBAR ── */}
+      <nav className="navbar">
+        <a href="#" className="navbar-logo">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 2 L2 22 L22 22 Z" />
+              <circle cx="12" cy="14" r="3.5" strokeDasharray="3 2" />
+            </svg>
           </div>
-          <button 
-            onClick={() => setShowProfileConfig(!showProfileConfig)}
-            className="btn btn-secondary py-1 px-3 text-xs"
-          >
-            {showProfileConfig ? "Close Profile Config" : "Inspect Session Variables"}
-          </button>
-        </div>
-        
-        {showProfileConfig && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 pt-4 border-t border-indigo-500/10 text-xs">
-            <div>
-              <label className="text-[10px] text-indigo-400 uppercase font-semibold">User Registry ID</label>
-              <input 
-                type="text" 
-                value={profileUserId} 
-                onChange={(e) => {
-                  const newId = e.target.value;
-                  setProfileUserId(newId);
-                }} 
-                className="py-1 px-2 text-xs mt-1" 
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-indigo-400 uppercase font-semibold">Registered Email</label>
-              <input 
-                type="text" 
-                value={profileEmail} 
-                onChange={(e) => setProfileEmail(e.target.value)} 
-                className="py-1 px-2 text-xs mt-1" 
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-indigo-400 uppercase font-semibold">Current IP address</label>
-              <input 
-                type="text" 
-                value={profileIp} 
-                onChange={(e) => setProfileIp(e.target.value)} 
-                className="py-1 px-2 text-xs mt-1" 
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-indigo-400 uppercase font-semibold">Location Zipcode</label>
-              <input 
-                type="text" 
-                value={profileZip} 
-                onChange={(e) => {
-                  const newZip = e.target.value;
-                  setProfileZip(newZip);
-                  setReturnerZip(newZip);
-                }} 
-                className="py-1 px-2 text-xs mt-1" 
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-indigo-400 uppercase font-semibold">Prior 30-Day Returns</label>
-              <input 
-                type="number" 
-                value={profilePriorReturns} 
-                onChange={(e) => setProfilePriorReturns(parseInt(e.target.value) || 0)} 
-                className="py-1 px-2 text-xs mt-1" 
-              />
-            </div>
-          </div>
-        )}
-      </div>
+          Anti-Gravity
+        </a>
 
-      {/* METRICS SUMMARY GRID */}
-      <section className="metrics-grid">
-        <div className="glass-card metric-card">
-          <div className="metric-icon-wrapper indigo">
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div className="metric-content">
-            <span className="metric-label">Processed Audits</span>
-            <span className="metric-value">{metrics.totalProcessed}</span>
-          </div>
+        <div className="navbar-links hidden md:flex">
+          <button onClick={() => setActiveTab("marketplace")} className="navbar-link">Shop Re-Commerce</button>
+          <button onClick={() => setActiveTab("marketplace")} className="navbar-link">Collections</button>
+          <button onClick={() => alert("Project Anti-Gravity is a circular retail engine. We intercept returns and route them directly to new buyers to save CO2 and logistics costs.")} className="navbar-link">Our Mission</button>
         </div>
 
-        <div className="glass-card metric-card">
-          <div className="metric-icon-wrapper emerald">
-            <TrendingDown className="w-5 h-5" />
+        <div className="navbar-actions">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-full border border-emerald-100 shadow-sm cursor-help" title="Green CO2 Saved">
+            <Leaf className="w-3.5 h-3.5 text-emerald-500" />
+            <span>{walletInfo.sustainabilityScore} kg CO₂</span>
           </div>
-          <div className="metric-content">
-            <span className="metric-label">Return Deflection</span>
-            <span className="metric-value">{metrics.deflectedRate}%</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-full border border-indigo-100 shadow-sm cursor-help" title="Wallet Credits">
+            <Award className="w-3.5 h-3.5 text-indigo-500" />
+            <span>{walletInfo.credits} Credits</span>
+          </div>
+          
+          <div className="relative">
+            <button 
+              onClick={() => setShowLogoutDropdown(!showLogoutDropdown)}
+              className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all"
+            >
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-[9px] uppercase">
+                {profileUserId.charAt(0)}
+              </div>
+              {profileUserId}
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+            
+            {showLogoutDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Signed in as</div>
+                  <div className="text-xs font-bold text-slate-800 truncate">{profileEmail}</div>
+                </div>
+                <button onClick={() => { setShowLogoutDropdown(false); setActiveTab("dashboard"); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                  <UserCheck className="w-3.5 h-3.5" /> Dashboard Profile
+                </button>
+                <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                  <ArrowRight className="w-3.5 h-3.5" /> Secure Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
+      </nav>
 
-        <div className="glass-card metric-card">
-          <div className="metric-icon-wrapper amber">
-            <Compass className="w-5 h-5" />
+      <div className="dashboard-container">
+
+        {/* ── LEFT SIDEBAR ── */}
+        <aside className="sidebar-container lg:sticky lg:top-20 h-fit">
+
+          {/* Session Card */}
+          <div className="glass-card flex flex-col gap-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-slate-800 truncate">{profileUserId}</div>
+                <div className="text-[10px] text-slate-400 font-medium">ZIP: {profileZip}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowProfileConfig(!showProfileConfig)}
+              className="w-full py-1.5 text-[11px] font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all flex items-center justify-center gap-1.5"
+            >
+              {showProfileConfig ? "Close Config" : "Inspect Session"}
+              <ChevronDown className={`w-3 h-3 transition-transform ${showProfileConfig ? "rotate-180" : ""}`} />
+            </button>
+            {showProfileConfig && (
+              <div className="flex flex-col gap-2 border-t border-slate-100 pt-2.5 text-[11px]">
+                {[
+                  { label: "User ID", value: profileUserId, setter: setProfileUserId, type: "text" },
+                  { label: "Email", value: profileEmail, setter: setProfileEmail, type: "email" },
+                  { label: "IP Address", value: profileIp, setter: setProfileIp, type: "text" },
+                  { label: "Zipcode", value: profileZip, setter: (v: string) => { setProfileZip(v); }, type: "text" },
+                  { label: "Prior Returns", value: String(profilePriorReturns), setter: (v: string) => setProfilePriorReturns(parseInt(v)||0), type: "number" },
+                ].map(field => (
+                  <div key={field.label}>
+                    <label className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">{field.label}</label>
+                    <input type={field.type} value={field.value} onChange={e => field.setter(e.target.value)} className="py-1 px-2 text-[11px] border border-slate-200 rounded-lg w-full mt-0.5" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="metric-content">
-            <span className="metric-label">P2P Route Matches</span>
-            <span className="metric-value">{metrics.p2pMatched}</span>
+
+          {/* Architecture Nav */}
+          <div className="glass-card flex flex-col gap-2">
+            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100">
+              Architecture Layers
+            </div>
+            <nav className="sidebar-nav-list">
+              {navItems.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`layer-sidebar-btn ${activeTab === item.id ? "active" : ""}`}
+                  >
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="text-[10px] font-bold text-slate-400 pt-2 border-t border-slate-100 text-center">
+              Match Score: <span className="text-indigo-600 font-extrabold">94%</span>
+            </div>
           </div>
-        </div>
 
-        <div className="glass-card metric-card">
-          <div className="metric-icon-wrapper rose">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div className="metric-content">
-            <span className="metric-label">Fraud Blocked</span>
-            <span className="metric-value">{metrics.fraudAttemptsBlocked} attempts</span>
-          </div>
-        </div>
-      </section>
-
-      {/* MAIN GRID */}
-      <div className="main-grid">
-        <aside className="glass-card flex flex-col gap-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">Architecture Layers</h3>
-          <nav className="sidebar-nav">
-            <button 
-              className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
-              onClick={() => setActiveTab("dashboard")}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Core Ledger Hub</span>
-            </button>
-
-            <button 
-              className={`nav-item ${activeTab === "size-assist" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("size-assist");
-                setSizingResult(null);
-              }}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>L1: Sizing Assist</span>
-            </button>
-
-            <button 
-              className={`nav-item ${activeTab === "fraud-mitigation" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("fraud-mitigation");
-                setFraudResult(null);
-              }}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>L2: Fraud Shield</span>
-            </button>
-
-            <button 
-              className={`nav-item ${activeTab === "deflection" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("deflection");
-                fetchGuidesForProduct("coffee maker");
-              }}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>L3: Intercept Chat</span>
-            </button>
-
-            <button 
-              className={`nav-item ${activeTab === "grading" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("grading");
-                setGradingResult(null);
-                fetchLedgerRecords();
-              }}
-            >
-              <Cpu className="w-4 h-4" />
-              <span>L4: Auto Inspector</span>
-            </button>
-
-            <button 
-              className={`nav-item ${activeTab === "logistics" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("logistics");
-                setLogisticsResult(null);
-              }}
-            >
-              <Compass className="w-4 h-4" />
-              <span>L5: P2P Logistics</span>
-            </button>
-
-            <button 
-              className={`nav-item ${activeTab === "wallet" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("wallet");
-                setRefundResult(null);
-              }}
-            >
-              <Award className="w-4 h-4" />
-              <span>L6: Loyalty Wallet</span>
-            </button>
-          </nav>
+          {/* Mini Cart (if items) */}
+          {cart.length > 0 && (
+            <div className="glass-card flex flex-col gap-2">
+              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1.5 flex items-center justify-between">
+                <span>Size Cart</span>
+                <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-[9px]">{cart.length}</span>
+              </div>
+              <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-[9px] flex-shrink-0">{item.size}</span>
+                      <span className="text-slate-600 truncate">{item.name.split(" ").slice(0,2).join(" ")}</span>
+                    </div>
+                    <button onClick={() => handleRemoveFromCart(item.id)} className="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0 ml-1">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
 
-        <main className="flex flex-col gap-6">
-          {/* TAB 0 - LEDGER CHAIN */}
-          {activeTab === "dashboard" && (
-            <div className="flex flex-col gap-6">
-              {/* Return Center / Order History */}
-              <div className="glass-card flex flex-col gap-4 border-indigo-500/15 bg-indigo-950/5">
-                <div className="section-title-bar">
-                  <h2>Circular Return Center</h2>
-                  <span className="section-badge badge-layer-1">Order History</span>
+        {/* ── MAIN CONTENT ── */}
+        <main className="flex flex-col gap-5 min-w-0">
+
+          {/* ── PRODUCT CARD ── */}
+          <div className="glass-card product-card-restructured">
+            {/* Left: Product Image */}
+            <div className="product-image-container">
+              <img
+                src={getSKUReferenceImage(selectedProductSku)}
+                alt={selectedProduct?.name || "Product"}
+                className="product-image"
+              />
+            </div>
+
+            {/* Right: Product Info */}
+            <div className="product-info-container">
+              <div>
+                <span className="text-[9px] text-indigo-600 font-bold uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                  Selected for Return Audit
+                </span>
+                <h2 className="text-xl font-extrabold text-slate-800 mt-1.5 leading-tight">
+                  {selectedProduct?.name || "Classic Denim Jacket"}
+                </h2>
+                <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
+                  <span className="text-2xl font-bold text-slate-900 font-mono">
+                    ${(selectedProduct?.price || 68.00).toFixed(2)}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
+                    {selectedProductSku}
+                  </span>
+                  {selectedProduct?.category && (
+                    <span className="text-[9px] font-bold uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                      {selectedProduct.category}
+                    </span>
+                  )}
                 </div>
-                <p className="text-gray-400 text-xs">
-                  Select a recently purchased product from your order history to initiate a circular return or self-repair deflection.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(walletInfo.orders || [
-                    { sku: "CF-Mkr-99", name: "Smart Drip Coffee Maker", price: 89.00, purchaseDate: "2026-06-01", category: "appliances" },
-                    { sku: "SPK-AIR-12", name: "HiFi Wireless Speaker", price: 150.00, purchaseDate: "2026-05-28", category: "electronics" },
-                    { sku: "DENIM-JKT-001", name: "Classic Denim Jacket", price: 120.00, purchaseDate: "2026-06-05", category: "apparel" },
-                    { sku: "FLANNEL-RED-02", name: "Classic Red Buffalo Check Flannel", price: 55.00, purchaseDate: "2026-06-10", category: "apparel" }
-                  ]).map(order => (
-                    <div key={order.sku} className="bg-gray-900/60 p-4 rounded-xl border border-gray-800 hover:border-indigo-500/30 transition-all flex flex-col justify-between gap-3 relative overflow-hidden group">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold bg-indigo-500/10 px-2 py-0.5 rounded-full">
-                            {order.category}
-                          </span>
-                          <h4 className="font-semibold text-sm text-gray-200 mt-2">{order.name}</h4>
-                          <span className="text-[10px] text-gray-500 font-mono block mt-1">SKU: {order.sku} | Purchased: {order.purchaseDate}</span>
-                        </div>
-                        <span className="text-emerald-400 font-bold font-mono text-sm">${order.price.toFixed(2)}</span>
-                      </div>
-                      
-                      <button
-                        className="btn btn-secondary py-2 text-xs font-semibold w-full bg-gray-950 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all"
-                        onClick={() => {
-                          setSelectedProductSku(order.sku);
-                          // Auto navigate to correct layer based on product type
-                          if (order.category.toLowerCase() === "apparel" || order.category.toLowerCase() === "footwear") {
-                            setActiveTab("size-assist");
-                          } else {
-                            // Category: Electronics / Appliances -> deflect chat!
-                            setDeflectProduct(order.name);
-                            setDeflectSku(order.sku);
-                            fetchGuidesForProduct(order.sku === "CF-Mkr-99" ? "coffee maker" : order.name);
-                            setChatMessages([{
-                              role: "bot",
-                              content: `Hi there! I see you want to return your **${order.name}** due to functionality issues. Before we generate a shipping label, let's see if we can resolve this together! I've loaded the troubleshooting guide. Can you tell me if the device turns on at all when plugged in?`
-                            }]);
-                            setActiveTab("deflection");
-                          }
-                          // Also set for grading, logistics, and wallet refund choices
-                          setFraudSku(order.sku);
-                          setFraudItemName(order.name);
-                          setLogisticsSku(order.sku);
-                          setRefundBaseAmount(order.price);
-                        }}
-                      >
-                        {order.category.toLowerCase() === "apparel" ? "Run Sizing Audit / Return" : "Troubleshoot / Return"}
-                      </button>
+              </div>
+
+              {/* Size buttons */}
+              {selectedProduct && selectedProduct.sizes.length > 1 && (
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Select Size (Add to cart to bracket)</span>
+                  <div className="fit-chip-grid">
+                    {selectedProduct.sizes.map(sz => {
+                      const inCart = cart.some(x => x.sku === selectedProductSku && x.size === sz);
+                      return (
+                        <button key={sz} onClick={() => handleAddToCart(sz)} className={`fit-chip ${inCart ? "active" : ""}`}>
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Sizing AI capture — only for apparel */}
+              {selectedProduct && selectedProduct.sizes.some(s => ["S","M","L","XL","XXL","XS","7","8","9","10","11","12"].includes(s)) && (
+                <div className="border-t border-slate-100 pt-3">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2">
+                    <Camera className="w-3.5 h-3.5 text-indigo-500" />
+                    AI Size Capture (Selfie Scan)
+                  </div>
+                  <WebcamCapture onCapture={(base64) => setSizingImage(base64)} overlayType="sizing" compact />
+                  {sizingImage && (
+                    <div className="mt-2">
+                      <span className="mini-badge success mb-1.5">Image Ready</span>
+                      <img src={sizingImage} className="upload-preview mt-1" alt="Sizing photo" />
+                    </div>
+                  )}
+                  {sizingImage && (
+                    <button
+                      className="btn btn-primary w-full py-2 rounded-xl text-xs font-bold mt-2"
+                      disabled={sizingLoading}
+                      onClick={triggerSizeAssist}
+                    >
+                      {sizingLoading ? <><span className="spinner" /> Analyzing...</> : "Analyze Photo & Recommend Size"}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Recommended size result */}
+              <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3">
+                <div className="text-2xl font-extrabold text-indigo-600 bg-white border border-indigo-200 py-1 px-3 rounded-xl font-mono min-w-[3rem] text-center shadow-sm">
+                  {sizingResult?.recommendedSize || (selectedProduct?.sizes[1] || "M")}
+                </div>
+                <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
+                  {sizingResult?.reasoning || "Based on standard sizing charts. Use the camera scan for a personalized AI recommendation."}
+                </div>
+                {sizingResult && (
+                  <span className="mini-badge info flex-shrink-0">AI Result</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── SIZING RESULT CARD (full breakdown) ── */}
+          {sizingResult && (
+            <div className="glass-card flex flex-col gap-4">
+              <div className="section-title-bar">
+                <h2>AI Fit Proportions Breakdown</h2>
+                <span className="section-badge badge-layer-1">L1: Sizing Result</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-3xl font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100 py-2 px-5 rounded-xl font-mono">
+                  {sizingResult.recommendedSize}
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between text-xs font-bold mb-1.5">
+                    <span className="text-slate-600">Match Confidence</span>
+                    <span className="text-indigo-600">{sizingResult.confidenceScore}%</span>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div className="progress-bar-fill" style={{ width: `${sizingResult.confidenceScore}%` }} />
+                  </div>
+                </div>
+              </div>
+              {sizingResult.predictedDimensions && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {Object.entries(sizingResult.predictedDimensions).map(([key, val]: any) => (
+                    <div key={key} className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-center">
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">{key}</span>
+                      <span className="text-sm font-bold text-slate-800 font-mono">{val} in</span>
                     </div>
                   ))}
                 </div>
+              )}
+              <p className="text-xs text-slate-500 italic bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed">
+                "{sizingResult.reasoning}"
+              </p>
+              <button className="btn btn-success w-full py-2.5 text-xs font-bold" onClick={() => applySizeRecommendation(sizingResult.recommendedSize)}>
+                <CheckCircle className="w-4 h-4" /> Accept AI Recommendation
+              </button>
+            </div>
+          )}
+
+          {/* ── METRICS STRIP ── */}
+          <div className="metrics-card-strip">
+            {[
+              { icon: ShoppingBag, color: "indigo",  label: "Processed Audits",  value: metrics.totalProcessed.toString() },
+              { icon: TrendingDown,color: "emerald", label: "Return Deflection",  value: `${metrics.deflectedRate}%` },
+              { icon: Compass,     color: "amber",   label: "P2P Route Matches", value: metrics.p2pMatched.toString() },
+              { icon: ShieldCheck, color: "rose",    label: "Fraud Blocked",      value: `${metrics.fraudAttemptsBlocked} blocked` },
+            ].map(({ icon: Icon, color, label, value }) => (
+              <div key={label} className="metric-strip-card">
+                <div className={`metric-strip-icon-box ${color}`}><Icon className="w-5 h-5" /></div>
+                <div>
+                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{label}</div>
+                  <div className="text-base font-extrabold text-slate-800">{value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── TAB PANELS ── */}
+
+          {/* TAB: CORE LEDGER HUB */}
+          {activeTab === "dashboard" && (
+            <div className="flex flex-col gap-5">
+              {/* Recommendation + Blueprint */}
+              <div className="glass-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                <div className="flex flex-col gap-3 flex-1">
+                  <h3 className="text-base font-extrabold text-slate-800">
+                    AI Recommended Size: <span className="text-indigo-600">{sizingResult?.recommendedSize || "L"}</span>
+                  </h3>
+                  <p className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs font-medium text-slate-500 leading-relaxed max-w-md">
+                    {sizingResult?.reasoning || "Body proportions evaluated relative to catalog. Standard sizing charts suggest size L for relaxed premium fitting."}
+                  </p>
+                  <div className="text-xs font-bold text-slate-500">
+                    Match Confidence: <span className="text-indigo-600 font-extrabold">{sizingResult?.confidenceScore || 94}%</span>
+                  </div>
+                </div>
+                <div className="sizing-blueprint-box w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0">
+                  <svg className="w-full h-full text-indigo-300" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20,10 L35,25 L35,90 L65,90 L65,25 L80,10 L70,5 L50,15 L30,5 Z" />
+                    <line x1="35" y1="30" x2="65" y2="30" strokeDasharray="3 3" />
+                    <line x1="35" y1="50" x2="65" y2="50" strokeDasharray="3 3" />
+                    <line x1="23" y1="10" x2="23" y2="90" stroke="#4f46e5" strokeWidth="1" />
+                    <text x="16" y="55" fontSize="5" fill="#4f46e5" textAnchor="middle" transform="rotate(-90,16,55)">HT</text>
+                  </svg>
+                </div>
               </div>
 
-              {/* Product Health & Circular Ledger */}
-              <div className="glass-card flex flex-col gap-6">
+              {/* Product Search */}
+              <div ref={searchContainerRef} className="glass-card flex flex-col gap-3 relative">
+                <div className="section-title-bar py-1">
+                  <h2>E-Commerce Product Search</h2>
+                  <span className="section-badge badge-catalog">Catalog</span>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pl-9 pr-8 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_0_3px_rgba(79,70,229,0.08)] placeholder-slate-400 transition-all font-semibold"
+                    placeholder="Search 150+ products by name or SKU..."
+                    value={searchQuery}
+                    onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                    onFocus={() => setShowSuggestions(true)}
+                  />
+                  {searchQuery && (
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600" onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                {showSuggestions && filteredSuggestions.length > 0 && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-slate-100">
+                    {filteredSuggestions.map(p => (
+                      <div
+                        key={p.sku}
+                        className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                        onClick={() => {
+                          setSelectedProductSku(p.sku);
+                          setSearchQuery(`${p.name} (${p.sku})`);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">{p.name}</div>
+                          <div className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</div>
+                        </div>
+                        <span className="text-emerald-600 font-extrabold text-sm font-mono">${p.price.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Order History */}
+              <div className="glass-card flex flex-col gap-4">
+                <div className="section-title-bar">
+                  <h2>Circular Return Center</h2>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order History</span>
+                </div>
+                {(walletInfo.orders || []).length === 0 ? (
+                  <div className="info-callout">
+                    <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>No order history found. Sign up and seed your wallet to see past orders appear here automatically.</span>
+                  </div>
+                ) : (
+                  <div className="order-history-grid">
+                    {(walletInfo.orders || []).map(order => (
+                      <div key={order.sku} className="glass-card flex flex-col justify-between gap-3 hover:border-indigo-300 transition-all cursor-default" style={{ padding: "1rem" }}>
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <span className="text-[9px] uppercase tracking-wider text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">{order.category}</span>
+                            <h4 className="font-bold text-xs text-slate-800 mt-1.5 leading-tight">{order.name}</h4>
+                            <span className="text-[10px] text-slate-400 font-mono block mt-0.5">{order.purchaseDate}</span>
+                          </div>
+                          <span className="text-emerald-600 font-extrabold font-mono text-sm flex-shrink-0">${order.price.toFixed(2)}</span>
+                        </div>
+                        <button
+                          className="w-full bg-white hover:bg-indigo-600 hover:text-white text-slate-700 hover:border-indigo-600 border border-slate-200 rounded-xl py-1.5 text-[11px] font-bold transition-all"
+                          onClick={() => {
+                            setSelectedProductSku(order.sku);
+                            if (["apparel","footwear"].includes(order.category.toLowerCase())) {
+                              setActiveTab("size-assist");
+                            } else {
+                              setDeflectProduct(order.name);
+                              setDeflectSku(order.sku);
+                              fetchGuidesForProduct(order.sku === "CF-Mkr-99" ? "coffee maker" : order.name);
+                              setChatMessages([{ role: "bot", content: `Hi! I see you want to return your **${order.name}**. Let's troubleshoot before issuing a label. Does the device power on at all?` }]);
+                              setActiveTab("deflection");
+                            }
+                          }}
+                        >
+                          {["apparel","footwear"].includes(order.category.toLowerCase()) ? "Sizing Audit / Return" : "Troubleshoot / Return"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Ledger Table */}
+              <div className="glass-card flex flex-col gap-4">
                 <div className="section-title-bar">
                   <h2>Product Health & Circular Ledger</h2>
-                  <span className="section-badge badge-layer-4">Ledger Overview</span>
+                  <span className="section-badge badge-layer-4">Blockchain</span>
                 </div>
-                <p className="text-gray-400 text-sm">
-                  Immutable registry chain recording circular transactions for active User ID **{profileUserId}**. Tracks returns, grading taxonomy results, and deflection resolutions.
-                </p>
-
-              <div>
-                <table className="size-chart-table">
-                  <thead>
-                    <tr>
-                      <th>Ledger Block ID</th>
-                      <th>Product SKU</th>
-                      <th>Condition Grade</th>
-                      <th>Identified Defects</th>
-                      <th>Immutability SHA-256 Hash Proof</th>
-                      <th>Resale Output Channel</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ledgerRecords.length === 0 ? (
+                <div className="overflow-x-auto w-full horizontal-scroll">
+                  <table className="size-chart-table">
+                    <thead>
                       <tr>
-                        <td colSpan={6} className="text-gray-500 py-4">No records found for active user {profileUserId}.</td>
+                        <th>Ledger Block ID</th>
+                        <th>SKU</th>
+                        <th>Grade</th>
+                        <th>Defects</th>
+                        <th>SHA-256 Hash</th>
+                        <th>Resale Channel</th>
                       </tr>
-                    ) : (
-                      ledgerRecords.map((record, index) => (
-                        <tr key={record.id || index}>
-                          <td className="font-mono text-indigo-400 text-xs">{record.id}</td>
-                          <td>{record.sku}</td>
-                          <td>
-                            <span className={`px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/20 text-indigo-400`}>
-                              Grade {record.grade}
-                            </span>
-                          </td>
-                          <td className="text-left text-xs text-gray-300">
-                            {record.defects && record.defects.join(", ")}
-                          </td>
-                          <td className="font-mono text-xs text-gray-500 max-w-xs truncate">{record.hash}</td>
-                          <td className="text-gray-300 text-xs">{record.resaleCategory}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          )}
-
-          {/* TAB 1 - SIZING ASSIST */}
-          {activeTab === "size-assist" && (
-            <div className="glass-card flex flex-col gap-6">
-              <div className="section-title-bar">
-                <h2>Pre-Purchase Bracketing Intervention</h2>
-                <span className="section-badge badge-layer-1">Layer 1</span>
-              </div>
-              
-              <div className="demo-split-grid">
-                <div ref={searchContainerRef} className="glass-card flex flex-col gap-5 border-indigo-500/10 bg-indigo-950/5 relative">
-                  <h3 className="text-sm font-semibold text-indigo-300 flex items-center gap-2">
-                    <ShoppingBag className="w-4.5 h-4.5" />
-                    Personalized Cart ({profileUserId})
-                  </h3>
-
-                  <div className="relative flex flex-col gap-1.5 z-30">
-                    <label className="text-[11px] font-semibold text-indigo-200">Search Product Catalog</label>
-                    <div className="relative">
-                       <input
-                         type="text"
-                         className="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 pr-8 text-xs text-gray-200 focus:outline-none focus:border-indigo-500 placeholder-gray-600 transition-all"
-                         placeholder="Type product name (e.g. Flannel, Shoes...)"
-                         value={searchQuery}
-                         onChange={(e) => {
-                           setSearchQuery(e.target.value);
-                           setShowSuggestions(true);
-                         }}
-                         onFocus={() => setShowSuggestions(true)}
-                       />
-                       {searchQuery && (
-                         <button 
-                           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                           onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}
-                         >
-                           <X className="w-3.5 h-3.5" />
-                         </button>
-                       )}
-                    </div>
-
-                    {/* Suggestions Dropdown */}
-                    {showSuggestions && filteredSuggestions.length > 0 && (
-                      <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-800 rounded-lg shadow-2xl max-h-56 overflow-y-auto divide-y divide-gray-800">
-                        {filteredSuggestions.map(p => (
-                          <div
-                            key={p.sku}
-                            className="p-2.5 hover:bg-indigo-950/60 cursor-pointer transition-colors flex flex-col gap-0.5 text-left"
-                            onClick={() => {
-                              setSelectedProductSku(p.sku);
-                              setSearchQuery(`${p.name} (${p.sku})`);
-                              setShowSuggestions(false);
-                            }}
-                          >
-                            <span className="text-xs font-semibold text-gray-200">{p.name}</span>
-                            <span className="text-[10px] text-indigo-300 font-mono">SKU: {p.sku} | Price: ${p.price.toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {showSuggestions && searchQuery.trim() !== "" && filteredSuggestions.length === 0 && (
-                      <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-800 rounded-lg p-3 text-center text-xs text-gray-500 shadow-2xl">
-                        No products found.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Active Selection Indicator */}
-                  {selectedProductSku && (
-                    <div className="bg-gradient-to-r from-indigo-950/40 to-indigo-900/10 border border-indigo-500/20 p-4 rounded-xl flex items-center justify-between gap-4">
-                      {(() => {
-                        const p = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku) || PRODUCT_CATALOG[0];
-                        return (
-                          <>
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold bg-indigo-500/10 px-2 py-0.5 rounded-full w-max">
-                                Active Return Product
+                    </thead>
+                    <tbody>
+                      {ledgerRecords.length === 0 ? (
+                        <tr><td colSpan={6} className="text-slate-400 py-6 text-center font-medium text-xs italic">No records for {profileUserId}. Grade a returned product in L4 to populate this ledger.</td></tr>
+                      ) : (
+                        ledgerRecords.map((record, index) => (
+                          <tr key={record.id || index}>
+                            <td className="font-mono text-indigo-600 text-xs font-bold">{record.id}</td>
+                            <td className="font-mono text-xs">{record.sku}</td>
+                            <td>
+                              <span className="px-2 py-0.5 rounded text-xs font-bold bg-indigo-50 border border-indigo-100 text-indigo-700">
+                                Grade {record.grade}
                               </span>
-                              <div className="font-semibold text-sm text-gray-100 mt-1">{p.name}</div>
-                              <div className="text-[10px] text-gray-500 font-mono">SKU: {p.sku}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-emerald-400 font-bold text-base font-mono">${p.price.toFixed(2)}</div>
-                              <span className="text-[9px] text-gray-500 block">Retail Price</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2">
-                    {cart.length === 0 ? (
-                      <div className="text-center text-xs text-gray-500 py-8 border border-dashed border-gray-800 rounded-xl bg-gray-950/15 flex flex-col items-center gap-2.5">
-                        <ShoppingBag className="w-6.5 h-6.5 text-gray-600 stroke-[1.5]" />
-                        <span>Your cart is empty. Search a product and add sizes to simulate bracketing.</span>
-                      </div>
-                    ) : (
-                      cart.map(item => (
-                        <div key={item.id} className="flex justify-between items-center bg-gray-900/80 p-3 px-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-all shadow-sm">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="font-semibold text-xs text-gray-200">{item.name}</div>
-                            <div className="text-[10px] text-gray-400">SKU: {item.sku} | Size: <span className="text-indigo-400 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">{item.size}</span></div>
-                          </div>
-                          <button 
-                            className="text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-full transition-all" 
-                            onClick={() => handleRemoveFromCart(item.id)}
-                            title="Remove item"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2.5 mt-4 pt-4 border-t border-gray-800">
-                    <span className="text-xs font-semibold text-gray-300">Simulate Bracketing — Select Size to Add:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {(PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0]).sizes.map(size => (
-                        <button
-                          key={size}
-                          className="min-w-[48px] h-10 px-3 flex items-center justify-center rounded-lg bg-gray-900 hover:bg-indigo-950/30 border border-gray-800 hover:border-indigo-500 text-xs text-gray-200 hover:text-white transition-all font-semibold active:scale-95 shadow-sm"
-                          onClick={() => handleAddToCart(size)}
-                          title={`Add ${size} to Cart`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass-card flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-gray-200">Sizing Selfie Capture Engine</h3>
-                  {(() => {
-                    const isSizingProductSelected = (PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0]).sizes.length > 1;
-                    if (isSizingProductSelected) {
-                      return (
-                        <div className="p-3 border border-indigo-500/20 bg-indigo-950/10 rounded-xl flex flex-col gap-3">
-                          <div className="text-[10px] text-indigo-300">
-                            Capture a selfie focusing on your upper torso/chest for AI sizing proportion checks.
-                          </div>
-                          <WebcamCapture onCapture={(base64) => setSizingImage(base64)} overlayType="sizing" />
-                          
-                          {sizingImage && (
-                            <div className="text-center mt-2">
-                              <span className="mini-badge success">✓ Live Selfie Captured</span>
-                              <img src={sizingImage} className="upload-preview mt-2 border border-gray-800" alt="Selfie" />
-                            </div>
-                          )}
-
-                          <button 
-                            className="btn btn-primary w-full py-2" 
-                            disabled={!sizingImage || sizingLoading}
-                            onClick={triggerSizeAssist}
-                          >
-                            {sizingLoading ? "Llama Vision Analyzing..." : "Run Llama 4 Vision Sizing Check"}
-                          </button>
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
-                          Select an Apparel product (Denim Jacket/Tee) to activate the Sizing Selfie Engine.
-                        </div>
-                      );
-                    }
-                  })()}
-
-                  {sizingResult && (
-                    <div className="bg-gray-900/80 p-4 rounded-xl border border-gray-800 flex flex-col gap-3">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-semibold text-indigo-300 uppercase">Proportions Result</span>
-                        <span className="text-[10px] text-gray-500">{sizingResult.fromMock ? "Simulated" : "Live Groq Vision"}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl font-bold text-emerald-400 bg-emerald-500/10 py-1 px-3 rounded-lg">
-                          {sizingResult.recommendedSize}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span>Confidence:</span>
-                            <span className="font-bold">{sizingResult.confidenceScore}%</span>
-                          </div>
-                          <div className="progress-bar-container">
-                            <div className="progress-bar-fill" style={{ width: `${sizingResult.confidenceScore}%` }}></div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {sizingResult.predictedDimensions && (
-                        <div className="text-xs border-t border-gray-800 pt-3 mt-1">
-                          <span className="font-bold text-gray-300 block mb-1.5">Estimated Body Metrics:</span>
-                          <div className="grid grid-cols-2 gap-2 mb-2">
-                            {Object.entries(sizingResult.predictedDimensions).map(([key, val]: any) => (
-                              <div key={key} className="bg-indigo-950/20 border border-indigo-500/10 p-2 rounded-lg text-center">
-                                <span className="text-[9px] text-indigo-400 block uppercase font-semibold">{key}</span>
-                                <span className="text-xs font-bold text-indigo-300">{val} in</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                            </td>
+                            <td className="text-xs text-slate-600 max-w-xs">
+                              {record.defects?.join(", ")}
+                            </td>
+                            <td title={record.hash}>
+                              <div className="font-mono text-[10px] text-slate-400 max-w-[160px] truncate">{record.hash}</div>
+                            </td>
+                            <td className="text-slate-600 text-xs">{record.resaleCategory}</td>
+                          </tr>
+                        ))
                       )}
-
-                      {sizingResult.distanceBreakdown && (
-                        <div className="text-xs border-t border-gray-800 pt-3">
-                          <span className="font-bold text-gray-300 block mb-1.5">Euclidean Sizing Distance Matcher (1-NN):</span>
-                          <div className="flex justify-between items-center gap-1.5 overflow-x-auto">
-                            {Object.entries(sizingResult.distanceBreakdown).map(([size, dist]: any) => (
-                              <div key={size} className={`flex-1 p-2 rounded-lg text-center border ${
-                                size === sizingResult.recommendedSize 
-                                  ? "bg-emerald-950/30 border-emerald-500/35 text-emerald-400 font-bold" 
-                                  : "bg-gray-950/40 border-gray-800 text-gray-400"
-                              }`}>
-                                <span className="text-xs block">{size}</span>
-                                <span className="text-[8px] block opacity-75">d = {dist}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <p className="text-xs text-gray-300 italic mt-1 font-sans">"{sizingResult.reasoning}"</p>
-                      <button className="btn btn-success w-full py-1.5 text-xs font-semibold mt-1" onClick={() => applySizeRecommendation(sizingResult.recommendedSize)}>
-                        Accept recommendation & Keep size {sizingResult.recommendedSize}
-                      </button>
-                    </div>
-                  )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2 - FRAUD SHIELD */}
+          {/* TAB: L1 SIZING */}
+          {activeTab === "size-assist" && (
+            <div className="flex flex-col gap-5">
+              <div className="glass-card flex flex-col gap-4">
+                <div className="section-title-bar">
+                  <h2>L1: AI Sizing Chart & Fit Assistant</h2>
+                  <span className="section-badge badge-layer-1">Layer 1</span>
+                </div>
+
+                <div className="info-callout">
+                  <Camera className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>Use the selfie scanner in the product card above to capture a body photo. The AI will map your proportions to the size chart below and recommend your optimal fit — reducing size-related returns by up to 68%.</span>
+                </div>
+
+                {/* Size chart for product */}
+                {(() => {
+                  const chartData = getDynamicSizeChart(selectedProductSku);
+                  if (chartData) {
+                    return (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-bold text-slate-700">{chartData.name} — {chartData.brand} Size Reference</h3>
+                        </div>
+                        <div className="overflow-x-auto horizontal-scroll">
+                          <table className="size-chart-table">
+                            <thead>
+                              <tr>
+                                {Object.keys(chartData.chart[0]).map(k => <th key={k} className="capitalize">{k}</th>)}
+                                <th>AI Match</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {chartData.chart.map((row: any, i: number) => {
+                                const isRecommended = sizingResult?.recommendedSize === row.size;
+                                return (
+                                  <tr key={i} style={isRecommended ? { background: "#eff6ff" } : {}}>
+                                    {Object.values(row).map((v: any, j: number) => (
+                                      <td key={j} className={j === 0 ? "font-bold text-indigo-600 font-mono" : ""}>{v}</td>
+                                    ))}
+                                    <td>
+                                      {isRecommended ? (
+                                        <span className="mini-badge success">✓ Best Fit</span>
+                                      ) : (
+                                        <span className="text-slate-300 text-xs">—</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="warning-callout">
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>No sizing template required for this category. Only Apparel and Footwear items require sizing charts. Switch to an apparel product using the search bar.</span>
+                      </div>
+                    );
+                  }
+                })()}
+
+                {sizingResult && (
+                  <div className="success-callout">
+                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold">Sizing Scan Ledger Entry</div>
+                      <div className="mt-0.5">Recommended: <strong>{sizingResult.recommendedSize}</strong> | Confidence: <strong>{sizingResult.confidenceScore}%</strong></div>
+                      <div className="mt-0.5 opacity-80">{sizingResult.reasoning}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bracketing flow info */}
+                <div className="border-t border-slate-100 pt-3">
+                  <h4 className="text-xs font-bold text-slate-700 mb-2">How Bracketing Works</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { step: "1", title: "Select 2 sizes", desc: "Add adjacent sizes (e.g. M + L) to the cart using the size buttons above." },
+                      { step: "2", title: "Scan your photo", desc: "Use the webcam or upload a full-body photo in the product card above." },
+                      { step: "3", title: "Accept AI pick", desc: "AI maps your body to the size chart. Keep one, return the other — zero waste." },
+                    ].map(({ step, title, desc }) => (
+                      <div key={step} className="flex gap-2.5 bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center flex-shrink-0">{step}</div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">{title}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: L2 FRAUD SHIELD */}
           {activeTab === "fraud-mitigation" && (
-            <div className="glass-card flex flex-col gap-6">
+            <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>AI Fraud Shield & Risk Mitigator</h2>
+                <h2>L2: AI Fraud Shield & Return Image Scanner</h2>
                 <span className="section-badge badge-layer-2">Layer 2</span>
               </div>
 
-              <div className="demo-split-grid">
-                <div className="glass-card flex flex-col gap-4 border-rose-500/10 bg-rose-950/5">
-                  <h3 className="text-sm font-semibold text-rose-300">Personalized Risk Profile ({profileUserId})</h3>
-                  <div className="flex flex-col gap-2 text-xs text-gray-400">
-                    <div>User Email: <span className="text-gray-200">{profileEmail}</span></div>
-                    <div>User IP: <span className="text-gray-200">{profileIp}</span></div>
-                    <div>Zipcode: <span className="text-gray-200">{profileZip}</span></div>
-                    <div>Prior 30-Day returns count: <span className="text-amber-400 font-bold">{profilePriorReturns}</span></div>
+              <div className="danger-callout">
+                <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Upload or photograph the returned item. Our multi-signal AI checks for AI-generated images, shadow staging artifacts, IP reputation (IPQS), and user return velocity — blocking fraudulent claims in under 2 seconds.</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Input column */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5" /> Return Claim Photo
                   </div>
 
-                  <div className="p-3 border border-rose-500/10 rounded-xl bg-gray-950/40">
-                    <label className="text-[10px] text-rose-300 font-semibold mb-2">Scan Damage Claim Photo:</label>
-                    <WebcamCapture onCapture={(base64) => {
-                      setFraudImageType("custom");
-                      setFraudImage(base64);
-                    }} overlayType="damage" />
-                    
-                    {fraudImage && (
-                      <div className="text-center mt-3">
-                        <span className="mini-badge success">✓ Image Loaded Successfully</span>
-                        <img src={fraudImage} className="upload-preview mt-2 border border-gray-800" alt="Claim" />
-                      </div>
-                    )}
+                  <WebcamCapture onCapture={(base64) => { setFraudImageType("custom"); setFraudImage(base64); }} overlayType="damage" />
+
+                  {fraudImage && (
+                    <div>
+                      <span className="mini-badge success mb-1.5">Photo Loaded</span>
+                      <img src={fraudImage} className="upload-preview mt-1" alt="Fraud scan preview" />
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      className={`btn btn-secondary flex-1 py-1 text-[11px] font-bold ${fraudImageType === "genuine" ? "border-indigo-500 text-indigo-600 bg-indigo-50" : ""}`}
+                      onClick={() => { setFraudImageType("genuine"); setFraudImage(svgToDataUrl(MOCK_DAMAGE_SVG)); }}
+                    >
+                      ✅ Genuine Preset
+                    </button>
+                    <button
+                      className={`btn btn-secondary flex-1 py-1 text-[11px] font-bold ${fraudImageType === "staged" ? "border-rose-500 text-rose-600 bg-rose-50" : ""}`}
+                      onClick={() => { setFraudImageType("staged"); setFraudImage(svgToDataUrl(MOCK_FRAUD_SUSPICIOUS_SVG)); }}
+                    >
+                      ⚠️ Staged Preset
+                    </button>
                   </div>
 
-                  {/* Demo presets inside Layer 2 */}
-                  <div className="text-xs mt-1">
-                    <span className="text-gray-500 block mb-1">Or Choose Preset Demo Scenarios:</span>
-                    <div className="flex gap-2">
-                      <button 
-                        className={`btn btn-secondary flex-1 py-1.5 text-[10px] ${fraudImageType === "genuine" ? "border-indigo-500 text-indigo-400" : ""}`}
-                        onClick={() => {
-                          setFraudImageType("genuine");
-                          setFraudImage(svgToDataUrl(MOCK_DAMAGE_SVG));
-                        }}
-                      >
-                        ✅ Genuine Preset
-                      </button>
-                      <button 
-                        className={`btn btn-secondary flex-1 py-1.5 text-[10px] ${fraudImageType === "staged" ? "border-rose-500 text-rose-400" : ""}`}
-                        onClick={() => {
-                          setFraudImageType("staged");
-                          setFraudImage(svgToDataUrl(MOCK_FRAUD_SUSPICIOUS_SVG));
-                        }}
-                      >
-                        ⚠️ Suspicious Preset
-                      </button>
+                  <div className="border-t border-slate-200 pt-3 text-[10px] text-slate-500">
+                    <div className="font-bold text-slate-600 mb-1.5">Claim Context</div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div><span className="text-slate-400">SKU:</span> <span className="font-mono font-bold">{fraudSku}</span></div>
+                      <div><span className="text-slate-400">IP:</span> <span className="font-mono">{profileIp}</span></div>
+                      <div><span className="text-slate-400">User:</span> <span className="font-bold">{profileUserId}</span></div>
+                      <div><span className="text-slate-400">Prior Returns:</span> <span className="font-bold">{profilePriorReturns}</span></div>
                     </div>
                   </div>
 
-                  <button 
-                    className="btn btn-primary w-full py-2"
+                  <button
+                    className="btn btn-primary w-full py-2.5 font-bold text-xs mt-1"
                     disabled={!fraudImage || fraudLoading}
                     onClick={triggerFraudCheck}
                   >
-                    {fraudLoading ? "Auditing image..." : "Scan Claim Risk & Shadows"}
+                    {fraudLoading ? <><span className="spinner" /> Analyzing Risk Signals...</> : <><Shield className="w-4 h-4" /> Scan Claim Risk & Authenticate</>}
                   </button>
                 </div>
 
-                <div className="glass-card flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-gray-200">Fraud Assessment Output</h3>
+                {/* Result column */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-white flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Audit Results</div>
                   {fraudResult ? (
                     <div className="flex flex-col gap-4">
+                      {/* Score + decision */}
                       <div className="flex items-center gap-4">
-                        <div className={`text-3xl font-bold font-display px-4 py-2 rounded-xl border ${
-                          fraudResult.riskScore > 70 ? "bg-rose-500/20 text-rose-400 border-rose-500/30" :
-                          fraudResult.riskScore >= 40 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
-                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                        }`}>
-                          {fraudResult.riskScore}/100
+                        <div className={`text-2xl font-extrabold px-4 py-2 rounded-xl border-2 font-mono flex-shrink-0 ${fraudResult.riskScore > 70 ? "bg-rose-50 border-rose-200 text-rose-600" : fraudResult.riskScore > 40 ? "bg-amber-50 border-amber-200 text-amber-600" : "bg-emerald-50 border-emerald-200 text-emerald-600"}`}>
+                          {fraudResult.riskScore}
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-gray-200">Action: {fraudResult.recommendedAction}</div>
-                          <span className="text-[10px] text-gray-400">
-                            {fraudResult.recommendedAction === "BLOCK" ? "Suspected return fraud. Refund blocked." :
-                             fraudResult.recommendedAction === "MANUAL_REVIEW" ? "Flagged for manual investigation." :
-                             "Clean status. Eligible for instant green credit payout."}
-                          </span>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase">Risk Score /100</div>
+                          <div className="text-sm font-bold text-slate-700 mt-0.5">
+                            Decision: <span className={fraudResult.recommendedAction === "BLOCK" ? "text-rose-600" : fraudResult.recommendedAction === "REVIEW" ? "text-amber-600" : "text-emerald-600"}>
+                              {fraudResult.recommendedAction}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-2 text-xs border-t border-gray-800 pt-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">AI image Generation Index:</span>
-                          <span className="font-semibold text-gray-200">{fraudResult.breakdown.aiGenerationScore}%</span>
+                      {/* Score breakdown */}
+                      {fraudResult.breakdown && (
+                        <div className="flex flex-col gap-2 text-xs border-t border-slate-100 pt-3">
+                          {[
+                            { label: "AI Image Generation", val: fraudResult.breakdown.aiGenerationScore },
+                            { label: "Photo Staging Signs", val: fraudResult.breakdown.photoStagingSigns },
+                            { label: "IP Reputation (IPQS)", val: fraudResult.breakdown.ipqsScore },
+                            { label: "Return Velocity Index", val: fraudResult.breakdown.userVelocityScore },
+                          ].map(({ label, val }) => (
+                            <div key={label}>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-slate-500">{label}</span>
+                                <span className="font-bold text-slate-800">{val}%</span>
+                              </div>
+                              <div className="progress-bar-container" style={{ height: "4px" }}>
+                                <div className="progress-bar-fill" style={{ width: `${val}%`, background: val > 70 ? "linear-gradient(90deg,#dc2626,#ef4444)" : val > 40 ? "linear-gradient(90deg,#d97706,#f59e0b)" : "linear-gradient(90deg,#059669,#10b981)" }} />
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Photographic Staging Indicators:</span>
-                          <span className="font-semibold text-gray-200">{fraudResult.breakdown.photoStagingSigns}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">User Returns Velocity Index:</span>
-                          <span className="font-semibold text-gray-200">{fraudResult.breakdown.userVelocityScore}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">IP / Email Fraud Reputation (IPQS):</span>
-                          <span className="font-semibold text-gray-200">{fraudResult.breakdown.ipqsScore}%</span>
-                        </div>
-                      </div>
+                      )}
 
-                      <div className="bg-gray-900/80 p-3 rounded-lg text-xs italic text-gray-300 border border-gray-800">
+                      <div className={`p-3 rounded-xl border text-xs italic leading-relaxed ${fraudResult.recommendedAction === "BLOCK" ? "bg-rose-50 border-rose-100 text-rose-700" : "bg-slate-50 border-slate-100 text-slate-600"}`}>
                         "{fraudResult.defectExplanation}"
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
-                      Initiate risk scan to run parallel evaluations.
+                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
+                      <Shield className="w-10 h-10 text-slate-200" />
+                      <span className="text-xs text-slate-400 italic">Upload a return claim photo and run the fraud scan to see results here.</span>
                     </div>
                   )}
                 </div>
@@ -1884,301 +1685,216 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB 3 - INTERCEPT CHAT */}
+          {/* TAB: L3 INTERCEPT CHAT */}
           {activeTab === "deflection" && (
-            <div className="glass-card flex flex-col gap-6">
+            <div className="glass-card flex flex-col gap-4">
               <div className="section-title-bar">
-                <h2>Interception & Deflection Chat Portal</h2>
+                <h2>L3: Intercept Chat — Repair Deflector</h2>
                 <span className="section-badge badge-layer-3">Layer 3</span>
               </div>
 
-              <div className="demo-split-grid">
-                <div className="glass-card flex flex-col gap-4 border-amber-500/10 bg-amber-950/5">
-                  <h3 className="text-sm font-semibold text-amber-300">Product for Repair</h3>
-                  <div className="bg-amber-950/20 border border-amber-500/10 p-3 rounded-lg flex flex-col gap-1 text-xs">
-                    <div className="text-[10px] uppercase text-amber-400/80 font-bold tracking-wider">Active Device Checked</div>
-                    <div className="flex justify-between items-center mt-1">
-                      <div>
-                        <div className="font-semibold text-gray-200">{deflectProduct}</div>
-                        <div className="text-[10px] text-gray-400 font-mono">SKU: {deflectSku}</div>
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] gap-4">
+                {/* Guides panel */}
+                <div className="flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">iFixit Repair Guides</div>
+                  {ifixitGuides.length === 0 ? (
+                    <div className="text-[11px] text-slate-400 italic py-4 text-center bg-slate-50 border border-slate-100 rounded-xl">
+                      Guides load automatically based on the selected product.
                     </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1 mt-2">
-                    <label className="text-[11px] text-amber-200/80">Search Custom Guides</label>
-                    <input
-                      type="text"
-                      className="bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-xs text-gray-200 focus:outline-none focus:border-amber-500 placeholder-gray-600 transition-colors"
-                      placeholder="Search manual (e.g. coffee, phone, battery...)"
-                      onKeyDown={async (e) => {
-                        if (e.key === "Enter") {
-                          const query = (e.target as HTMLInputElement).value;
-                          if (query.trim()) {
-                            await fetchGuidesForProduct(query);
-                            setChatMessages([{
-                              role: "bot",
-                              content: `Hi there! I've loaded the custom troubleshooting manuals for **${query}**. How can I assist you today?`
-                            }]);
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="text-xs">
-                    <span className="font-bold text-indigo-300 block mb-1">Loaded iFixit Context:</span>
-                    <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                  ) : (
+                    <div className="flex flex-col gap-2">
                       {ifixitGuides.map(guide => (
-                        <div key={guide.id} className="bg-gray-900/60 p-2 rounded border border-gray-800 text-[11px]">
-                          <span className="font-semibold text-gray-300">{guide.title}</span>
-                          <p className="text-gray-500 text-[9px] mt-0.5">{guide.summary}</p>
-                        </div>
+                        <a key={guide.id} href={guide.url} target="_blank" rel="noopener noreferrer" className="block bg-slate-50 hover:bg-indigo-50 p-3 rounded-xl border border-slate-100 hover:border-indigo-200 text-[11px] leading-relaxed transition-all group">
+                          <span className="font-bold text-slate-800 group-hover:text-indigo-700 block">{guide.title}</span>
+                          {guide.summary && <span className="text-slate-400 block mt-0.5 text-[10px] leading-relaxed">{guide.summary.slice(0, 80)}...</span>}
+                          <span className="text-indigo-500 text-[9px] mt-1 flex items-center gap-0.5 font-medium"><ExternalLink className="w-2.5 h-2.5" /> View Guide</span>
+                        </a>
                       ))}
                     </div>
+                  )}
+
+                  <div className="border-t border-slate-100 pt-2">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Return Reason</div>
+                    <select
+                      value={deflectReason}
+                      onChange={e => setDeflectReason(e.target.value)}
+                      className="text-[11px] py-1.5"
+                    >
+                      <option>Defective / Won't turn on</option>
+                      <option>Wrong size</option>
+                      <option>Not as described</option>
+                      <option>Damaged on arrival</option>
+                      <option>Changed my mind</option>
+                    </select>
                   </div>
                 </div>
 
+                {/* Chat window */}
                 <div className="chat-window">
                   <div className="chat-header">
-                    <span className="text-xs font-semibold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                      Groq Llama 3 Deflector Agent
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="status-dot online" />
+                      <span className="text-[10px] font-bold text-slate-700">AI Repair Assistant</span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 font-medium">{deflectProduct}</span>
                   </div>
                   <div className="chat-messages">
                     {chatMessages.map((msg, index) => (
                       <div key={index} className={`chat-bubble ${msg.role}`}>
-                        <div className="text-xs whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                        <div className="text-xs whitespace-pre-wrap leading-relaxed">
+                          {renderMarkdown(msg.content)}
+                        </div>
                       </div>
                     ))}
                     {chatLoading && (
                       <div className="typing-indicator">
-                        <div className="typing-dot"></div>
-                        <div className="typing-dot"></div>
-                        <div className="typing-dot"></div>
+                        <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
                       </div>
                     )}
                     <div ref={chatEndRef} />
                   </div>
-                  <div className="flex gap-2 p-2 bg-gray-950/80 border-t border-gray-800">
-                    <button className="btn btn-success flex-1 py-1.5 text-xs font-semibold" onClick={resolveDeflection}>
-                      👍 Resolved! Cancel Return
+
+                  <div className="flex gap-2 px-3 py-2 bg-slate-50 border-t border-slate-100">
+                    <button className="btn btn-success flex-1 py-1.5 text-xs font-bold" onClick={resolveDeflection}>
+                      <CheckCircle className="w-3.5 h-3.5" /> Resolved! Claim Payout
                     </button>
-                    <button className="btn btn-secondary py-1.5 text-xs font-semibold" onClick={() => {
-                      setChatMessages(prev => [...prev, {
-                        role: "bot",
-                        content: "Understood. Proceeding to circular logistics router. Select your refund routing options in L5/L6."
-                      }]);
+                    <button className="btn btn-secondary py-1.5 text-xs font-bold" onClick={() => {
+                      setChatMessages(prev => [...prev, { role: "bot", content: "Understood. Proceeding to circular logistics router. Head to L5 for shipping options, or L6 for refund routing." }]);
+                      setTimeout(() => setActiveTab("logistics"), 1500);
                     }}>
-                      Still need to return
+                      Still Return
                     </button>
                   </div>
+
                   <form onSubmit={handleSendChatMessage} className="chat-input-area">
-                    <input 
-                      type="text" 
-                      value={chatInput} 
-                      onChange={(e) => setChatInput(e.target.value)} 
-                      placeholder="Type diagnostic response (e.g. yes)..."
-                      className="text-xs"
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      placeholder="Describe your issue..."
                       disabled={chatLoading}
                     />
-                    <button type="submit" className="btn btn-primary py-1.5 text-xs" disabled={chatLoading}>Send</button>
+                    <button type="submit" className="btn btn-primary py-2 text-xs font-bold" disabled={chatLoading || !chatInput.trim()}>
+                      Send
+                    </button>
                   </form>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4 - WAREHOUSE AUTO GRADING */}
+          {/* TAB: L4 AUTO INSPECTOR */}
           {activeTab === "grading" && (
-            <div className="glass-card flex flex-col gap-6">
+            <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>Automated Product Inspection & Grading</h2>
+                <h2>L4: Warehouse Rotation Inspector & Condition Grader</h2>
                 <span className="section-badge badge-layer-4">Layer 4</span>
               </div>
 
-              <div className="demo-split-grid">
-                <div className="glass-card flex flex-col gap-4 border-purple-500/10 bg-purple-950/5">
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-purple-300">Inspector Camera Feed ({profileUserId})</h3>
-                    <span className="text-[10px] text-gray-500">Record or upload a return inspection video showing all viewpoints of the product.</span>
-                  </div>
-                  <div>
-                    <label>Returned Item SKU</label>
-                    <input type="text" value={`${gradingItemName} (${gradingSku})`} disabled />
+              <div className="warning-callout">
+                <Camera className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Upload a 360° rotation video of the returned product. Our vision AI extracts keyframes, identifies defects, assigns a resale grade (A–D), and writes an immutable ledger block with a SHA-256 hash.</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Upload column */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5" /> Product Inspection Video
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="p-3 border border-purple-500/10 rounded-xl bg-gray-950/40 flex flex-col items-center justify-between">
-                      <label className="text-[10px] text-purple-300 font-semibold mb-2 text-center uppercase tracking-wider">Catalog DB Reference:</label>
-                      <img 
-                        src={SKU_REFERENCE_IMAGES[gradingSku] || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500"} 
-                        className="upload-preview border border-gray-800 object-cover rounded-lg aspect-video w-full" 
-                        alt="Catalog Reference" 
-                      />
+                  <div className="flex gap-2">
+                    <label className="btn btn-secondary flex-1 py-2 text-[11px] font-bold text-center cursor-pointer">
+                      <Upload className="w-3.5 h-3.5" /> Upload Video
+                      <input type="file" accept="video/*" onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setGradingVideoUrl(URL.createObjectURL(file));
+                          const reader = new FileReader();
+                          reader.onloadend = () => { if (reader.result) setGradingVideoBase64(reader.result as string); };
+                          reader.readAsDataURL(file);
+                        }
+                      }} className="hidden" />
+                    </label>
+                    <button
+                      className="btn btn-secondary flex-1 py-2 text-[11px] font-bold"
+                      onClick={() => { setGradingVideoUrl("/demo_return.mp4"); setGradingVideoBase64(""); }}
+                    >
+                      <Zap className="w-3.5 h-3.5" /> Load Demo Video
+                    </button>
+                  </div>
+
+                  {gradingVideoUrl ? (
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 bg-black shadow-sm">
+                      <video src={gradingVideoUrl} controls autoPlay muted playsInline className="w-full h-full object-cover" />
                     </div>
+                  ) : (
+                    <div className="aspect-video rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-300">
+                      <Camera className="w-10 h-10" />
+                      <span className="text-xs font-medium">No video loaded</span>
+                    </div>
+                  )}
 
-                    <div className="p-3 border border-purple-500/10 rounded-xl bg-gray-950/40 flex flex-col justify-between">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-purple-300 font-semibold text-center uppercase tracking-wider">Upload Product Rotation Video:</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <label className="btn btn-secondary py-1 text-[11px] text-center cursor-pointer">
-                            📁 File Video
-                            <input 
-                              type="file" 
-                              accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*" 
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  setGradingVideoUrl(URL.createObjectURL(file));
-                                  // Convert to Base64 for API upload
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    if (reader.result) {
-                                      setGradingVideoBase64(reader.result as string);
-                                    }
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }} 
-                              className="hidden" 
-                            />
-                          </label>
-                          <button 
-                            type="button" 
-                            className="btn btn-secondary py-1 text-[11px]"
-                            onClick={() => {
-                              // Use the local public asset video for instant mock loading
-                              setGradingVideoUrl("/demo_return.mp4");
-                              setGradingVideoBase64("");
-                            }}
-                          >
-                            💻 Tech Demo
-                          </button>
-                        </div>
-
-                        {gradingVideoUrl ? (
-                          <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-purple-500/20 bg-black mt-2">
-                            <video 
-                              ref={videoPlayerRef} 
-                              src={gradingVideoUrl} 
-                              controls 
-                              autoPlay
-                              muted
-                              playsInline
-                              crossOrigin="anonymous"
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="text-[10px] text-gray-500 text-center py-8 border border-dashed border-gray-800 rounded-lg mt-2 flex flex-col items-center justify-center my-auto">
-                            <span>Upload a product inspection video file (.mp4, .webm)</span>
-                            <span className="text-[9px] text-gray-600 mt-1">or click "Tech Demo" to load local video</span>
-                          </div>
-                        )}
-                      </div>
+                  <div className="border-t border-slate-200 pt-3 text-[10px] text-slate-500">
+                    <div className="font-bold text-slate-600 mb-1.5">Product Context</div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div><span className="text-slate-400">SKU:</span> <span className="font-mono font-bold">{gradingSku}</span></div>
+                      <div><span className="text-slate-400">User:</span> <span className="font-bold">{profileUserId}</span></div>
+                      <div className="col-span-2"><span className="text-slate-400">Product:</span> <span className="font-bold">{gradingItemName}</span></div>
                     </div>
                   </div>
 
-                  <button 
-                    className="btn btn-primary w-full py-2.5" 
+                  <button
+                    className="btn btn-primary w-full py-2.5 font-bold text-xs mt-1"
                     disabled={(!gradingVideoUrl && !gradingVideoBase64) || gradingLoading}
                     onClick={triggerWarehouseGrading}
                   >
-                    {gradingLoading ? "Extracting rotation angles & analyzing defect textures..." : "Grade Product Conditions"}
+                    {gradingLoading ? <><span className="spinner" /> Extracting keyframes & grading...</> : <><BarChart2 className="w-4 h-4" /> Grade Product Condition</>}
                   </button>
                 </div>
 
-                <div className="glass-card flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-gray-200">Product Health Card</h3>
+                {/* Result column */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-white flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Condition Report Card</div>
                   {gradingResult ? (
-                    <div className="bg-gray-900 border border-purple-500/20 p-4 rounded-xl flex flex-col gap-3">
-                      <div className="flex justify-between items-start">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="text-sm font-bold text-gray-100">{gradingResult.itemName}</h4>
-                          <span className="text-[10px] text-gray-500">SKU: {gradingResult.sku}</span>
+                          <h4 className="text-sm font-bold text-slate-800">{gradingResult.itemName}</h4>
+                          <span className="text-[10px] font-mono text-slate-400 mt-0.5 block">SKU: {gradingResult.sku}</span>
                         </div>
-                        <span className="px-2 py-1 rounded bg-indigo-500/20 text-indigo-400 font-extrabold text-sm">
-                          Grade {gradingResult.grade}
-                        </span>
+                        <div className={`text-2xl font-extrabold px-3.5 py-1.5 rounded-xl border-2 font-mono ${gradingResult.grade === "A" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : gradingResult.grade === "B" ? "bg-indigo-50 border-indigo-200 text-indigo-700" : gradingResult.grade === "C" ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-rose-50 border-rose-200 text-rose-700"}`}>
+                          {gradingResult.grade}
+                        </div>
                       </div>
 
-                      {/* Variant Verification check */}
-                      <div className="text-xs border-y border-gray-800 py-2 my-1 flex justify-between items-center">
-                        <span className="text-gray-400">Database Variant Check:</span>
-                        {gradingResult.isCorrectVariant ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[10px]">
-                            ✓ MATCHED CATALOG VARIANT
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-bold text-[10px]">
-                            ✗ MISMATCHED PRODUCT VARIANT
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="text-xs">
-                        <span className="font-semibold text-purple-300 block mb-1">Defect Taxonomy Findings:</span>
-                        <ul className="list-disc pl-4 text-gray-300 flex flex-col gap-1">
-                          {gradingResult.defects && gradingResult.defects.map((d: string, i: number) => <li key={i}>{d}</li>)}
-                        </ul>
-                      </div>
-
-                      {/* Missing Components verification */}
-                      <div className="text-xs border-t border-gray-800 pt-2.5">
-                        <span className="font-semibold text-purple-300 block mb-1">Missing DB Accessories:</span>
-                        {gradingResult.missingComponents && gradingResult.missingComponents.length > 0 ? (
-                          <ul className="list-disc pl-4 text-rose-300 flex flex-col gap-0.5">
-                            {gradingResult.missingComponents.map((c: string, i: number) => <li key={i}>{c}</li>)}
-                          </ul>
-                        ) : (
-                          <span className="text-emerald-400 font-medium">None (All parts accounted for)</span>
-                        )}
-                      </div>
-
-                      {/* Viewpoints Breakdown list */}
-                      {gradingResult.viewpoints && gradingResult.viewpoints.length > 1 && (
-                        <div className="text-xs border-t border-gray-800 pt-2.5">
-                          <span className="font-semibold text-purple-300 block mb-1.5">Viewpoint Screenshot Inspection:</span>
-                          <div className="flex flex-col gap-1 bg-gray-950/60 p-2 rounded-lg border border-gray-800">
-                            {gradingResult.viewpoints.map((v: any, idx: number) => (
-                              <div key={idx} className="flex justify-between items-start text-[11px] py-1 border-b border-gray-800 last:border-0">
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="text-gray-400 font-medium">Angle {v.viewpointIndex || idx + 1}:</span>
-                                  {v.defects && v.defects.length > 0 ? (
-                                    <span className="text-[10px] text-amber-300 italic">{v.defects.join(", ")}</span>
-                                  ) : (
-                                    <span className="text-[10px] text-emerald-400 italic">No defects</span>
-                                  )}
-                                </div>
-                                <span className="font-mono text-gray-200 bg-gray-900 px-1 py-0.5 rounded">
-                                  Score: {v.functionalScore}/10
-                                </span>
-                              </div>
-                            ))}
-                            <div className="text-[10px] text-purple-400 text-center font-bold pt-1.5">
-                              Averaged Score: ({gradingResult.viewpoints.map((v: any) => v.functionalScore).join(" + ")}) / {gradingResult.viewpoints.length} = {gradingResult.functionalScore}/10
-                            </div>
+                      <div className="flex flex-col gap-2 text-xs border-y border-slate-100 py-3">
+                        {[
+                          { label: "Variant Check", value: gradingResult.isCorrectVariant ? "✓ MATCHED" : "✗ MISMATCH", colored: true },
+                          { label: "Defects Found", value: gradingResult.defects?.join(", ") || "None", colored: false },
+                          { label: "Resale Channel", value: gradingResult.resaleCategory, colored: false },
+                          { label: "Functional Score", value: `${gradingResult.functionalScore}/10`, colored: false },
+                        ].map(({ label, value, colored }) => (
+                          <div key={label} className="flex justify-between gap-2">
+                            <span className="text-slate-500">{label}:</span>
+                            <span className={`font-bold text-right text-slate-800 ${colored && value.startsWith("✓") ? "text-emerald-600" : colored && value.startsWith("✗") ? "text-rose-600" : ""}`}>{value}</span>
                           </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
 
-                      <div className="flex justify-between text-xs pt-2 border-t border-gray-800">
-                        <span className="text-gray-500">Functional Score:</span>
-                        <span className="font-bold text-emerald-400">{gradingResult.functionalScore}/10</span>
+                      <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                        <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Ledger Block SHA-256</div>
+                        <div className="font-mono text-[9px] text-indigo-700 break-all leading-relaxed">{gradingResult.hash}</div>
                       </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500">Resale channel:</span>
-                        <span className="font-bold text-gray-200">{gradingResult.resaleCategory}</span>
-                      </div>
-                      <div className="bg-indigo-950/10 border border-indigo-500/10 p-2 rounded text-[9px] mt-1">
-                        <span className="font-mono text-indigo-400 block mb-0.5">LEDGER BLOCK SHA-256 SIGNATURE:</span>
-                        <span className="font-mono text-gray-500 break-all">{gradingResult.hash}</span>
-                      </div>
+
+                      <button className="btn btn-success w-full py-2 text-xs font-bold" onClick={() => setActiveTab("logistics")}>
+                        <Truck className="w-4 h-4" /> Route to L5 P2P Logistics
+                      </button>
                     </div>
                   ) : (
-                    <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
-                      Grade return item to compile health ledger block.
+                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
+                      <Package className="w-10 h-10 text-slate-200" />
+                      <span className="text-xs text-slate-400 italic">Load a video and run grading to see the condition report here.</span>
                     </div>
                   )}
                 </div>
@@ -2186,97 +1902,107 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB 5 - P2P LOGISTICS */}
+          {/* TAB: L5 LOGISTICS */}
           {activeTab === "logistics" && (
-            <div className="glass-card flex flex-col gap-6">
+            <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>Dynamic Logistics Core & P2P Router</h2>
+                <h2>L5: Geocoded P2P Logistics Router</h2>
                 <span className="section-badge badge-layer-5">Layer 5</span>
               </div>
 
-              <div className="demo-split-grid">
-                <div className="glass-card flex flex-col gap-4 border-cyan-500/10 bg-cyan-950/5">
-                  <h3 className="text-sm font-semibold text-cyan-300">Route Parameters ({profileUserId})</h3>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label>Returner Zip (From)</label>
-                      <input type="text" value={profileZip} disabled className="bg-gray-900/80 cursor-not-allowed" />
+              <div className="success-callout">
+                <Truck className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Enter your ZIP code and the buyer's ZIP. Our geocoding engine (Nominatim + Haversine) calculates the optimal direct P2P shipping route — skipping the central warehouse and saving up to 62% CO₂ per return.</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Settings column */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-4">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Route Configuration</div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Returner ZIP</label>
+                      <input type="text" value={profileZip} disabled className="bg-slate-100 cursor-not-allowed text-xs" />
+                      <span className="text-[9px] text-slate-400 mt-0.5 block">Your profile ZIP</span>
                     </div>
-                    <div className="flex-1">
-                      <label>Circular Buyer Zip (To)</label>
-                      <input type="text" value={buyerZip} onChange={(e) => setBuyerZip(e.target.value)} className="text-xs" />
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 block mb-1">Buyer ZIP</label>
+                      <input type="text" value={buyerZip} onChange={e => setBuyerZip(e.target.value)} placeholder="98004" className="text-xs" />
+                      <span className="text-[9px] text-slate-400 mt-0.5 block">Matched local buyer</span>
                     </div>
                   </div>
-                  <button className="btn btn-primary w-full py-2" onClick={triggerP2PRouteCalculation} disabled={logisticsLoading}>
-                    {logisticsLoading ? "Geocoding zipcodes..." : "Optimize Shipping Route"}
+
+                  <div className="text-[10px] text-slate-500 border border-slate-100 bg-white p-2.5 rounded-xl">
+                    <div className="font-bold text-slate-600 mb-1">Routing for:</div>
+                    <div className="font-mono"><span className="text-slate-400">SKU:</span> <span className="font-bold">{logisticsSku}</span></div>
+                    <div className="font-mono"><span className="text-slate-400">User:</span> <span className="font-bold">{profileUserId}</span></div>
+                  </div>
+
+                  <button className="btn btn-primary w-full py-2.5 font-bold text-xs" onClick={triggerP2PRouteCalculation} disabled={logisticsLoading}>
+                    {logisticsLoading ? <><span className="spinner" /> Calculating routes...</> : <><Compass className="w-4 h-4" /> Optimize Shipping Route</>}
                   </button>
 
                   {logisticsResult && (
-                    <div className="bg-gray-900/60 p-3 rounded border border-gray-800 text-xs">
-                      <div className="font-semibold text-emerald-400 mb-1">P2P Circular Target Match</div>
-                      <p className="text-gray-400 text-[10px] leading-relaxed">
-                        Shipping directly from zipcode **{profileZip}** to matched buyer **{logisticsResult.p2pRoute.buyerName}** in Bellevue (**{buyerZip}**).
-                      </p>
+                    <div className="success-callout">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold">Local P2P Match Confirmed!</div>
+                        <div className="mt-0.5">Shipping directly to <strong>{logisticsResult.p2pRoute.buyerName}</strong> — no warehouse stop.</div>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <div className="glass-card flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-gray-200">Route Comparison & Maps</h3>
+                {/* Map + results column */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-white flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Route Comparison Map</div>
                   {logisticsResult ? (
                     <div className="flex flex-col gap-3">
                       <div className="map-placeholder">
-                        <div id="map-element" style={{ height: "100%", width: "100%" }}></div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-[10px]">
-                        <div className="bg-emerald-950/15 border border-emerald-500/20 p-2 rounded">
-                          <span className="font-bold text-emerald-400 block mb-1">Direct P2P Route</span>
-                          Distance: {logisticsResult.p2pRoute.distance}<br />
-                          Cost: {logisticsResult.p2pRoute.cost}<br />
-                          CO₂: {logisticsResult.p2pRoute.co2}
-                        </div>
-                        <div className="bg-rose-950/15 border border-rose-500/20 p-2 rounded">
-                          <span className="font-bold text-rose-400 block mb-1">Standard Warehouse</span>
-                          Distance: {logisticsResult.warehouseRoute.distance}<br />
-                          Cost: {logisticsResult.warehouseRoute.cost}<br />
-                          CO₂: {logisticsResult.warehouseRoute.co2}
-                        </div>
+                        <div id="map-element" style={{ height: "100%", width: "100%" }} />
                       </div>
 
-                      <div className="flex justify-between bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1.5 rounded text-xs font-bold text-emerald-300">
-                        <span>Ecological Savings:</span>
-                        <span>{logisticsResult.savings.co2} CO₂ & {logisticsResult.savings.cost} USD Saved!</span>
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                          <div className="font-bold text-emerald-700 mb-1.5">🟢 P2P Direct Route</div>
+                          <div className="text-emerald-700">📍 {logisticsResult.p2pRoute.distance}</div>
+                          <div className="text-emerald-700">💵 {logisticsResult.p2pRoute.cost}</div>
+                          <div className="text-emerald-700">🌱 {logisticsResult.p2pRoute.co2}</div>
+                        </div>
+                        <div className="bg-rose-50 border border-rose-100 p-3 rounded-xl">
+                          <div className="font-bold text-rose-700 mb-1.5">🔴 Central Warehouse</div>
+                          <div className="text-rose-700">📍 {logisticsResult.warehouseRoute.distance}</div>
+                          <div className="text-rose-700">💵 {logisticsResult.warehouseRoute.cost}</div>
+                          <div className="text-rose-700">🌱 {logisticsResult.warehouseRoute.co2}</div>
+                        </div>
                       </div>
 
                       {labelGenerated ? (
-                        <div className="bg-white p-3 rounded border border-gray-300 flex flex-col items-center gap-1 font-mono text-black text-[9px]">
-                          <div className="font-bold text-[11px]">USPS DIRECT P2P NETWORK</div>
-                          <div className="border-y border-black w-full text-center py-0.5 my-1">
-                            SHIP TO: {logisticsResult.p2pRoute.buyerName} ({buyerZip})
+                        <div className="bg-white p-3 rounded-xl border-2 border-black flex flex-col items-center gap-1 font-mono text-black text-[9px] shadow-sm">
+                          <div className="font-bold text-[10px] tracking-wider">USPS DIRECT P2P NETWORK</div>
+                          <div className="border-y border-black w-full text-center py-1 my-0.5 text-[10px]">
+                            SHIP TO: {logisticsResult.p2pRoute.buyerName} — {buyerZip}
                           </div>
-                          <div className="font-bold select-all">{logisticsResult.label.trackingNumber}</div>
-                          <svg className="w-48 h-8 mt-1" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg">
+                          <div className="font-bold text-sm tracking-widest">{logisticsResult.label?.trackingNumber || "1Z999AA1012345678"}</div>
+                          <svg className="w-44 h-7 mt-1" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg">
                             <rect width="100" height="20" fill="white" />
-                            <rect x="5" y="2" width="2" height="16" fill="black" /><rect x="10" y="2" width="1" height="16" fill="black" />
-                            <rect x="14" y="2" width="3" height="16" fill="black" /><rect x="20" y="2" width="1" height="16" fill="black" />
-                            <rect x="24" y="2" width="2" height="16" fill="black" /><rect x="30" y="2" width="4" height="16" fill="black" />
-                            <rect x="36" y="2" width="1" height="16" fill="black" /><rect x="40" y="2" width="2" height="16" fill="black" />
-                            <rect x="45" y="2" width="3" height="16" fill="black" /><rect x="50" y="2" width="1" height="16" fill="black" />
-                            <rect x="55" y="2" width="2" height="16" fill="black" /><rect x="60" y="2" width="4" height="16" fill="black" />
-                            <rect x="66" y="2" width="1" height="16" fill="black" /><rect x="70" y="2" width="2" height="16" fill="black" />
-                            <rect x="75" y="2" width="3" height="16" fill="black" /><rect x="80" y="2" width="1" height="16" fill="black" />
-                            <rect x="85" y="2" width="2" height="16" fill="black" /><rect x="90" y="2" width="4" height="16" fill="black" />
+                            {[5,8,11,14,17,20,23,26,29,32,35,38,41,44,47,50,53,56,59,62,65,68,71,74,77,80,83,86,89,92].map((x, i) => (
+                              <rect key={x} x={x} y="2" width={i%3===0?3:1} height="16" fill="black" />
+                            ))}
                           </svg>
+                          <div className="text-[8px] text-slate-500 mt-1">Generated via Shippo API</div>
                         </div>
                       ) : (
-                        <button className="btn btn-success w-full py-2 text-xs" onClick={() => setLabelGenerated(true)}>
-                          Generate Shippo Label
+                        <button className="btn btn-success w-full py-2 text-xs font-bold" onClick={() => setLabelGenerated(true)}>
+                          <Truck className="w-4 h-4" /> Generate Shippo Label
                         </button>
                       )}
                     </div>
                   ) : (
-                    <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
-                      Compute shipping route to render dynamic OpenStreetMap Leaflet layers.
+                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
+                      <Map className="w-10 h-10 text-slate-200" />
+                      <span className="text-xs text-slate-400 italic">Enter ZIP codes and click Optimize to see the route map and cost comparison.</span>
                     </div>
                   )}
                 </div>
@@ -2284,104 +2010,265 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB 6 - WALLET RESOLUTIONS */}
+          {/* TAB: L6 WALLET */}
           {activeTab === "wallet" && (
-            <div className="glass-card flex flex-col gap-6">
+            <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>Green Credits Wallet & Incentives Ledger</h2>
+                <h2>L6: Loyalty Wallet & Refund Routing Engine</h2>
                 <span className="section-badge badge-layer-6">Layer 6</span>
               </div>
 
-              <div className="demo-split-grid">
-                <div className="glass-card flex flex-col gap-4 border-emerald-500/10 bg-emerald-950/5">
-                  <h3 className="text-sm font-semibold text-emerald-300">Loyalty Choice Ledger ({profileUserId})</h3>
-                  
+              {/* Wallet summary */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "Green Credits", value: walletInfo.credits, icon: Award, color: "indigo" },
+                  { label: "CO₂ Saved", value: `${walletInfo.sustainabilityScore} kg`, icon: Leaf, color: "emerald" },
+                  { label: "Refund Base", value: `$${refundBaseAmount.toFixed(2)}`, icon: DollarSign, color: "amber" },
+                  { label: "Augmented", value: `$${(refundBaseAmount * 1.3).toFixed(2)}`, icon: Zap, color: "violet" },
+                ].map(({ label, value, icon: Icon, color }) => (
+                  <div key={label} className="metric-strip-card flex flex-col gap-1 items-start py-3">
+                    <div className={`metric-strip-icon-box ${color} w-8 h-8`}><Icon className="w-4 h-4" /></div>
+                    <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">{label}</div>
+                    <div className="text-base font-extrabold text-slate-800">{value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Refund options */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-4">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Refund Options</div>
+
                   <div className="resolution-choices">
                     <div className={`choice-card ${refundSelection === "cash" ? "selected" : ""}`} onClick={() => setRefundSelection("cash")}>
-                      <div className="text-[10px] font-semibold text-gray-400 uppercase">Option 1: Cash Refund</div>
-                      <div className="text-2xl font-bold font-display text-gray-200">${refundBaseAmount.toFixed(2)}</div>
+                      <DollarSign className="w-5 h-5 text-slate-500 mb-0.5" />
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">Cash Refund</span>
+                      <span className="text-xl font-extrabold text-slate-800 font-mono">${refundBaseAmount.toFixed(2)}</span>
+                      <span className="text-[10px] text-slate-400">Standard return value</span>
                     </div>
+
                     <div className={`choice-card highlight-success ${refundSelection === "credits" ? "selected" : ""}`} onClick={() => setRefundSelection("credits")}>
-                      <span className="choice-badge">Recommended</span>
-                      <div className="text-[10px] font-semibold text-emerald-400 uppercase">Option 2: Green Credits (+30%)</div>
-                      <div className="text-2xl font-bold font-display text-emerald-300">
-                        ${(refundBaseAmount * 1.3).toFixed(2)}
-                        <span className="text-[10px] text-gray-400 block font-normal mt-0.5">({Math.round(refundBaseAmount * 1.3 * 10)} Credits)</span>
-                      </div>
+                      <span className="choice-badge">+30%</span>
+                      <Leaf className="w-5 h-5 text-emerald-600 mb-0.5" />
+                      <span className="text-[9px] font-bold text-emerald-600 uppercase">Green Credits</span>
+                      <span className="text-xl font-extrabold text-emerald-700 font-mono">${(refundBaseAmount * 1.3).toFixed(2)}</span>
+                      <span className="text-[10px] text-emerald-600">Eco-augmented value</span>
                     </div>
                   </div>
 
                   {refundSelection === "credits" && (
-                    <div className="flex flex-col gap-2 text-xs">
-                      <label className="text-xs text-emerald-300 font-bold mb-1">Apply Circular Actions Multipliers:</label>
-                      <div className="flex flex-col gap-1.5 text-gray-300">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={loyaltyActions.includes("p2p")} onChange={() => handleToggleLoyaltyAction("p2p")} className="w-4 h-4 text-emerald-500" />
-                          <span>P2P Shipping direct (+5% credits / +151kg CO₂)</span>
+                    <div className="flex flex-col gap-2 bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                      <span className="text-xs font-bold text-emerald-800">Circular Action Multipliers</span>
+                      {[
+                        { id: "p2p", label: "P2P Logistics routing", bonus: "+5%" },
+                        { id: "swap", label: "Refurbished replacement swap", bonus: "+10%" },
+                        { id: "repair", label: "Self-repair deflection", bonus: "+15%" },
+                      ].map(({ id, label, bonus }) => (
+                        <label key={id} className="flex items-center gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={loyaltyActions.includes(id)}
+                            onChange={() => handleToggleLoyaltyAction(id)}
+                            className="w-4 h-4 rounded accent-emerald-600"
+                          />
+                          <span className="text-xs text-emerald-700 font-medium flex-1">{label}</span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{bonus}</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={loyaltyActions.includes("swap")} onChange={() => handleToggleLoyaltyAction("swap")} className="w-4 h-4 text-emerald-500" />
-                          <span>Accept refurbished replacement swap (+10% credits)</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={loyaltyActions.includes("repair")} onChange={() => handleToggleLoyaltyAction("repair")} className="w-4 h-4 text-emerald-500" />
-                          <span>Engage self-troubleshoot / Repair (+15% credits / +4.8kg CO₂)</span>
-                        </label>
-                      </div>
+                      ))}
                     </div>
                   )}
 
-                  <button className="btn btn-success w-full py-2.5 mt-2" onClick={processWalletRefund} disabled={refundLoading}>
-                    {refundLoading ? "Processing transaction..." : "Confirm Resolution"}
+                  <button className="btn btn-success w-full py-2.5 font-bold text-xs" onClick={processWalletRefund} disabled={refundLoading}>
+                    {refundLoading ? <><span className="spinner" /> Processing...</> : <><Award className="w-4 h-4" /> Confirm Resolution</>}
                   </button>
                 </div>
 
-                <div className="glass-card flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-gray-200">Updated Wallet Ledger</h3>
+                {/* Invoice */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-white flex flex-col gap-3">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Transaction Invoice</div>
                   {refundResult ? (
-                    <div className="bg-gray-900 border border-emerald-500/20 p-4 rounded-xl flex flex-col gap-3">
-                      <div className="text-xs font-semibold text-emerald-400 uppercase">Transaction Cleared successfully</div>
-                      
-                      <div className="text-xs text-gray-300 my-1 flex flex-col gap-1">
-                        <div>Type: <span className="font-bold text-gray-100">{refundResult.refundType}</span></div>
-                        {refundResult.refundType === "green_credits" ? (
-                          <>
-                            <div>Awarded Credits: <span className="font-bold text-emerald-400">+{refundResult.creditsAwarded} Credits</span></div>
-                            <div>Retained CO₂ Index: <span className="font-bold text-emerald-400">+{refundResult.co2SavedAwarded} kg</span></div>
-                          </>
-                        ) : (
-                          <div>Refunded: <span className="font-bold text-gray-100">{refundResult.amountRefunded}</span></div>
-                        )}
+                    <div className="flex flex-col gap-2.5 text-xs">
+                      <div className="success-callout py-2">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-bold">Transaction cleared successfully</span>
                       </div>
 
-                      <div className="border-t border-gray-800 pt-3 text-xs flex justify-between">
-                        <span className="text-gray-400">New Wallet Balance:</span>
-                        <span className="font-bold text-indigo-400">{refundResult.walletBalance} Credits</span>
-                      </div>
-                      <div className="text-xs flex justify-between">
-                        <span className="text-gray-400">Net CO₂ saved:</span>
-                        <span className="font-bold text-emerald-400">{refundResult.sustainabilityScore} kg</span>
-                      </div>
+                      {[
+                        { label: "Method", value: refundResult.refundType },
+                        refundResult.refundType === "green_credits"
+                          ? { label: "Credits Awarded", value: `+${refundResult.creditsAwarded} credits`, green: true }
+                          : { label: "Amount Refunded", value: refundResult.amountRefunded },
+                        refundResult.refundType === "green_credits"
+                          ? { label: "CO₂ Offset", value: `+${refundResult.co2SavedAwarded} kg`, green: true }
+                          : null,
+                        { label: "Wallet Balance", value: `${refundResult.walletBalance} Credits` },
+                        { label: "Net CO₂ Saved", value: `${refundResult.sustainabilityScore} kg`, green: true },
+                      ].filter(Boolean).map((item: any, i) => (
+                        <div key={i} className="flex justify-between border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
+                          <span className="text-slate-500">{item.label}:</span>
+                          <span className={`font-bold ${item.green ? "text-emerald-600" : "text-slate-800"}`}>{item.value}</span>
+                        </div>
+                      ))}
 
-                      <div className="bg-gray-950/80 p-2.5 rounded text-center text-xs text-gray-400 mt-2">
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center text-slate-500 text-[11px] leading-relaxed italic mt-1">
                         {refundResult.message}
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
-                      Submit checkout transaction to query ledger registry balances.
+                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
+                      <Wallet className="w-10 h-10 text-slate-200" />
+                      <span className="text-xs text-slate-400 italic">Select a refund type and click Confirm Resolution to process the transaction.</span>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           )}
+
+          {/* TAB: CIRCULAR MARKETPLACE */}
+          {activeTab === "marketplace" && (
+            <div className="glass-card flex flex-col gap-5">
+              <div className="section-title-bar">
+                <h2>Circular Re-Commerce Marketplace</h2>
+                <span className="section-badge badge-layer-5">Local Feed</span>
+              </div>
+              <div className="info-callout mb-2">
+                <ShoppingBag className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Items shown below have been returned by users within a 100km radius. By purchasing locally, you earn Green Credits and save shipping emissions.</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {marketplaceLoading ? (
+                  <div className="col-span-full py-12 text-center text-slate-400">
+                    <span className="spinner mb-3" />
+                    <div>Discovering local circular deals in {profileZip}...</div>
+                  </div>
+                ) : (
+                  marketplaceFeed.map((item, i) => (
+                    <div key={i} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col group hover:shadow-md transition-all relative">
+                      {item.trust < 40 && (
+                        <div className="absolute top-2 right-2 bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-rose-200 z-10 shadow-sm flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> High Risk Seller
+                        </div>
+                      )}
+                      <div className="h-40 overflow-hidden relative">
+                        <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
+                        <div className="absolute bottom-2 left-2 flex gap-1">
+                          <div className="bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">
+                            Grade {item.grade}
+                          </div>
+                          <div className="bg-emerald-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
+                            <Leaf className="w-2.5 h-2.5" /> -{item.co2Saved}kg CO₂
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 flex flex-col flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{item.distance} Away</div>
+                          <div className="text-[9px] text-slate-400 uppercase">{item.brand}</div>
+                        </div>
+                        <h3 className="font-bold text-slate-800 text-sm leading-tight flex-1">{item.name}</h3>
+                        
+                        <div className="flex items-end justify-between mt-3 mb-3 border-b border-slate-100 pb-3">
+                          <div>
+                            <span className="text-emerald-600 font-extrabold text-lg font-mono">${item.price.toFixed(2)}</span>
+                            <span className="text-slate-400 text-[10px] line-through ml-1.5">${item.originalPrice.toFixed(2)}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[9px] text-slate-500">Seller Trust</div>
+                            <div className={`font-mono text-xs font-bold ${item.trust > 80 ? "text-emerald-600" : item.trust > 40 ? "text-amber-600" : "text-rose-600"}`}>
+                              {item.trust}%
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="text-[10px] text-slate-500 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <strong>Earn {Math.round(item.price * 0.3)} Green Credits</strong> instantly by choosing this circular item instead of a new one.
+                        </div>
+                        
+                        <button 
+                          className="btn btn-primary w-full py-2 text-xs font-bold"
+                          onClick={async () => {
+                            const res = await fetch("/api/checkout", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ sku: item.sku, name: item.name, price: item.price })
+                            });
+                            if(res.ok) {
+                              const data = await res.json();
+                              if(data.url) window.location.href = data.url;
+                              else if(data.locked) {
+                                const jump = confirm("This item is currently locked by another buyer. Do you want to pay a $5 Priority Routing Fee to jump the queue?");
+                                if(jump) {
+                                  const jumpRes = await fetch("/api/checkout", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ sku: item.sku, name: item.name, price: item.price, priorityQueue: true })
+                                  });
+                                  if(jumpRes.ok) {
+                                    const jumpData = await jumpRes.json();
+                                    if(jumpData.url) window.location.href = jumpData.url;
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                        >
+                          Checkout via Stripe
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
 
-      <footer className="mt-12 text-center text-xs text-gray-600 border-t border-gray-900 pt-6">
-        <div>Project Anti-Gravity Circular Logistics MVP • 100% Personalization & Hardware Capture Ready</div>
-        <div className="mt-1">Built in HSL slate using Next.js 16, Llama 3/3.2 Vision, Leaflet, Nominatim, and Shippo.</div>
+      {/* BRACKETING MODAL */}
+      {showBracketingModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base">Size Bracketing Activated</h3>
+                <p className="text-xs text-slate-500 mt-1">You've added 2 sizes — this triggers the AI sizing scan to determine your perfect fit.</p>
+              </div>
+              <button onClick={() => setShowBracketingModal(false)} className="text-slate-300 hover:text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs font-medium text-indigo-700">
+              Use the camera/upload button to capture your photo above, then click "Analyze Photo" to get your AI size recommendation.
+            </div>
+            <div className="flex gap-2">
+              <button className="btn btn-primary flex-1 py-2 text-xs" onClick={() => { setShowBracketingModal(false); setActiveTab("size-assist"); }}>
+                View Size Chart
+              </button>
+              <button className="btn btn-secondary flex-1 py-2 text-xs" onClick={() => setShowBracketingModal(false)}>
+                Continue Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <footer className="app-footer text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex justify-center mb-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2 L2 22 L22 22 Z" />
+                <circle cx="12" cy="14" r="3.5" strokeDasharray="3 2" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-xs font-bold text-slate-500">Project Anti-Gravity Circular Logistics MVP</div>
+          <div className="text-[10px] text-slate-400 mt-1">Built with Next.js 16 · LLaMA 3.2 Vision · Leaflet/Nominatim · Shippo · Groq API</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Personalization Engine · iFixit Integration · SHA-256 Ledger · Canvas Confetti</div>
+        </div>
       </footer>
     </div>
   );

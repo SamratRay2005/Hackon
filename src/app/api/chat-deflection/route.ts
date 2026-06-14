@@ -3,7 +3,7 @@ import { queryGroq } from "@/lib/services";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, productName, reasonCode, guides } = await req.json();
+    const { messages, productName, reasonCode, guides, userId, purchaseDate, returnWindowDays } = await req.json();
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: "Missing conversation messages" }, { status: 400 });
@@ -33,22 +33,43 @@ export async function POST(req: NextRequest) {
       ? guides.map((g: any) => `Guide: ${g.title}\nURL: ${g.url}\nSummary: ${g.summary}`).join("\n\n")
       : "No specific repair manuals found.";
 
+    // Vector DB lookup for personalized context
+    let vectorContext = "";
+    if (userId) {
+      const results = db.queryVectorContext(userId, productName, 3);
+      if (results.length > 0) {
+        vectorContext = "\nCustomer Purchase History Context (Vector Match):\n- " + results.join("\n- ");
+      }
+    }
+
+    const today = new Date();
+    const purchaseDt = purchaseDate ? new Date(purchaseDate) : today;
+    const daysSincePurchase = Math.floor((today.getTime() - purchaseDt.getTime()) / (1000 * 3600 * 24));
+    const isExpired = daysSincePurchase > (returnWindowDays || 30);
+
     const systemPrompt = `You are a conversational deflection assistant for a circular retail returns portal.
 Your primary objective is to help the customer diagnose and repair their item using open-source repair guides, preventing a physical return.
 If troubleshooting succeeds, you deflect the return and save shipping resources.
 If the item is physically broken beyond repair or the user insists, you will guide them to proceed with the return.
 
+CRITICAL POLICY ENFORCEMENT:
+- Purchase Date: ${purchaseDate || "Unknown"} (${daysSincePurchase} days ago)
+- Return Window: ${returnWindowDays || 30} days
+- Is Return Expired? ${isExpired ? "YES" : "NO"}
+
+If the return is EXPIRED (Is Return Expired? YES), you MUST strictly but politely deny the return immediately. Tell the user the return window has closed. Offer troubleshooting or repair, but explicitly state a refund or replacement is not possible. Do not allow them to proceed with the return.
+
 Product Name: ${productName || "Product"}
 Customer Reason Code: ${reasonCode || "Defective"}
 iFixit Repair Manuals Context:
-${guidesContext}
+${guidesContext}${vectorContext}
 
 Instructions:
 1. Be polite, encouraging, and clear. Break down troubleshooting into actionable, numbered steps.
 2. Ingest the iFixit guides context above to provide highly relevant repair suggestions.
 3. Keep answers concise. Do not write more than 150 words per turn.
 4. If the user indicates their issue is resolved, or thanks you, congratulate them on circularity and suggest they click "Resolved".
-5. If troubleshooting fails after attempt, tell them they can click "Still need to return".`;
+5. If troubleshooting fails after attempt AND the return is NOT expired, tell them they can click "Still need to return".`;
 
     const apiKey = process.env.GROQ_API_KEY;
 
@@ -88,7 +109,7 @@ Instructions:
     }
 
     // High-fidelity streaming mock fallback
-    const mockContent = getMockResponse(productName, latestMessage, guidesContext);
+    const mockContent = getMockResponse(productName, latestMessage, guidesContext, isExpired);
     const encoder = new TextEncoder();
     const customStream = new ReadableStream({
       async start(controller) {
@@ -126,31 +147,28 @@ Instructions:
   }
 }
 
-function getMockResponse(product: string, message: string, guides: string): string {
+function getMockResponse(product: string, message: string, guides: string, isExpired: boolean): string {
   const msg = message.toLowerCase();
   
+  if (isExpired) {
+    return `I apologize, but your **${product}** is no longer eligible for a return or replacement as it is past the return window limit. However, we'd still love to help you repair it! Would you like me to walk you through some troubleshooting steps to get it working again?`;
+  }
+
   if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey")) {
-    return `Hi there! I see you are returning your **${product}** due to functionality issues. Before we generate a shipping label, let's see if we can resolve this together! I've loaded the troubleshooting manual. Can you tell me if the device turns on at all when plugged in?`;
+    return `Hi there! I see you are returning your **${product}**. Let's see if we can resolve this together! Can you provide more details about the issue?`;
   }
   
-  if (msg.includes("yes") || msg.includes("turn on") || msg.includes("on") || msg.includes("light")) {
-    return `That's a great sign! Since it has power, the issue is likely a flow or thermal lock. Let's try a quick 1-minute reset: 
-1. Unplug the **${product}** from the wall.
-2. Hold down the Power/Brew button for 10 seconds to drain remaining capacitor energy.
-3. Plug it back in and try running a cycle with plain warm water.
-
-Give this a try and let me know if it helps clear the block!`;
+  if (msg.includes("yes") || msg.includes("turn on") || msg.includes("on") || msg.includes("light") || msg.includes("size") || msg.includes("fit") || msg.includes("broken")) {
+    return `Got it. Based on your history, I recommend checking out our exchange program. If it's a technical issue, try a quick 1-minute reset by unplugging it, waiting 10 seconds, and plugging it back in.
+    
+Let me know if this helps or if you'd like to proceed with the return!`;
   }
 
   if (msg.includes("work") || msg.includes("fixed") || msg.includes("resolved") || msg.includes("thank") || msg.includes("yes!")) {
-    return `Fantastic! I'm so glad we got that sorted out. By repairing rather than returning, you've saved packaging and transport carbon emissions (approx 4.8kg CO2). 
+    return `Fantastic! I'm so glad we got that sorted out. By repairing rather than returning, you've saved packaging and transport carbon emissions. 
 
 Please click the green **"Resolved! Cancel Return"** button below to complete the process and claim your circularity bonus credits!`;
   }
 
-  return `I understand. If the basic reset didn't work, we can check the next level: 
-- For electronics, this is commonly caused by an air bubble or calcification block.
-- Try checking the water lines and descaling the reservoir. 
-
-If it's still completely unresponsive, no worries at all—I can help you process your return immediately. Simply click **"Still need to return"** below to generate your shipping options.`;
+  return `I understand. If the suggestions didn't work, we can proceed with the return. Simply click **"Still need to return"** below to generate your shipping options.`;
 }

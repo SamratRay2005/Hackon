@@ -6,7 +6,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId") || "user_samrat";
     const wallet = await db.getWallet(userId);
-    return NextResponse.json(wallet);
+    const orders = await db.getOrders(userId);
+    return NextResponse.json({ ...wallet, orders });
   } catch (e) {
     return NextResponse.json({ error: "Failed to fetch wallet info" }, { status: 500 });
   }
@@ -61,13 +62,13 @@ export async function POST(req: NextRequest) {
     }
 
     const claims = await db.getClaims(activeUserId);
-    const verifiedClaim = claims.find((c: any) => c.id === targetClaimId);
+    const verifiedClaim = targetClaimId ? claims.find((c: any) => c.id === targetClaimId) : null;
 
-    if (!verifiedClaim) {
+    if (targetClaimId && !verifiedClaim) {
       return NextResponse.json({ error: "Claim Verification Failed: No matching return claim record found." }, { status: 404 });
     }
 
-    if (verifiedClaim.status === "REFUNDED") {
+    if (verifiedClaim && verifiedClaim.status === "REFUNDED") {
       return NextResponse.json({ error: "Claim Verification Failed: Refund has already been processed for this claim." }, { status: 400 });
     }
 
@@ -104,8 +105,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark claim as refunded to prevent double refunding
-    verifiedClaim.status = "REFUNDED";
-    await db.saveClaim(activeUserId, verifiedClaim);
+    if (verifiedClaim) {
+      verifiedClaim.status = "REFUNDED";
+      await db.saveClaim(activeUserId, verifiedClaim);
+    }
 
     // 4. Commit transaction to digital wallet (DynamoDB simulator)
     const newBalance = await db.updateWallet(activeUserId, Math.round(creditsAwarded), Math.round(co2SavedAwarded));

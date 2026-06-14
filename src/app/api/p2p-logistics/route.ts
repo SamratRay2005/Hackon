@@ -98,11 +98,32 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    const warehouseCoords = isIndian 
-      ? { lat: 19.0760, lng: 72.8777, city: "Mumbai (Central Hub)", state: "MH" }
-      : ZIP_COORDS["40201"]; // Louisville Central Warehouse
-    const finalWarehouseZip = isIndian ? "400001" : "40201";
-    const warehouseLabel = isIndian ? "Mumbai Central Hub" : "Louisville Central Warehouse (Hub)";
+    // Real Amazon FC Coordinates
+    const AMAZON_FCS = isIndian ? [
+      { id: "BOM4", lat: 19.2183, lng: 73.1628, city: "Bhiwandi (Mumbai FC)", state: "MH", zip: "421302" },
+      { id: "DEL1", lat: 28.3840, lng: 76.9405, city: "Gurugram (Delhi FC)", state: "HR", zip: "122413" },
+      { id: "BLR1", lat: 12.8399, lng: 77.6770, city: "Electronic City (Bangalore FC)", state: "KA", zip: "560100" },
+      { id: "PNQ2", lat: 18.7300, lng: 73.6700, city: "Chakan (Pune FC)", state: "MH", zip: "410501" }
+    ] : [
+      { id: "SDF8", lat: 38.2527, lng: -85.7585, city: "Louisville FC", state: "KY", zip: "40201" },
+      { id: "EWR4", lat: 40.2547, lng: -74.5264, city: "Robbinsville FC", state: "NJ", zip: "08691" },
+      { id: "LAS2", lat: 36.2162, lng: -115.0253, city: "North Las Vegas FC", state: "NV", zip: "89081" }
+    ];
+
+    let nearestFC = AMAZON_FCS[0];
+    let minDistance = Infinity;
+    
+    for (const fc of AMAZON_FCS) {
+      const dist = calculateHaversineDistance(returnerCoords.lat, returnerCoords.lng, fc.lat, fc.lng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestFC = fc;
+      }
+    }
+
+    const warehouseCoords = { lat: nearestFC.lat, lng: nearestFC.lng, city: nearestFC.city, state: nearestFC.state };
+    const finalWarehouseZip = nearestFC.zip;
+    const warehouseLabel = `Amazon ${nearestFC.id} - ${nearestFC.city}`;
 
     const displayOrigin = `${returnerCoords.city}, ${returnerCoords.state}`;
 
