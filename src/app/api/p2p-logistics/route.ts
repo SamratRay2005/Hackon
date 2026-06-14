@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     let isP2POverridden = false;
     let finalBuyerZip = selectedBuyerZip;
     let finalBuyerCoords = buyerCoords;
-    let finalBuyerName = targetBuyer ? targetBuyer.nameBuyer : "Local Circular Buyer";
+    let finalBuyerName = targetBuyer ? `Amazon Hub Locker - ${targetBuyer.nameBuyer} (P2P Dropoff)` : "Amazon Hub Locker (Local P2P Dropoff)";
     let p2pDistKm = p2pDistKmRaw;
 
     if (p2pDistKmRaw > 150) {
