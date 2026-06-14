@@ -35,6 +35,9 @@ import {
   Search,
   ChevronDown,
   ExternalLink,
+  Image as ImageIcon,
+  Copy,
+  Shirt,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -337,11 +340,11 @@ function WebcamCapture({ onCapture, overlayType, compact }: WebcamCaptureProps) 
               </div>
             </div>
           )}
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
-            <button type="button" className="btn btn-success py-1 px-3 text-[11px]" onClick={captureSnapshot}>
-              <Camera className="w-3 h-3" /> Snap
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
+            <button type="button" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1.5 px-4 rounded-full shadow-lg text-[11px] flex items-center gap-1.5 transition-all" onClick={captureSnapshot}>
+              <Camera className="w-3.5 h-3.5" /> Snap
             </button>
-            <button type="button" className="btn btn-secondary py-1 px-3 text-[11px]" onClick={stopCamera}>
+            <button type="button" className="bg-white/90 hover:bg-white text-slate-800 font-bold py-1.5 px-4 rounded-full shadow-lg text-[11px] transition-all" onClick={stopCamera}>
               Cancel
             </button>
           </div>
@@ -349,17 +352,17 @@ function WebcamCapture({ onCapture, overlayType, compact }: WebcamCaptureProps) 
       ) : (
         <div className="flex flex-col gap-2 w-full">
           {error && <p className="text-[10px] text-rose-500 font-medium bg-rose-50 border border-rose-100 px-2.5 py-1.5 rounded-lg">{error}</p>}
-          <div className={`flex gap-1.5 w-full ${compact ? "" : "flex-col sm:flex-row"}`}>
-            <button type="button" className="btn btn-primary flex-1 py-1.5 text-xs" onClick={startCamera}>
+          <div className={`flex gap-2 w-full ${compact ? "" : "flex-col sm:flex-row"}`}>
+            <button type="button" className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2 rounded-xl border border-indigo-200 shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={startCamera}>
               <Camera className="w-3.5 h-3.5" />
               Camera
             </button>
-            <label className="btn btn-secondary flex-1 py-1.5 text-xs text-center cursor-pointer">
+            <label className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl border border-slate-200 shadow-sm text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all">
               <Upload className="w-3.5 h-3.5" />
               Upload
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </label>
-            <button type="button" className="btn btn-secondary flex-1 py-1.5 text-xs" onClick={loadDemo}>
+            <button type="button" className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold py-2 rounded-xl border border-amber-200 shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={loadDemo}>
               <Zap className="w-3.5 h-3.5" />
               Demo
             </button>
@@ -907,9 +910,9 @@ export default function Home() {
                 </svg>
               </div>
             </div>
-            <h2 className="auth-title">Project Anti-Gravity</h2>
+            <h2 className="auth-title">ReLoop Portal</h2>
             <p className="auth-subtitle">
-              {authMode === "signin" ? "Sign in to access your circular returns portal" : "Register to initialize your green credits ledger"}
+              {authMode === "signin" ? "Sign in to access your circular returns dashboard" : "Register to initialize your green credits ledger"}
             </p>
           </div>
 
@@ -996,63 +999,76 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 40%, #f0fdf4 100%)" }}>
+    <>
+      <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 40%, #f0fdf4 100%)" }}>
 
       {/* ── NAVBAR ── */}
       <nav className="navbar">
         <a href="#" className="navbar-logo">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
             <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 2 L2 22 L22 22 Z" />
-              <circle cx="12" cy="14" r="3.5" strokeDasharray="3 2" />
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
             </svg>
           </div>
-          Anti-Gravity
+          ReLoop
         </a>
 
-        <div className="navbar-links hidden md:flex">
-          <button onClick={() => setShowXRayModal(true)} className="navbar-link font-bold text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 shadow-sm flex items-center gap-1.5 hover:bg-amber-100 transition-colors">
-            <Zap className="w-3.5 h-3.5" /> Architecture X-Ray
+        {/* Vibrant Pill Navigation Links */}
+        <div className="hidden md:flex items-center gap-4">
+          <button onClick={() => setShowXRayModal(true)} className="flex items-center gap-2 text-[11px] font-extrabold text-amber-800 bg-amber-100 px-4 py-2 rounded-full border border-amber-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-amber-200 transition-all active:scale-95">
+            <Zap className="w-4 h-4 text-amber-600" /> Architecture X-Ray
           </button>
-          <button onClick={() => setActiveTab("marketplace")} className="navbar-link">Shop Re-Commerce</button>
-          <button onClick={() => setActiveTab("marketplace")} className="navbar-link">Collections</button>
-          <button onClick={() => alert("Project Anti-Gravity is a circular retail engine. We intercept returns and route them directly to new buyers to save CO2 and logistics costs.")} className="navbar-link">Our Mission</button>
+          <button onClick={() => setActiveTab("marketplace")} className="flex items-center gap-2 text-[11px] font-extrabold text-indigo-800 bg-indigo-100 px-4 py-2 rounded-full border border-indigo-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-indigo-200 transition-all active:scale-95">
+            <ShoppingBag className="w-4 h-4 text-indigo-600" /> Shop Re-Commerce
+          </button>
+          <button onClick={() => alert("Collections feature coming soon!")} className="flex items-center gap-2 text-[11px] font-extrabold text-teal-800 bg-teal-100 px-4 py-2 rounded-full border border-teal-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-teal-200 transition-all active:scale-95">
+            <Layers className="w-4 h-4 text-teal-600" /> Collections
+          </button>
+          <button onClick={() => alert("ReLoop is a circular retail engine. We intercept returns and route them directly to new buyers to save CO2 and logistics costs.")} className="flex items-center gap-2 text-[11px] font-extrabold text-rose-800 bg-rose-100 px-4 py-2 rounded-full border border-rose-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-rose-200 transition-all active:scale-95">
+            <Heart className="w-4 h-4 text-rose-600" /> Our Mission
+          </button>
         </div>
 
-        <div className="navbar-actions">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-full border border-emerald-100 shadow-sm cursor-help" title="Green CO2 Saved">
-            <Leaf className="w-3.5 h-3.5 text-emerald-500" />
-            <span>{walletInfo.sustainabilityScore} kg CO₂</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-full border border-indigo-100 shadow-sm cursor-help" title="Wallet Credits">
-            <Award className="w-3.5 h-3.5 text-indigo-500" />
-            <span>{walletInfo.credits} Credits</span>
+        <div className="navbar-actions flex items-center gap-3">
+
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-full border border-emerald-100 shadow-sm cursor-help">
+              <Leaf className="w-3.5 h-3.5 text-emerald-500" />
+              <span>{walletInfo.sustainabilityScore} kg CO₂</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-full border border-indigo-100 shadow-sm cursor-help">
+              <Award className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{walletInfo.credits} Credits</span>
+            </div>
           </div>
           
-          <div className="relative">
+          <div className="relative ml-1">
             <button 
               onClick={() => setShowLogoutDropdown(!showLogoutDropdown)}
-              className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all"
+              className="flex flex-row items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all"
             >
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-[9px] uppercase">
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex flex-row items-center justify-center text-white text-[9px] uppercase">
                 {profileUserId.charAt(0)}
               </div>
-              {profileUserId}
+              <span className="hidden sm:inline-block">{profileUserId}</span>
               <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
             
             {showLogoutDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="px-3 py-2 border-b border-slate-100">
+                <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Signed in as</div>
-                  <div className="text-xs font-bold text-slate-800 truncate">{profileEmail}</div>
+                  <div className="text-[11px] font-bold text-slate-800 truncate mt-0.5">{profileEmail}</div>
                 </div>
-                <button onClick={() => { setShowLogoutDropdown(false); setActiveTab("dashboard"); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                  <UserCheck className="w-3.5 h-3.5" /> Dashboard Profile
-                </button>
-                <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
-                  <ArrowRight className="w-3.5 h-3.5" /> Secure Logout
-                </button>
+                <div className="p-2 flex flex-col gap-1.5">
+                  <button onClick={() => { setShowLogoutDropdown(false); setActiveTab("dashboard"); }} className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg shadow-sm hover:bg-white hover:border-indigo-300 hover:shadow transition-all flex items-center gap-2 group">
+                    <UserCheck className="w-3.5 h-3.5 text-indigo-500 group-hover:scale-110 transition-transform" /> Dashboard Profile
+                  </button>
+                  <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg shadow-sm hover:bg-white hover:border-rose-300 hover:shadow transition-all flex items-center gap-2 group">
+                    <ArrowRight className="w-3.5 h-3.5 text-rose-500 group-hover:translate-x-1 transition-transform" /> Secure Logout
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1136,7 +1152,7 @@ export default function Home() {
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between items-center text-[10px]">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-[9px] flex-shrink-0">{item.size}</span>
+                      <span className="bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-[9px] flex-shrink-0">Size: {item.size}</span>
                       <span className="text-slate-600 truncate">{item.name.split(" ").slice(0,2).join(" ")}</span>
                     </div>
                     <button onClick={() => handleRemoveFromCart(item.id)} className="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0 ml-1">
@@ -1172,17 +1188,21 @@ export default function Home() {
                 <h2 className="text-xl font-extrabold text-slate-800 mt-1.5 leading-tight">
                   {selectedProduct?.name || "Classic Denim Jacket"}
                 </h2>
-                <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
+                <div className="flex items-center gap-2.5 mt-1.5 flex-wrap text-sm text-slate-500 font-medium">
                   <span className="text-2xl font-bold text-slate-900 font-mono">
                     ${(selectedProduct?.price || 68.00).toFixed(2)}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
-                    {selectedProductSku}
+                  <span className="text-slate-300">•</span>
+                  <span className="font-mono text-slate-400">
+                    SKU: {selectedProductSku}
                   </span>
                   {selectedProduct?.category && (
-                    <span className="text-[9px] font-bold uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                      {selectedProduct.category}
-                    </span>
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span className="mini-badge" style={{ background: '#f1f5f9', color: '#64748b' }}>
+                        {selectedProduct.category}
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
@@ -1319,27 +1339,25 @@ export default function Home() {
           {activeTab === "dashboard" && (
             <div className="flex flex-col gap-5">
               {/* Recommendation + Blueprint */}
-              <div className="glass-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                <div className="flex flex-col gap-3 flex-1">
-                  <h3 className="text-base font-extrabold text-slate-800">
-                    AI Recommended Size: <span className="text-indigo-600">{sizingResult?.recommendedSize || "L"}</span>
-                  </h3>
-                  <p className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs font-medium text-slate-500 leading-relaxed max-w-md">
-                    {sizingResult?.reasoning || "Body proportions evaluated relative to catalog. Standard sizing charts suggest size L for relaxed premium fitting."}
-                  </p>
-                  <div className="text-xs font-bold text-slate-500">
-                    Match Confidence: <span className="text-indigo-600 font-extrabold">{sizingResult?.confidenceScore || 94}%</span>
+              <div className="glass-card flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 flex-shrink-0">
+                      <Shirt className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                        AI Recommended Size: <span className="text-indigo-600">{sizingResult?.recommendedSize || "L"}</span>
+                      </h3>
+                      <div className="text-xs font-bold text-slate-500 mt-0.5">
+                        Match Confidence: <span className="text-indigo-600 font-extrabold">{sizingResult?.confidenceScore || 94}%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="sizing-blueprint-box w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0">
-                  <svg className="w-full h-full text-indigo-300" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20,10 L35,25 L35,90 L65,90 L65,25 L80,10 L70,5 L50,15 L30,5 Z" />
-                    <line x1="35" y1="30" x2="65" y2="30" strokeDasharray="3 3" />
-                    <line x1="35" y1="50" x2="65" y2="50" strokeDasharray="3 3" />
-                    <line x1="23" y1="10" x2="23" y2="90" stroke="#4f46e5" strokeWidth="1" />
-                    <text x="16" y="55" fontSize="5" fill="#4f46e5" textAnchor="middle" transform="rotate(-90,16,55)">HT</text>
-                  </svg>
-                </div>
+                <p className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs font-medium text-slate-500 leading-relaxed">
+                  {sizingResult?.reasoning || "Body proportions evaluated relative to catalog. Standard sizing charts suggest size L for relaxed premium fitting."}
+                </p>
               </div>
 
               {/* Product Search */}
@@ -1399,19 +1417,19 @@ export default function Home() {
                     <span>No order history found. Sign up and seed your wallet to see past orders appear here automatically.</span>
                   </div>
                 ) : (
-                  <div className="order-history-grid">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
                     {(walletInfo.orders || []).map(order => (
-                      <div key={order.sku} className="glass-card flex flex-col justify-between gap-3 hover:border-indigo-300 transition-all cursor-default" style={{ padding: "1rem" }}>
+                      <div key={order.sku} className="glass-card flex flex-col justify-between gap-3 hover:shadow-md transition-all cursor-default" style={{ padding: "1rem" }}>
                         <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0">
                             <span className="text-[9px] uppercase tracking-wider text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">{order.category}</span>
-                            <h4 className="font-bold text-xs text-slate-800 mt-1.5 leading-tight">{order.name}</h4>
+                            <h4 className="font-bold text-xs text-slate-800 mt-1.5 leading-tight line-clamp-2">{order.name}</h4>
                             <span className="text-[10px] text-slate-400 font-mono block mt-0.5">{order.purchaseDate}</span>
                           </div>
                           <span className="text-emerald-600 font-extrabold font-mono text-sm flex-shrink-0">${order.price.toFixed(2)}</span>
                         </div>
                         <button
-                          className="w-full bg-white hover:bg-indigo-600 hover:text-white text-slate-700 hover:border-indigo-600 border border-slate-200 rounded-xl py-1.5 text-[11px] font-bold transition-all"
+                          className="btn btn-secondary w-full py-1.5 text-[11px] font-bold mt-auto"
                           onClick={() => {
                             setSelectedProductSku(order.sku);
                             if (["apparel","footwear"].includes(order.category.toLowerCase())) {
@@ -1425,10 +1443,16 @@ export default function Home() {
                             }
                           }}
                         >
-                          {["apparel","footwear"].includes(order.category.toLowerCase()) ? "Sizing Audit / Return" : "Troubleshoot / Return"}
+                          {["apparel","footwear"].includes(order.category.toLowerCase()) ? "Troubleshoot/Return" : "Troubleshoot/Return"}
                         </button>
                       </div>
                     ))}
+                    <div className="glass-card flex flex-col items-center justify-center gap-2 hover:shadow-md transition-all cursor-pointer bg-slate-50/50 border-dashed" style={{ padding: "1rem" }}>
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-500">View all orders</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1458,19 +1482,18 @@ export default function Home() {
                         ledgerRecords.map((record, index) => (
                           <tr key={record.id || index}>
                             <td className="font-mono text-indigo-600 text-xs font-bold">{record.id}</td>
-                            <td className="font-mono text-xs">{record.sku}</td>
-                            <td>
-                              <span className="px-2 py-0.5 rounded text-xs font-bold bg-indigo-50 border border-indigo-100 text-indigo-700">
-                                Grade {record.grade}
-                              </span>
+                            <td className="font-bold text-slate-700 text-xs">{record.sku}</td>
+                            <td><span className={`mini-badge ${record.grade?.startsWith("A") ? "success" : record.grade?.startsWith("B") ? "warning" : "danger"}`}>{record.grade}</span></td>
+                            <td className="text-[10px] text-slate-500 max-w-[120px] truncate">{record.defects?.join(", ")}</td>
+                            <td className="font-mono text-[10px] text-slate-500">
+                              <div className="flex items-center gap-1.5" title={record.hash}>
+                                <span>{record.hash?.substring(0, 6)}...{record.hash?.substring(record.hash.length - 4)}</span>
+                                <button className="text-slate-300 hover:text-indigo-500 transition-colors" onClick={() => navigator.clipboard.writeText(record.hash)}>
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </td>
-                            <td className="text-xs text-slate-600 max-w-xs">
-                              {record.defects?.join(", ")}
-                            </td>
-                            <td title={record.hash}>
-                              <div className="font-mono text-[10px] text-slate-400 max-w-[160px] truncate">{record.hash}</div>
-                            </td>
-                            <td className="text-slate-600 text-xs">{record.resaleCategory}</td>
+                            <td className="text-xs font-bold text-slate-600">{record.resaleCategory}</td>
                           </tr>
                         ))
                       )}
@@ -1606,10 +1629,15 @@ export default function Home() {
 
                   <WebcamCapture onCapture={(base64) => { setFraudImageType("custom"); setFraudImage(base64); }} overlayType="damage" />
 
-                  {fraudImage && (
+                  {fraudImage ? (
                     <div>
                       <span className="mini-badge success mb-1.5">Photo Loaded</span>
                       <img src={fraudImage} className="upload-preview mt-1" alt="Fraud scan preview" />
+                    </div>
+                  ) : (
+                    <div className="empty-state-card mt-1">
+                      <ImageIcon className="icon" />
+                      <div className="text">No image selected yet</div>
                     </div>
                   )}
 
@@ -1628,13 +1656,25 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div className="border-t border-slate-200 pt-3 text-[10px] text-slate-500">
-                    <div className="font-bold text-slate-600 mb-1.5">Claim Context</div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div><span className="text-slate-400">SKU:</span> <span className="font-mono font-bold">{fraudSku}</span></div>
-                      <div><span className="text-slate-400">IP:</span> <span className="font-mono">{profileIp}</span></div>
-                      <div><span className="text-slate-400">User:</span> <span className="font-bold">{profileUserId}</span></div>
-                      <div><span className="text-slate-400">Prior Returns:</span> <span className="font-bold">{profilePriorReturns}</span></div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <div className="font-bold text-slate-600 mb-2 text-[10px] uppercase tracking-wider">Claim Context</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
+                        <span className="text-xs font-mono text-slate-800 font-medium">{fraudSku}</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">IP</span>
+                        <span className="text-xs font-mono text-slate-800 font-medium">{profileIp}</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
+                        <span className="text-xs text-slate-800 font-medium">{profileUserId}</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Prior Returns</span>
+                        <span className="text-xs text-slate-800 font-medium">{profilePriorReturns}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -1737,7 +1777,7 @@ export default function Home() {
                     <select
                       value={deflectReason}
                       onChange={e => setDeflectReason(e.target.value)}
-                      className="text-[11px] py-1.5"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
                     >
                       <option>Defective / Won't turn on</option>
                       <option>Wrong size</option>
@@ -1749,54 +1789,62 @@ export default function Home() {
                 </div>
 
                 {/* Chat window */}
-                <div className="chat-window">
-                  <div className="chat-header">
+                <div className="bg-white border border-slate-200 rounded-2xl flex flex-col h-[450px] overflow-hidden shadow-sm">
+                  <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center flex-shrink-0">
                     <div className="flex items-center gap-2">
-                      <span className="status-dot online" />
-                      <span className="text-[10px] font-bold text-slate-700">AI Repair Assistant</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-bold text-slate-700">AI Repair Assistant</span>
                     </div>
-                    <span className="text-[9px] text-slate-400 font-medium">{deflectProduct}</span>
+                    <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]" title={deflectProduct}>{deflectProduct}</span>
                   </div>
-                  <div className="chat-messages">
+                  
+                  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50/50">
                     {chatMessages.map((msg, index) => (
-                      <div key={index} className={`chat-bubble ${msg.role}`}>
-                        <div className="text-xs whitespace-pre-wrap leading-relaxed">
-                          {renderMarkdown(msg.content)}
+                      <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'}`}>
+                          <div className="whitespace-pre-wrap">{renderMarkdown(msg.content)}</div>
                         </div>
                       </div>
                     ))}
                     {chatLoading && (
-                      <div className="typing-indicator">
-                        <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                      <div className="flex justify-start">
+                        <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
                     )}
                     <div ref={chatEndRef} />
                   </div>
 
-                  <div className="flex gap-2 px-3 py-2 bg-slate-50 border-t border-slate-100">
-                    <button className="btn btn-success flex-1 py-1.5 text-xs font-bold" onClick={resolveDeflection}>
-                      <CheckCircle className="w-3.5 h-3.5" /> Resolved! Claim Payout
-                    </button>
-                    <button className="btn btn-secondary py-1.5 text-xs font-bold" onClick={() => {
-                      setChatMessages(prev => [...prev, { role: "bot", content: "Understood. Proceeding to circular logistics router. Head to L5 for shipping options, or L6 for refund routing." }]);
-                      setTimeout(() => setActiveTab("logistics"), 1500);
-                    }}>
-                      Still Return
-                    </button>
-                  </div>
+                  <div className="mt-auto flex flex-col flex-shrink-0">
+                    <div className="flex gap-2 px-3 py-2 bg-slate-50 border-t border-slate-100">
+                      <button className="btn btn-success flex-1 py-1.5 text-[11px] font-bold" onClick={resolveDeflection}>
+                        <CheckCircle className="w-3 h-3" /> Resolved! Claim Payout
+                      </button>
+                      <button className="btn btn-secondary flex-1 py-1.5 text-[11px] font-bold" onClick={() => {
+                        setChatMessages(prev => [...prev, { role: "bot", content: "Understood. Proceeding to circular logistics router. Head to L5 for shipping options, or L6 for refund routing." }]);
+                        setTimeout(() => setActiveTab("logistics"), 1500);
+                      }}>
+                        Still Return
+                      </button>
+                    </div>
 
-                  <form onSubmit={handleSendChatMessage} className="chat-input-area">
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      placeholder="Describe your issue..."
-                      disabled={chatLoading}
-                    />
-                    <button type="submit" className="btn btn-primary py-2 text-xs font-bold" disabled={chatLoading || !chatInput.trim()}>
-                      Send
-                    </button>
-                  </form>
+                    <form onSubmit={handleSendChatMessage} className="flex gap-2 p-3 bg-white border-t border-slate-200">
+                      <input
+                        type="text"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        placeholder="Describe your issue..."
+                        disabled={chatLoading}
+                      />
+                      <button type="submit" className="btn btn-primary py-2 px-5 text-xs font-bold" disabled={chatLoading || !chatInput.trim()}>
+                        Send
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1854,12 +1902,21 @@ export default function Home() {
                     </div>
                   )}
 
-                  <div className="border-t border-slate-200 pt-3 text-[10px] text-slate-500">
-                    <div className="font-bold text-slate-600 mb-1.5">Product Context</div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div><span className="text-slate-400">SKU:</span> <span className="font-mono font-bold">{gradingSku}</span></div>
-                      <div><span className="text-slate-400">User:</span> <span className="font-bold">{profileUserId}</span></div>
-                      <div className="col-span-2"><span className="text-slate-400">Product:</span> <span className="font-bold">{gradingItemName}</span></div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <div className="font-bold text-slate-600 mb-2 text-[10px] uppercase tracking-wider">Product Context</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
+                        <span className="text-xs font-mono text-slate-800 font-medium">{gradingSku}</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
+                        <span className="text-xs text-slate-800 font-medium">{profileUserId}</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col col-span-2">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Product</span>
+                        <span className="text-xs text-slate-800 font-medium truncate" title={gradingItemName}>{gradingItemName}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -1911,9 +1968,9 @@ export default function Home() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
-                      <Package className="w-10 h-10 text-slate-200" />
-                      <span className="text-xs text-slate-400 italic">Load a video and run grading to see the condition report here.</span>
+                    <div className="empty-state-card flex-1 mt-2">
+                      <Package className="icon" />
+                      <div className="text">Load a video and run grading to see the condition report here.</div>
                     </div>
                   )}
                 </div>
@@ -2019,9 +2076,9 @@ export default function Home() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
-                      <Map className="w-10 h-10 text-slate-200" />
-                      <span className="text-xs text-slate-400 italic">Enter ZIP codes and click Optimize to see the route map and cost comparison.</span>
+                    <div className="empty-state-card flex-1 mt-2">
+                      <Map className="icon" />
+                      <div className="text">Enter ZIP codes and click Optimize to see the route map and cost comparison.</div>
                     </div>
                   )}
                 </div>
@@ -2058,19 +2115,25 @@ export default function Home() {
                 <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-4">
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Refund Options</div>
 
-                  <div className="resolution-choices">
-                    <div className={`choice-card ${refundSelection === "cash" ? "selected" : ""}`} onClick={() => setRefundSelection("cash")}>
-                      <DollarSign className="w-5 h-5 text-slate-500 mb-0.5" />
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">Cash Refund</span>
-                      <span className="text-xl font-extrabold text-slate-800 font-mono">${refundBaseAmount.toFixed(2)}</span>
+                  <div className="grid grid-cols-2 gap-3 items-stretch h-full">
+                    <div className={`border-2 rounded-2xl p-4 flex flex-col gap-1.5 cursor-pointer relative transition-all ${refundSelection === "cash" ? "border-slate-800 bg-white shadow-md ring-1 ring-slate-800" : "border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300"}`} onClick={() => setRefundSelection("cash")}>
+                      <div className={`absolute top-3 right-3 w-4 h-4 rounded-full border-2 flex items-center justify-center ${refundSelection === "cash" ? "border-slate-800 bg-slate-800" : "border-slate-300 bg-white"}`}>
+                        {refundSelection === "cash" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                      <DollarSign className={`w-6 h-6 mb-1 ${refundSelection === "cash" ? "text-slate-800" : "text-slate-400"}`} />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cash Refund</span>
+                      <span className="text-2xl font-extrabold text-slate-800 font-mono">${refundBaseAmount.toFixed(2)}</span>
                       <span className="text-[10px] text-slate-400">Standard return value</span>
                     </div>
 
-                    <div className={`choice-card highlight-success ${refundSelection === "credits" ? "selected" : ""}`} onClick={() => setRefundSelection("credits")}>
-                      <span className="choice-badge">+30%</span>
-                      <Leaf className="w-5 h-5 text-emerald-600 mb-0.5" />
-                      <span className="text-[9px] font-bold text-emerald-600 uppercase">Green Credits</span>
-                      <span className="text-xl font-extrabold text-emerald-700 font-mono">${(refundBaseAmount * 1.3).toFixed(2)}</span>
+                    <div className={`border-2 rounded-2xl p-4 flex flex-col gap-1.5 cursor-pointer relative transition-all ${refundSelection === "credits" ? "border-emerald-600 bg-emerald-50 shadow-md ring-1 ring-emerald-600" : "border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-300"}`} onClick={() => setRefundSelection("credits")}>
+                      <div className={`absolute top-3 right-3 w-4 h-4 rounded-full border-2 flex items-center justify-center ${refundSelection === "credits" ? "border-emerald-600 bg-emerald-600" : "border-emerald-300 bg-white"}`}>
+                        {refundSelection === "credits" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                      <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm">+30%</span>
+                      <Leaf className={`w-6 h-6 mb-1 ${refundSelection === "credits" ? "text-emerald-600" : "text-emerald-400"}`} />
+                      <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Green Credits</span>
+                      <span className="text-2xl font-extrabold text-emerald-800 font-mono">${(refundBaseAmount * 1.3).toFixed(2)}</span>
                       <span className="text-[10px] text-emerald-600">Eco-augmented value</span>
                     </div>
                   </div>
@@ -2083,15 +2146,13 @@ export default function Home() {
                         { id: "swap", label: "Refurbished replacement swap", bonus: "+10%" },
                         { id: "repair", label: "Self-repair deflection", bonus: "+15%" },
                       ].map(({ id, label, bonus }) => (
-                        <label key={id} className="flex items-center gap-2.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={loyaltyActions.includes(id)}
-                            onChange={() => handleToggleLoyaltyAction(id)}
-                            className="w-4 h-4 rounded accent-emerald-600"
-                          />
-                          <span className="text-xs text-emerald-700 font-medium flex-1">{label}</span>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{bonus}</span>
+                        <label key={id} className="flex items-center gap-2.5 cursor-pointer bg-white border border-emerald-100 rounded-lg px-3 py-2.5 hover:border-emerald-300 hover:shadow-sm transition-all group">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${loyaltyActions.includes(id) ? "bg-emerald-600 border-emerald-600" : "border-emerald-300 bg-emerald-50 group-hover:border-emerald-400"}`}>
+                            {loyaltyActions.includes(id) && <CheckCircle className="w-3 h-3 text-white" />}
+                          </div>
+                          <span className={`text-xs font-medium flex-1 ${loyaltyActions.includes(id) ? "text-emerald-800" : "text-slate-600"}`}>{label}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0 ${loyaltyActions.includes(id) ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>{bonus}</span>
+                          <input type="checkbox" checked={loyaltyActions.includes(id)} onChange={() => handleToggleLoyaltyAction(id)} className="hidden" />
                         </label>
                       ))}
                     </div>
@@ -2134,9 +2195,9 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
-                      <Wallet className="w-10 h-10 text-slate-200" />
-                      <span className="text-xs text-slate-400 italic">Select a refund type and click Confirm Resolution to process the transaction.</span>
+                    <div className="empty-state-card flex-1 mt-2">
+                      <Wallet className="icon" />
+                      <div className="text">Select a refund type and click Confirm Resolution to process the transaction.</div>
                     </div>
                   )}
                 </div>
@@ -2164,45 +2225,45 @@ export default function Home() {
                   </div>
                 ) : (
                   marketplaceFeed.map((item, i) => (
-                    <div key={i} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col group hover:shadow-md transition-all relative">
+                    <div key={i} className="glass-card flex flex-col group relative overflow-hidden p-0">
                       {item.trust < 40 && (
                         <div className="absolute top-2 right-2 bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-rose-200 z-10 shadow-sm flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" /> High Risk Seller
                         </div>
                       )}
-                      <div className="h-40 overflow-hidden relative">
+                      <div className="aspect-[4/3] overflow-hidden relative border-b border-slate-100">
                         <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
-                        <div className="absolute bottom-2 left-2 flex gap-1">
-                          <div className="bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">
-                            Grade {item.grade}
-                          </div>
-                          <div className="bg-emerald-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
-                            <Leaf className="w-2.5 h-2.5" /> -{item.co2Saved}kg CO₂
-                          </div>
-                        </div>
                       </div>
+                      
                       <div className="p-4 flex flex-col flex-1">
-                        <div className="flex justify-between items-start mb-1">
-                          <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{item.distance} Away</div>
-                          <div className="text-[9px] text-slate-400 uppercase">{item.brand}</div>
+                        <div className="flex gap-1.5 mb-3 flex-wrap">
+                          <span className={`mini-badge ${item.grade.startsWith("A") ? "success" : "warning"}`}>Grade {item.grade}</span>
+                          <span className="mini-badge bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1"><Leaf className="w-2.5 h-2.5" /> -{item.co2Saved}kg CO₂</span>
+                          <span className="mini-badge bg-slate-50 text-slate-600 border-slate-200 flex items-center gap-1"><Map className="w-2.5 h-2.5" /> {item.distance} away</span>
                         </div>
-                        <h3 className="font-bold text-slate-800 text-sm leading-tight flex-1">{item.name}</h3>
                         
-                        <div className="flex items-end justify-between mt-3 mb-3 border-b border-slate-100 pb-3">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{item.brand}</div>
+                        <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{item.name}</h3>
+                        
+                        <div className="flex items-end justify-between mt-3 mb-4 border-t border-slate-100 pt-3">
                           <div>
                             <span className="text-emerald-600 font-extrabold text-lg font-mono">${item.price.toFixed(2)}</span>
-                            <span className="text-slate-400 text-[10px] line-through ml-1.5">${item.originalPrice.toFixed(2)}</span>
+                            <span className="text-slate-400 text-[10px] line-through ml-2">${item.originalPrice.toFixed(2)}</span>
                           </div>
-                          <div className="text-right">
-                            <div className="text-[9px] text-slate-500">Seller Trust</div>
-                            <div className={`font-mono text-xs font-bold ${item.trust > 80 ? "text-emerald-600" : item.trust > 40 ? "text-amber-600" : "text-rose-600"}`}>
-                              {item.trust}%
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Seller Trust</div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className={`h-full ${item.trust > 80 ? "bg-emerald-500" : item.trust > 40 ? "bg-amber-500" : "bg-rose-500"}`} style={{ width: `${item.trust}%` }} />
+                              </div>
+                              <span className={`font-mono text-[10px] font-bold ${item.trust > 80 ? "text-emerald-600" : item.trust > 40 ? "text-amber-600" : "text-rose-600"}`}>{item.trust}%</span>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="text-[10px] text-slate-500 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                          <strong>Earn {Math.round(item.price * 0.3)} Green Credits</strong> instantly by choosing this circular item instead of a new one.
+                        <div className="text-[10px] text-emerald-700 font-medium mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-start gap-1.5 mt-auto">
+                          <Award className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
+                          <span><strong>Earn {Math.round(item.price * 0.3)} Green Credits</strong> instantly by choosing this circular item.</span>
                         </div>
                         
                         <button 
@@ -2246,7 +2307,24 @@ export default function Home() {
         </main>
       </div>
 
-      {/* BRACKETING MODAL */}
+      <footer className="app-footer text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex justify-center mb-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2 L2 22 L22 22 Z" />
+                <circle cx="12" cy="14" r="3.5" strokeDasharray="3 2" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-xs font-bold text-slate-500">ReLoop Circular Logistics MVP</div>
+          <div className="text-[10px] text-slate-400 mt-1">Built with Next.js 16 · Vision AI · P2P Routing Engine · Global Ledger</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Personalization Engine · Interactive Repair Integration · SHA-256 Ledger</div>
+        </div>
+      </footer>
+    </div>
+
+    {/* BRACKETING MODAL */}
       {showBracketingModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4">
@@ -2281,9 +2359,9 @@ export default function Home() {
             <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/50">
               <div>
                 <h3 className="font-extrabold text-white text-lg flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-amber-500" /> Amazon Architecture X-Ray
+                  <Zap className="w-5 h-5 text-amber-500" /> Platform Architecture X-Ray
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">How Project Anti-Gravity scales using AWS and Bedrock.</p>
+                <p className="text-xs text-slate-400 mt-1">How ReLoop scales using advanced Cloud and AI infrastructure.</p>
               </div>
               <button onClick={() => setShowXRayModal(false)} className="text-slate-400 hover:text-white transition-colors">
                 <X className="w-6 h-6" />
@@ -2293,16 +2371,16 @@ export default function Home() {
             <div className="p-6 overflow-y-auto flex flex-col gap-6 bg-slate-900">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  { layer: "L1 & L2: Predictive & Vision", aws: "Amazon Bedrock & SageMaker", desc: "Computer vision models analyze images for fraud artifacts. Bedrock LLMs provide proactive return velocity warnings." },
-                  { layer: "L3: Generative AI Chat", aws: "Amazon Bedrock (Llama 3)", desc: "Streams interactive troubleshooting via API Gateway -> Lambda -> Bedrock to deflect returns before they happen." },
-                  { layer: "L4: Grading Ledger", aws: "Amazon DynamoDB", desc: "Immutable grading records stored in DynamoDB for fast retrieval, powering dynamic Seller Trust scores." },
-                  { layer: "L5: Hub Locker P2P Routing", aws: "Amazon Location Service", desc: "Calculates local buyer proximity and routes items directly to neighborhood Amazon Hub Lockers, bypassing Central FCs." },
-                  { layer: "L6: Green Economy Engine", aws: "AWS SQS & EventBridge", desc: "Asynchronous queues manage the Priority Jump ('Rapido') locks and Stripe payment events at massive scale." }
+                  { layer: "L1 & L2: Predictive & Vision", stack: "Proprietary Vision Engine", desc: "Computer vision models analyze images for fraud artifacts. Predictive LLMs provide proactive return velocity warnings." },
+                  { layer: "L3: Generative AI Chat", stack: "LLM Streaming API", desc: "Streams interactive troubleshooting via Edge API -> Lambda -> LLM to deflect returns before they happen." },
+                  { layer: "L4: Grading Ledger", stack: "Distributed Ledger DB", desc: "Immutable grading records stored in high-throughput NoSQL for fast retrieval, powering dynamic Seller Trust scores." },
+                  { layer: "L5: Distributed Routing", stack: "Geospatial Service", desc: "Calculates local buyer proximity and routes items directly to neighborhood drops, bypassing Central Warehouses." },
+                  { layer: "L6: Green Economy Engine", stack: "Event Queue Manager", desc: "Asynchronous queues manage the Priority Jump ('Rapido') locks and Stripe payment events at massive scale." }
                 ].map((item, i) => (
                   <div key={i} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col gap-2">
                     <div className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">{item.layer}</div>
                     <div className="text-sm font-extrabold text-white font-mono flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> {item.aws}
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> {item.stack}
                     </div>
                     <div className="text-xs text-slate-400 leading-relaxed">{item.desc}</div>
                   </div>
@@ -2317,22 +2395,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      <footer className="app-footer text-center">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex justify-center mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 2 L2 22 L22 22 Z" />
-                <circle cx="12" cy="14" r="3.5" strokeDasharray="3 2" />
-              </svg>
-            </div>
-          </div>
-          <div className="text-xs font-bold text-slate-500">Project Anti-Gravity Circular Logistics MVP</div>
-          <div className="text-[10px] text-slate-400 mt-1">Built with Next.js 16 · LLaMA 3.2 Vision · Leaflet/Nominatim · Shippo · Groq API</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Personalization Engine · iFixit Integration · SHA-256 Ledger · Canvas Confetti</div>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }

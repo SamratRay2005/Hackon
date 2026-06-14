@@ -795,7 +795,33 @@ input, button, select, textarea {
   box-shadow: 0 6px 16px rgba(220,38,38,0.25);
 }
 
-/* ===== INPUTS (general) ===== */
+
+
+/* ===== EMPTY STATE ===== */
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  min-height: 140px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+  color: var(--text-muted);
+  gap: 0.75rem;
+}
+.empty-state-card .icon {
+  width: 32px;
+  height: 32px;
+  color: #cbd5e1;
+}
+.empty-state-card .text {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 input[type="text"],
 input[type="email"],
 input[type="password"],
