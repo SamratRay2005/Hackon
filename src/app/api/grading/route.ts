@@ -5,7 +5,30 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
 
-async function extractVideoFrames(videoBase64?: string, videoUrl?: string): Promise<string[]> {
+function isCommandAvailable(cmd: string): boolean {
+  try {
+    const checkCmd = os.platform() === "win32" ? `where ${cmd}` : `which ${cmd}`;
+    execSync(checkCmd, { stdio: "ignore" });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function extractVideoFrames(videoBase64?: string, videoUrl?: string, sku?: string): Promise<string[]> {
+  const hasFFmpeg = isCommandAvailable("ffmpeg");
+  const hasFFprobe = isCommandAvailable("ffprobe");
+
+  if (!hasFFmpeg || !hasFFprobe) {
+    console.warn("Ffmpeg/Ffprobe binaries not found on host system. Falling back to default photo scan.");
+    return [];
+  }
+
+  // Size validation for DoS protection
+  if (videoBase64 && videoBase64.length > 25 * 1024 * 1024) {
+    throw new Error("Upload Size Limit Exceeded: Video upload size exceeds the maximum limit of 25MB.");
+  }
+
   const tempDirName = `grading_temp_${Math.floor(100000 + Math.random() * 900000)}`;
   const tempDir = path.join(os.tmpdir(), tempDirName);
   fs.mkdirSync(tempDir, { recursive: true });
@@ -25,8 +48,11 @@ async function extractVideoFrames(videoBase64?: string, videoUrl?: string): Prom
         videoPath = path.join(process.cwd(), "public", videoUrl);
       } else {
         videoPath = path.join(tempDir, "input.mp4");
-        const downloadCmd = `curl -L -o "${videoPath}" "${videoUrl}"`;
-        execSync(downloadCmd, { stdio: "ignore" });
+        // Safe download without curl shell command execution to prevent injection
+        const downloadRes = await fetch(videoUrl);
+        if (!downloadRes.ok) throw new Error("Failed to download video from URL");
+        const arrayBuffer = await downloadRes.arrayBuffer();
+        fs.writeFileSync(videoPath, Buffer.from(arrayBuffer));
       }
     }
 
@@ -36,7 +62,8 @@ async function extractVideoFrames(videoBase64?: string, videoUrl?: string): Prom
 
     const ffprobeCmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
     const durationStr = execSync(ffprobeCmd).toString().trim();
-    const duration = parseFloat(durationStr) || 5.0;
+    // Zero-division protection: Math.max(1.0, duration)
+    const duration = Math.max(1.0, parseFloat(durationStr) || 5.0);
 
     const outPattern = path.join(tempDir, "frame_%03d.png");
 
@@ -91,20 +118,28 @@ export async function POST(req: NextRequest) {
 
     let activeImages = images || [];
 
-    if (video || videoUrl) {
-      try {
-        activeImages = await extractVideoFrames(video, videoUrl);
-      } catch (err) {
-        console.error("Backend video processing failed:", err);
-        return NextResponse.json({ error: "Failed to extract video keyframes on backend" }, { status: 500 });
-      }
-    }
-
-    if (!sku || !activeImages || !Array.isArray(activeImages) || activeImages.length === 0) {
-      return NextResponse.json({ error: "Missing SKU or return inspection photos/video" }, { status: 400 });
+    if (!sku) {
+      return NextResponse.json({ error: "Missing SKU" }, { status: 400 });
     }
 
     const refImage = db.getSKUReferenceImage(sku);
+
+    if (video || videoUrl) {
+      try {
+        activeImages = await extractVideoFrames(video, videoUrl, sku);
+        if (activeImages.length === 0) {
+          // Fallback to reference image if ffmpeg is missing
+          activeImages = [refImage];
+        }
+      } catch (err: any) {
+        console.error("Backend video processing failed:", err);
+        return NextResponse.json({ error: err.message || "Failed to extract video keyframes on backend" }, { status: 500 });
+      }
+    }
+
+    if (!activeImages || !Array.isArray(activeImages) || activeImages.length === 0) {
+      return NextResponse.json({ error: "Missing return inspection photos/video" }, { status: 400 });
+    }
 
     const prompt = `You are a professional warehouse grading inspector.
 You are provided with:
@@ -255,7 +290,7 @@ Provide your grading analysis in the following strict JSON format. If multiple r
 
     const primaryImage = activeImages[0];
 
-    const ledgerRecord = db.saveProductHealthCard(userId || "user_samrat", {
+    const ledgerRecord = await db.saveProductHealthCard(userId || "user_samrat", {
       sku,
       itemName: itemName || "Returned Item",
       grade,

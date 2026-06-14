@@ -1,7 +1,86 @@
 /**
  * Services Helper Library - Intelligent Returns Bridge
- * Implements real API calls to Groq, iFixit, Shippo, and mocks DynamoDB / S3
+ * Implements real API calls to Groq, iFixit, Shippo, and DynamoDB / S3
  */
+
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { PRODUCT_CATALOG } from "./catalog";
+
+function getSeededOrders(userId: string) {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash << 5) - hash + userId.charCodeAt(i);
+    hash |= 0;
+  }
+  
+  const seedRandom = () => {
+    const x = Math.sin(hash++) * 10000;
+    return x - Math.floor(x);
+  };
+
+  const shuffled = [...PRODUCT_CATALOG];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(seedRandom() * (i + 1));
+    const temp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = temp;
+  }
+
+  const selected = shuffled.slice(0, 4);
+  
+  return selected.map((p) => {
+    let cat = "Other";
+    const sku = p.sku.toUpperCase();
+    if (sku.includes("DENIM") || sku.includes("TEE") || sku.includes("HOODIE") || sku.includes("FLANNEL") || sku.includes("PNT") || sku.includes("SWEATER") || sku.includes("PARKA") || sku.includes("SHORTS") || sku.includes("BLAZER") || sku.includes("DRESS") || sku.includes("JOGGER") || sku.includes("SKIRT") || sku.includes("CARDIGAN") || sku.includes("POLO") || sku.includes("VEST") || sku.includes("TRENCH") || sku.includes("JEAN") || sku.includes("SHIRT") || sku.includes("OVERALLS") || sku.includes("GLVS")) {
+      cat = "Apparel";
+    } else if (sku.includes("SHOE") || sku.includes("SNEAK") || sku.includes("BOOT") || sku.includes("SANDAL") || sku.includes("LOAFER") || sku.includes("CHELSEA") || sku.includes("TRAINER") || sku.includes("SLIP-ON") || sku.includes("OXFORD") || sku.includes("SLIPPER") || sku.includes("BROGUE") || sku.includes("ESPADRIL")) {
+      cat = "Footwear";
+    } else if (sku.includes("CF-MKR") || sku.includes("SPK-AIR") || sku.includes("BUDS") || sku.includes("HEADPHN") || sku.includes("KB-") || sku.includes("MOUSE") || sku.includes("MONITOR") || sku.includes("PWR-") || sku.includes("CHRG-") || sku.includes("HUB") || sku.includes("MIC") || sku.includes("WEBCAM") || sku.includes("HDD") || sku.includes("SSD") || sku.includes("CBL") || sku.includes("ROUTER") || sku.includes("TABLET") || sku.includes("E-READER") || sku.includes("SOUND-BAR") || sku.includes("TV-") || sku.includes("BAND")) {
+      cat = "Electronics";
+    } else if (sku.includes("BLENDER") || sku.includes("TOASTER") || sku.includes("KETTLE") || sku.includes("MUG") || sku.includes("SKILLET") || sku.includes("KNIFE") || sku.includes("PAN") || sku.includes("COOK") || sku.includes("FRYER") || sku.includes("JUICER") || sku.includes("SCALE") || sku.includes("OVEN") || sku.includes("GRNDR") || sku.includes("SLOW") || sku.includes("MIXER") || sku.includes("POT") || sku.includes("WAFFLE") || sku.includes("CONTAINR") || sku.includes("SPICE") || sku.includes("HUMID") || sku.includes("PURIFY") || sku.includes("VACUUM") || sku.includes("ROBO") || sku.includes("IRON") || sku.includes("STEAMER") || sku.includes("FAN") || sku.includes("HEAT") || sku.includes("DIFFUSE") || sku.includes("LBL")) {
+      cat = "Home & Kitchen";
+    } else {
+      cat = "Recreation & Lifestyle";
+    }
+
+    const day = Math.floor(1 + seedRandom() * 14);
+    const purchaseDate = `2026-06-${day < 10 ? '0' + day : day}`;
+
+    return {
+      sku: p.sku,
+      name: p.name,
+      price: p.price,
+      purchaseDate,
+      category: cat
+    };
+  });
+}
+
+const hasAWSCredentials = !!(
+  (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) ||
+  process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ||
+  process.env.AWS_WEB_IDENTITY_TOKEN_FILE
+);
+
+let useAWS = false;
+let ddbDocClient: any = null;
+let s3Client: any = null;
+
+if (hasAWSCredentials) {
+  try {
+    const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION || "us-east-1" });
+    ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
+    s3Client = new S3Client({ region: process.env.AWS_REGION || "us-east-1" });
+    useAWS = true;
+    console.log("DynamoDB and S3 clients successfully initialized.");
+  } catch (e) {
+    console.warn("AWS SDK Client initialization failed. Falling back to local mocks.", e);
+    useAWS = false;
+  }
+}
 
 // Simulated State (Mock DynamoDB & S3 Ledger)
 // To keep data persistent across page reloads during the session, we use global state on the server.
@@ -9,7 +88,7 @@ const globalState: {
   sessions: Record<string, any>;
   claims: Record<string, Array<any>>;
   ledger: Record<string, Array<any>>;
-  wallets: Record<string, { credits: number; sustainabilityScore: number }>;
+  wallets: Record<string, { credits: number; sustainabilityScore: number; orders?: Array<any> }>;
   buyerDemand: Array<any>;
 } = {
   sessions: {},
@@ -80,71 +159,183 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
 // ----------------------------------------------------
 export const db = {
   getSKUReferenceImage: (sku: string) => {
-    return SKU_REFERENCE_IMAGES[sku] || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500";
+    if (SKU_REFERENCE_IMAGES[sku]) return SKU_REFERENCE_IMAGES[sku];
+    // Find product in catalog and return dynamic Unsplash image based on name/category keywords
+    const p = PRODUCT_CATALOG.find(x => x.sku === sku);
+    if (p) {
+      const name = p.name.toLowerCase();
+      if (name.includes("hoodie") || name.includes("pullover")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
+      if (name.includes("shirt") || name.includes("polo") || name.includes("tee")) return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500";
+      if (name.includes("jacket") || name.includes("parka") || name.includes("windbreaker") || name.includes("vest")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
+      if (name.includes("jean") || name.includes("pants") || name.includes("chinos") || name.includes("cargo") || name.includes("jogger") || name.includes("skirt")) return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
+      if (name.includes("shoe") || name.includes("sneaker") || name.includes("boot") || name.includes("sandal") || name.includes("loafer") || name.includes("chelsea") || name.includes("oxford")) return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
+      if (name.includes("coffee") || name.includes("kettle") || name.includes("grinder") || name.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
+      if (name.includes("speaker") || name.includes("headphone") || name.includes("earbuds") || name.includes("soundbar")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
+      if (name.includes("keyboard") || name.includes("mouse") || name.includes("monitor") || name.includes("webcam")) return "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500";
+      if (name.includes("blender") || name.includes("toaster") || name.includes("fryer") || name.includes("juicer") || name.includes("cooker") || name.includes("mixer")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
+      if (name.includes("backpack") || name.includes("bag") || name.includes("duffel") || name.includes("bottle")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+    }
+    return "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500";
   },
 
-  initUser: (userId: string) => {
+  getS3PresignedUploadUrl: async (bucketName: string, key: string) => {
+    if (!useAWS) {
+      return `/api/mock-upload?key=${encodeURIComponent(key)}`;
+    }
+    try {
+      const command = new PutObjectCommand({ Bucket: bucketName, Key: key });
+      return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    } catch (e) {
+      console.error("Failed to generate presigned upload URL:", e);
+      return `/api/mock-upload?key=${encodeURIComponent(key)}`;
+    }
+  },
+
+  initUser: async (userId: string) => {
     if (!userId) return;
-    if (!globalState.claims[userId]) globalState.claims[userId] = [];
-    if (!globalState.ledger[userId]) globalState.ledger[userId] = [];
-    if (!globalState.wallets[userId]) {
-      globalState.wallets[userId] = {
-        credits: 1000,
-        sustainabilityScore: 0
-      };
+    const userOrders = getSeededOrders(userId);
+
+    if (!useAWS) {
+      if (!globalState.claims[userId]) globalState.claims[userId] = [];
+      if (!globalState.ledger[userId]) globalState.ledger[userId] = [];
+      if (!globalState.wallets[userId]) {
+        globalState.wallets[userId] = {
+          credits: 1000,
+          sustainabilityScore: 0,
+          orders: userOrders
+        };
+      }
+      return;
+    }
+    try {
+      await ddbDocClient.send(new PutCommand({
+        TableName: "Users",
+        Item: { userId, credits: 1000, sustainabilityScore: 0, orders: userOrders },
+        ConditionExpression: "attribute_not_exists(userId)"
+      }));
+    } catch (e) {
+      // User already initialized in DB
     }
   },
 
   // Cart session for bracketing
-  saveCartSession: (sessionId: string, sessionData: any) => {
-    globalState.sessions[sessionId] = {
-      ...globalState.sessions[sessionId],
-      ...sessionData,
-      updatedAt: new Date().toISOString()
-    };
-    return globalState.sessions[sessionId];
+  saveCartSession: async (sessionId: string, sessionData: any) => {
+    if (!useAWS) {
+      globalState.sessions[sessionId] = {
+        ...globalState.sessions[sessionId],
+        ...sessionData,
+        updatedAt: new Date().toISOString()
+      };
+      return globalState.sessions[sessionId];
+    }
+    try {
+      const item = {
+        sessionId,
+        ...sessionData,
+        updatedAt: new Date().toISOString()
+      };
+      await ddbDocClient.send(new PutCommand({
+        TableName: "Sessions",
+        Item: item
+      }));
+      return item;
+    } catch (e) {
+      console.error("Failed to save cart session in DynamoDB:", e);
+      // Fallback
+      globalState.sessions[sessionId] = {
+        ...globalState.sessions[sessionId],
+        ...sessionData,
+        updatedAt: new Date().toISOString()
+      };
+      return globalState.sessions[sessionId];
+    }
   },
   
-  getCartSession: (sessionId: string) => {
-    return globalState.sessions[sessionId] || null;
+  getCartSession: async (sessionId: string) => {
+    if (!useAWS) {
+      return globalState.sessions[sessionId] || null;
+    }
+    try {
+      const res = await ddbDocClient.send(new GetCommand({
+        TableName: "Sessions",
+        Key: { sessionId }
+      }));
+      return res.Item || null;
+    } catch (e) {
+      console.error("Failed to get cart session from DynamoDB:", e);
+      return globalState.sessions[sessionId] || null;
+    }
   },
 
   // Fraud return claim tracking
-  saveClaim: (userId: string, claim: any) => {
-    db.initUser(userId);
+  saveClaim: async (userId: string, claim: any) => {
+    await db.initUser(userId);
     const newClaim = {
       id: `claim-${Math.floor(100 + Math.random() * 900)}`,
       date: new Date().toISOString().split("T")[0],
       userId,
       ...claim
     };
-    globalState.claims[userId].unshift(newClaim);
-    return newClaim;
-  },
-
-  getClaims: (userId?: string) => {
-    if (userId) {
-      db.initUser(userId);
-      return globalState.claims[userId];
+    if (!useAWS) {
+      globalState.claims[userId].unshift(newClaim);
+      return newClaim;
     }
-    return Object.values(globalState.claims).flat();
+    try {
+      await ddbDocClient.send(new PutCommand({
+        TableName: "Claims",
+        Item: newClaim
+      }));
+      return newClaim;
+    } catch (e) {
+      console.error("Failed to save claim in DynamoDB:", e);
+      globalState.claims[userId].unshift(newClaim);
+      return newClaim;
+    }
   },
 
-  getUserReturnHistory: (userId: string, priorCount?: number) => {
-    db.initUser(userId);
-    const userClaims = globalState.claims[userId] || [];
-    const totalCount = userClaims.length + (priorCount || 0);
+  getClaims: async (userId?: string) => {
+    if (!useAWS) {
+      if (userId) {
+        await db.initUser(userId);
+        return globalState.claims[userId];
+      }
+      return Object.values(globalState.claims).flat();
+    }
+    try {
+      if (userId) {
+        const res = await ddbDocClient.send(new ScanCommand({
+          TableName: "Claims",
+          FilterExpression: "userId = :userId",
+          ExpressionAttributeValues: { ":userId": userId }
+        }));
+        return res.Items || [];
+      }
+      const res = await ddbDocClient.send(new ScanCommand({
+        TableName: "Claims"
+      }));
+      return res.Items || [];
+    } catch (e) {
+      console.error("Failed to get claims from DynamoDB:", e);
+      if (userId) return globalState.claims[userId] || [];
+      return Object.values(globalState.claims).flat();
+    }
+  },
+
+  getUserReturnHistory: async (userId: string, priorCount?: number) => {
+    await db.initUser(userId);
+    const claims = await db.getClaims(userId);
+    const totalCount = claims.length + (priorCount || 0);
     return {
       totalReturns30Days: totalCount,
-      approvedReturns: userClaims.filter(c => c.status === "APPROVED").length + (priorCount ? Math.floor(priorCount * 0.8) : 0),
-      blockedReturns: userClaims.filter(c => c.status === "BLOCKED").length + (priorCount ? Math.floor(priorCount * 0.2) : 0),
-      history: userClaims
+      approvedReturns: claims.filter((c: any) => c.status === "APPROVED").length + (priorCount ? Math.floor(priorCount * 0.8) : 0),
+      blockedReturns: claims.filter((c: any) => c.status === "BLOCKED").length + (priorCount ? Math.floor(priorCount * 0.2) : 0),
+      history: claims
     };
   },
 
   // Product Health ledger
-  saveProductHealthCard: (userId: string, report: any) => {
-    db.initUser(userId);
+  saveProductHealthCard: async (userId: string, report: any) => {
+    await db.initUser(userId);
     const hash = require("crypto")
       .createHash("sha256")
       .update(JSON.stringify(report))
@@ -157,33 +348,157 @@ export const db = {
       hash,
       timestamp: new Date().toISOString()
     };
-    globalState.ledger[userId].unshift(record);
-    return record;
+    if (!useAWS) {
+      globalState.ledger[userId].unshift(record);
+      return record;
+    }
+    try {
+      await ddbDocClient.send(new PutCommand({
+        TableName: "Ledger",
+        Item: record
+      }));
+      return record;
+    } catch (e) {
+      console.error("Failed to save product health card in DynamoDB:", e);
+      globalState.ledger[userId].unshift(record);
+      return record;
+    }
   },
 
-  getLedger: (userId?: string) => {
-    if (userId) {
-      db.initUser(userId);
-      return globalState.ledger[userId];
+  getLedger: async (userId?: string) => {
+    if (!useAWS) {
+      if (userId) {
+        await db.initUser(userId);
+        return globalState.ledger[userId];
+      }
+      return Object.values(globalState.ledger).flat();
     }
-    return Object.values(globalState.ledger).flat();
+    try {
+      if (userId) {
+        const res = await ddbDocClient.send(new ScanCommand({
+          TableName: "Ledger",
+          FilterExpression: "userId = :userId",
+          ExpressionAttributeValues: { ":userId": userId }
+        }));
+        return res.Items || [];
+      }
+      const res = await ddbDocClient.send(new ScanCommand({
+        TableName: "Ledger"
+      }));
+      return res.Items || [];
+    } catch (e) {
+      console.error("Failed to get ledger from DynamoDB:", e);
+      if (userId) return globalState.ledger[userId] || [];
+      return Object.values(globalState.ledger).flat();
+    }
   },
 
   // Wallet and Loyalty
-  getWallet: (userId: string) => {
-    db.initUser(userId);
-    return globalState.wallets[userId];
+  getWallet: async (userId: string) => {
+    await db.initUser(userId);
+    const userOrders = getSeededOrders(userId);
+
+    if (!useAWS) {
+      return globalState.wallets[userId];
+    }
+    try {
+      const res = await ddbDocClient.send(new GetCommand({
+        TableName: "Users",
+        Key: { userId }
+      }));
+      if (res.Item) {
+        return { 
+          credits: res.Item.credits, 
+          sustainabilityScore: res.Item.sustainabilityScore,
+          orders: res.Item.orders || userOrders
+        };
+      }
+      return { credits: 1000, sustainabilityScore: 0, orders: userOrders };
+    } catch (e) {
+      console.error("Failed to get wallet from DynamoDB:", e);
+      return globalState.wallets[userId];
+    }
   },
 
-  updateWallet: (userId: string, creditsAdded: number, co2SavedAdded: number) => {
-    db.initUser(userId);
-    globalState.wallets[userId].credits += creditsAdded;
-    globalState.wallets[userId].sustainabilityScore += co2SavedAdded;
-    return globalState.wallets[userId];
+  updateWallet: async (userId: string, creditsAdded: number, co2SavedAdded: number) => {
+    await db.initUser(userId);
+    if (!useAWS) {
+      globalState.wallets[userId].credits += creditsAdded;
+      globalState.wallets[userId].sustainabilityScore += co2SavedAdded;
+      return globalState.wallets[userId];
+    }
+    try {
+      const res = await ddbDocClient.send(new UpdateCommand({
+        TableName: "Users",
+        Key: { userId },
+        UpdateExpression: "ADD credits :c, sustainabilityScore :s",
+        ExpressionAttributeValues: {
+          ":c": creditsAdded,
+          ":s": co2SavedAdded
+        },
+        ReturnValues: "ALL_NEW"
+      }));
+      return {
+        credits: res.Attributes?.credits ?? 0,
+        sustainabilityScore: res.Attributes?.sustainabilityScore ?? 0
+      };
+    } catch (e) {
+      console.error("Failed to update wallet in DynamoDB:", e);
+      globalState.wallets[userId].credits += creditsAdded;
+      globalState.wallets[userId].sustainabilityScore += co2SavedAdded;
+      return globalState.wallets[userId];
+    }
   },
 
-  getBuyerDemand: (sku: string) => {
-    return globalState.buyerDemand.filter(d => d.sku === sku);
+  getBuyerDemand: (sku: string, returnerZip?: string) => {
+    const list = globalState.buyerDemand.filter(d => d.sku === sku && !d.reserved);
+    if (list.length > 0) return list;
+    
+    // Dynamically generate a buyer demand if none exists for this SKU
+    const p = PRODUCT_CATALOG.find(x => x.sku === sku);
+    if (!p) return [];
+
+    const names = ["Alice Chen", "David Kim", "Marcus Aurelius", "Sarah Connor", "Bruce Wayne", "Clark Kent", "Peter Parker"];
+    
+    // Default to matching returner zip or choosing a close one if returner zip is provided
+    let buyerZip = "98004";
+    if (returnerZip) {
+      const isIndianZip = /^\d{6}$/.test(returnerZip.trim());
+      if (isIndianZip) {
+        const numeric = parseInt(returnerZip) || 411030;
+        buyerZip = String(numeric + (sku.length % 5) - 2);
+      } else {
+        const numeric = parseInt(returnerZip);
+        if (!isNaN(numeric)) {
+          buyerZip = String(numeric + (sku.length % 5) - 2);
+        } else {
+          buyerZip = "98004";
+        }
+      }
+    }
+
+    const nameIndex = sku.length % names.length;
+    const generated = {
+      sku: p.sku,
+      name: p.name,
+      buyerZip,
+      nameBuyer: names[nameIndex],
+      distance: 5 + (sku.length % 15),
+      size: p.sizes[sku.length % p.sizes.length],
+      reserved: false
+    };
+    
+    globalState.buyerDemand.push(generated);
+    return [generated];
+  },
+
+  reserveBuyerDemand: (sku: string, buyerZip: string) => {
+    const demand = globalState.buyerDemand.find(d => d.sku === sku && d.buyerZip === buyerZip && !d.reserved);
+    if (demand) {
+      demand.reserved = true;
+      return true;
+    }
+    return false;
   }
 };
 

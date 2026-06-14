@@ -26,6 +26,7 @@ import {
   Cpu
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 // ----------------------------------------------------
 // HUMAN-READABLE HIGH-FIDELITY MOCK SVG ILLUSTRATIONS
@@ -315,6 +316,7 @@ function WebcamCapture({ onCapture, overlayType }: WebcamCaptureProps) {
   );
 }
 
+
 // ----------------------------------------------------
 // MAIN DASHBOARD COMPONENT
 // ----------------------------------------------------
@@ -350,9 +352,33 @@ export default function Home() {
   });
 
   // Layer 1 - Sizing Cart State
-  const [cart, setCart] = useState<Array<{ id: string; sku: string; name: string; size: string; price: number }>>([
-    { id: "1", sku: "DENIM-JKT-001", name: "Classic Denim Jacket", size: "M", price: 120.00 }
-  ]);
+  const [cart, setCart] = useState<Array<{ id: string; sku: string; name: string; size: string; price: number }>>([]);
+  const [selectedProductSku, setSelectedProductSku] = useState("DENIM-JKT-001");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const filteredSuggestions = React.useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return PRODUCT_CATALOG.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      p.sku.toLowerCase().includes(query)
+    ).slice(0, 8);
+  }, [searchQuery]);
+
   const [showBracketingModal, setShowBracketingModal] = useState(false);
   const [sizingImage, setSizingImage] = useState<string | null>(null);
   const [sizingLoading, setSizingLoading] = useState(false);
@@ -399,7 +425,11 @@ export default function Home() {
   const [labelGenerated, setLabelGenerated] = useState(false);
 
   // Layer 6 - Green Credits Loyalty State
-  const [walletInfo, setWalletInfo] = useState({ credits: 1250, sustainabilityScore: 48 });
+  const [walletInfo, setWalletInfo] = useState<{
+    credits: number;
+    sustainabilityScore: number;
+    orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string }>;
+  }>({ credits: 1000, sustainabilityScore: 0, orders: [] });
   const [refundSelection, setRefundSelection] = useState<"cash" | "credits">("credits");
   const [loyaltyActions, setLoyaltyActions] = useState<Array<string>>(["p2p", "repair"]);
   const [refundBaseAmount, setRefundBaseAmount] = useState(120.00);
@@ -438,6 +468,51 @@ export default function Home() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, chatLoading]);
+
+  // Synchronize state across all tabs whenever selectedProductSku changes
+  useEffect(() => {
+    const p = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
+    if (p) {
+      setFraudSku(p.sku);
+      setFraudItemName(p.name);
+      setLogisticsSku(p.sku);
+      setGradingSku(p.sku);
+      setGradingItemName(p.name);
+      setRefundBaseAmount(p.price);
+      
+      const isApparelOrFootwear = p.sizes.includes("S") || p.sizes.includes("M") || p.sizes.includes("L") || p.sizes.includes("XL") || p.sizes.includes("7") || p.sizes.includes("8") || p.sizes.includes("9") || p.sizes.includes("10") || p.sizes.includes("11") || p.sizes.includes("12");
+      if (!isApparelOrFootwear) {
+        setDeflectProduct(p.name);
+        setDeflectSku(p.sku);
+        fetchGuidesForProduct(p.name);
+      }
+    }
+  }, [selectedProductSku]);
+
+  // Automatically load the user's first order as the active return candidate upon login
+  useEffect(() => {
+    if (walletInfo.orders && walletInfo.orders.length > 0) {
+      const firstOrder = walletInfo.orders[0];
+      setSelectedProductSku(firstOrder.sku);
+      setFraudSku(firstOrder.sku);
+      setFraudItemName(firstOrder.name);
+      setLogisticsSku(firstOrder.sku);
+      setRefundBaseAmount(firstOrder.price);
+      setGradingSku(firstOrder.sku);
+      setGradingItemName(firstOrder.name);
+
+      const isApparelOrFootwear = firstOrder.category.toLowerCase() === "apparel" || firstOrder.category.toLowerCase() === "footwear";
+      if (!isApparelOrFootwear) {
+        setDeflectProduct(firstOrder.name);
+        setDeflectSku(firstOrder.sku);
+        fetchGuidesForProduct(firstOrder.sku === "CF-Mkr-99" ? "coffee maker" : firstOrder.name);
+        setChatMessages([{
+          role: "bot",
+          content: `Hi there! I see you want to return your **${firstOrder.name}** due to functionality issues. Before we generate a shipping label, let's see if we can resolve this together! I've loaded the troubleshooting guide. Can you tell me if the device turns on at all when plugged in?`
+        }]);
+      }
+    }
+  }, [walletInfo.orders]);
 
   // Handle Login authentication validation
   const handleSignIn = (e: React.FormEvent) => {
@@ -501,9 +576,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          choice: "credits",
-          actions: [],
-          baseAmount: 100.0,
+          choice: "init",
           userId: userSession.userId
         })
       });
@@ -586,30 +659,59 @@ export default function Home() {
   // Fetch guides from iFixit
   const fetchGuidesForProduct = async (query: string) => {
     try {
-      if (query.toLowerCase().includes("coffee")) {
-        setIfixitGuides([
-          { id: 101, title: "Drip Coffee Maker Heating Element Replacement", url: "https://www.ifixit.com/Guide/Drip+Coffee+Maker+Heating+Element+Replacement/10292", summary: "Replace the heating element inside your standard drip coffee maker." },
-          { id: 102, title: "How to Descale a Coffee Machine", url: "https://www.ifixit.com/Guide/How+to+Descale+a+Coffee+Machine/11883", summary: "Descale the water pathways to clear hard mineral blockage." }
-        ]);
-      } else {
-        setIfixitGuides([
-          { id: 201, title: "Bluetooth Speaker Battery Swap", url: "https://www.ifixit.com/Guide/Bluetooth+Speaker+Battery+Replacement/8844", summary: "Swap the lithium battery inside your portable Bluetooth speaker." }
-        ]);
+      const response = await fetch(`https://www.ifixit.com/api/2.0/guides?query=${encodeURIComponent(query)}&limit=3`);
+      if (response.ok) {
+        const data = await response.json();
+        const guides = data.guides.map((g: any) => ({
+          id: g.guideid,
+          title: g.title,
+          url: g.url,
+          summary: g.summary || "",
+          imageUrl: g.image?.medium || null
+        }));
+        
+        if (guides.length > 0) {
+          setIfixitGuides(guides);
+          return;
+        }
       }
     } catch (e) {
-      console.error(e);
+      console.error("Direct iFixit API fetch failed, falling back to local database", e);
+    }
+
+    // High-fidelity fallback database for demo reliability
+    const fallbackDB: Record<string, Array<any>> = {
+      "coffee": [
+        { id: 101, title: "Drip Coffee Maker Heating Element Replacement", url: "https://www.ifixit.com/Guide/Drip+Coffee+Maker+Heating+Element+Replacement/10292", summary: "Replace the heating element inside your standard drip coffee maker." },
+        { id: 102, title: "How to Descale a Coffee Machine", url: "https://www.ifixit.com/Guide/How+to+Descale+a+Coffee+Machine/11883", summary: "Descale the water pathways to clear hard mineral blockage." }
+      ],
+      "speaker": [
+        { id: 201, title: "Bluetooth Speaker Battery Swap", url: "https://www.ifixit.com/Guide/Bluetooth+Speaker+Battery+Replacement/8844", summary: "Swap the lithium battery inside your portable Bluetooth speaker." }
+      ]
+    };
+
+    const normQuery = query.toLowerCase();
+    if (normQuery.includes("coffee") || normQuery.includes("maker")) {
+      setIfixitGuides(fallbackDB["coffee"]);
+    } else if (normQuery.includes("speaker") || normQuery.includes("sound")) {
+      setIfixitGuides(fallbackDB["speaker"]);
+    } else {
+      setIfixitGuides([
+        { id: 99, title: `General Troubleshooting for ${query}`, url: "https://www.ifixit.com/Device/Electronics", summary: "Follow standard diagnostics for electrical and power issues." }
+      ]);
     }
   };
 
   // --- LAYER 1 SIZING CART HANDLERS ---
   const handleAddToCart = (size: string) => {
-    const isAlreadyBracketed = cart.some(item => item.sku === "DENIM-JKT-001");
+    const selectedProd = PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0];
+    const isAlreadyBracketed = cart.some(item => item.sku === selectedProd.sku);
     const newCart = [...cart, { 
       id: Math.random().toString(), 
-      sku: "DENIM-JKT-001", 
-      name: "Classic Denim Jacket", 
+      sku: selectedProd.sku, 
+      name: selectedProd.name, 
       size, 
-      price: 120.00 
+      price: selectedProd.price 
     }];
     setCart(newCart);
 
@@ -625,6 +727,15 @@ export default function Home() {
   const triggerSizeAssist = async () => {
     if (!sizingImage) return;
     setSizingLoading(true);
+
+    // Find which SKU is duplicated (bracketed) in the cart
+    const skuCounts: Record<string, number> = {};
+    cart.forEach(item => {
+      skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1;
+    });
+    const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
+    const bracketedSizes = cart.filter(item => item.sku === bracketedSku).map(item => item.size);
+
     try {
       const res = await fetch("/api/size-assist", {
         method: "POST",
@@ -632,8 +743,8 @@ export default function Home() {
         body: JSON.stringify({
           image: sizingImage,
           brand: "UrbanEco",
-          sku: "DENIM-JKT-001",
-          sizes: cart.map(i => i.size),
+          sku: bracketedSku,
+          sizes: bracketedSizes,
           sessionId: `session-${profileUserId}`
         })
       });
@@ -649,10 +760,18 @@ export default function Home() {
   };
 
   const applySizeRecommendation = (recommendedSize: string) => {
-    const filteredCart = cart.filter(item => item.sku !== "DENIM-JKT-001");
+    // Find which SKU is duplicated (bracketed) in the cart
+    const skuCounts: Record<string, number> = {};
+    cart.forEach(item => {
+      skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1;
+    });
+    const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
+    const bracketedProd = PRODUCT_CATALOG.find(p => p.sku === bracketedSku) || PRODUCT_CATALOG[0];
+
+    const filteredCart = cart.filter(item => item.sku !== bracketedSku);
     setCart([
       ...filteredCart,
-      { id: "rec-size", sku: "DENIM-JKT-001", name: "Classic Denim Jacket", size: recommendedSize, price: 120.00 }
+      { id: "rec-size", sku: bracketedSku, name: bracketedProd.name, size: recommendedSize, price: bracketedProd.price }
     ]);
     setShowBracketingModal(false);
     setSizingResult(null);
@@ -766,10 +885,9 @@ export default function Home() {
         body: JSON.stringify({
           userId: profileUserId,
           productName: deflectProduct,
+          sku: deflectSku,
           reasonCode: deflectReason,
-          deflected: true,
-          co2Saved: 5,
-          creditsAwarded: 150
+          deflected: true
         })
       });
       if (res.ok) {
@@ -1298,14 +1416,76 @@ export default function Home() {
         <main className="flex flex-col gap-6">
           {/* TAB 0 - LEDGER CHAIN */}
           {activeTab === "dashboard" && (
-            <div className="glass-card flex flex-col gap-6">
-              <div className="section-title-bar">
-                <h2>Product Health & Circular Ledger</h2>
-                <span className="section-badge badge-layer-4">Ledger Overview</span>
+            <div className="flex flex-col gap-6">
+              {/* Return Center / Order History */}
+              <div className="glass-card flex flex-col gap-4 border-indigo-500/15 bg-indigo-950/5">
+                <div className="section-title-bar">
+                  <h2>Circular Return Center</h2>
+                  <span className="section-badge badge-layer-1">Order History</span>
+                </div>
+                <p className="text-gray-400 text-xs">
+                  Select a recently purchased product from your order history to initiate a circular return or self-repair deflection.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(walletInfo.orders || [
+                    { sku: "CF-Mkr-99", name: "Smart Drip Coffee Maker", price: 89.00, purchaseDate: "2026-06-01", category: "appliances" },
+                    { sku: "SPK-AIR-12", name: "HiFi Wireless Speaker", price: 150.00, purchaseDate: "2026-05-28", category: "electronics" },
+                    { sku: "DENIM-JKT-001", name: "Classic Denim Jacket", price: 120.00, purchaseDate: "2026-06-05", category: "apparel" },
+                    { sku: "FLANNEL-RED-02", name: "Classic Red Buffalo Check Flannel", price: 55.00, purchaseDate: "2026-06-10", category: "apparel" }
+                  ]).map(order => (
+                    <div key={order.sku} className="bg-gray-900/60 p-4 rounded-xl border border-gray-800 hover:border-indigo-500/30 transition-all flex flex-col justify-between gap-3 relative overflow-hidden group">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                            {order.category}
+                          </span>
+                          <h4 className="font-semibold text-sm text-gray-200 mt-2">{order.name}</h4>
+                          <span className="text-[10px] text-gray-500 font-mono block mt-1">SKU: {order.sku} | Purchased: {order.purchaseDate}</span>
+                        </div>
+                        <span className="text-emerald-400 font-bold font-mono text-sm">${order.price.toFixed(2)}</span>
+                      </div>
+                      
+                      <button
+                        className="btn btn-secondary py-2 text-xs font-semibold w-full bg-gray-950 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all"
+                        onClick={() => {
+                          setSelectedProductSku(order.sku);
+                          // Auto navigate to correct layer based on product type
+                          if (order.category.toLowerCase() === "apparel" || order.category.toLowerCase() === "footwear") {
+                            setActiveTab("size-assist");
+                          } else {
+                            // Category: Electronics / Appliances -> deflect chat!
+                            setDeflectProduct(order.name);
+                            setDeflectSku(order.sku);
+                            fetchGuidesForProduct(order.sku === "CF-Mkr-99" ? "coffee maker" : order.name);
+                            setChatMessages([{
+                              role: "bot",
+                              content: `Hi there! I see you want to return your **${order.name}** due to functionality issues. Before we generate a shipping label, let's see if we can resolve this together! I've loaded the troubleshooting guide. Can you tell me if the device turns on at all when plugged in?`
+                            }]);
+                            setActiveTab("deflection");
+                          }
+                          // Also set for grading, logistics, and wallet refund choices
+                          setFraudSku(order.sku);
+                          setFraudItemName(order.name);
+                          setLogisticsSku(order.sku);
+                          setRefundBaseAmount(order.price);
+                        }}
+                      >
+                        {order.category.toLowerCase() === "apparel" ? "Run Sizing Audit / Return" : "Troubleshoot / Return"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="text-gray-400 text-sm">
-                Immutable registry chain recording circular transactions for active User ID **{profileUserId}**. Tracks returns, grading taxonomy results, and deflection resolutions.
-              </p>
+
+              {/* Product Health & Circular Ledger */}
+              <div className="glass-card flex flex-col gap-6">
+                <div className="section-title-bar">
+                  <h2>Product Health & Circular Ledger</h2>
+                  <span className="section-badge badge-layer-4">Ledger Overview</span>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  Immutable registry chain recording circular transactions for active User ID **{profileUserId}**. Tracks returns, grading taxonomy results, and deflection resolutions.
+                </p>
 
               <div>
                 <table className="size-chart-table">
@@ -1346,6 +1526,7 @@ export default function Home() {
                 </table>
               </div>
             </div>
+          </div>
           )}
 
           {/* TAB 1 - SIZING ASSIST */}
@@ -1357,61 +1538,165 @@ export default function Home() {
               </div>
               
               <div className="demo-split-grid">
-                <div className="glass-card flex flex-col gap-4 border-indigo-500/10 bg-indigo-950/5">
+                <div ref={searchContainerRef} className="glass-card flex flex-col gap-5 border-indigo-500/10 bg-indigo-950/5 relative">
                   <h3 className="text-sm font-semibold text-indigo-300 flex items-center gap-2">
                     <ShoppingBag className="w-4.5 h-4.5" />
                     Personalized Cart ({profileUserId})
                   </h3>
-                  <div className="flex flex-col gap-2">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex justify-between items-center bg-gray-900/60 p-3 rounded-lg border border-gray-800">
-                        <div>
-                          <div className="font-semibold text-sm">{item.name}</div>
-                          <div className="text-xs text-gray-400">SKU: {item.sku} | Size: <span className="text-indigo-300 font-bold">{item.size}</span></div>
-                        </div>
-                        <button className="text-gray-500 hover:text-rose-400 transition" onClick={() => handleRemoveFromCart(item.id)}>
-                          <X className="w-4.5 h-4.5" />
-                        </button>
+
+                  <div className="relative flex flex-col gap-1.5 z-30">
+                    <label className="text-[11px] font-semibold text-indigo-200">Search Product Catalog</label>
+                    <div className="relative">
+                       <input
+                         type="text"
+                         className="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 pr-8 text-xs text-gray-200 focus:outline-none focus:border-indigo-500 placeholder-gray-600 transition-all"
+                         placeholder="Type product name (e.g. Flannel, Shoes...)"
+                         value={searchQuery}
+                         onChange={(e) => {
+                           setSearchQuery(e.target.value);
+                           setShowSuggestions(true);
+                         }}
+                         onFocus={() => setShowSuggestions(true)}
+                       />
+                       {searchQuery && (
+                         <button 
+                           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                           onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}
+                         >
+                           <X className="w-3.5 h-3.5" />
+                         </button>
+                       )}
+                    </div>
+
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && filteredSuggestions.length > 0 && (
+                      <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-800 rounded-lg shadow-2xl max-h-56 overflow-y-auto divide-y divide-gray-800">
+                        {filteredSuggestions.map(p => (
+                          <div
+                            key={p.sku}
+                            className="p-2.5 hover:bg-indigo-950/60 cursor-pointer transition-colors flex flex-col gap-0.5 text-left"
+                            onClick={() => {
+                              setSelectedProductSku(p.sku);
+                              setSearchQuery(`${p.name} (${p.sku})`);
+                              setShowSuggestions(false);
+                            }}
+                          >
+                            <span className="text-xs font-semibold text-gray-200">{p.name}</span>
+                            <span className="text-[10px] text-indigo-300 font-mono">SKU: {p.sku} | Price: ${p.price.toFixed(2)}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+
+                    {showSuggestions && searchQuery.trim() !== "" && filteredSuggestions.length === 0 && (
+                      <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-800 rounded-lg p-3 text-center text-xs text-gray-500 shadow-2xl">
+                        No products found.
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-gray-800">
-                    <label>Simulate Bracketing - Add Duplicate Size:</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("S")}>Add Size S</button>
-                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("M")}>Add Size M</button>
-                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("L")}>Add Size L</button>
-                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("XL")}>Add Size XL</button>
+
+                  {/* Active Selection Indicator */}
+                  {selectedProductSku && (
+                    <div className="bg-gradient-to-r from-indigo-950/40 to-indigo-900/10 border border-indigo-500/20 p-4 rounded-xl flex items-center justify-between gap-4">
+                      {(() => {
+                        const p = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku) || PRODUCT_CATALOG[0];
+                        return (
+                          <>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[9px] uppercase tracking-wider text-indigo-400 font-bold bg-indigo-500/10 px-2 py-0.5 rounded-full w-max">
+                                Active Return Product
+                              </span>
+                              <div className="font-semibold text-sm text-gray-100 mt-1">{p.name}</div>
+                              <div className="text-[10px] text-gray-500 font-mono">SKU: {p.sku}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-emerald-400 font-bold text-base font-mono">${p.price.toFixed(2)}</div>
+                              <span className="text-[9px] text-gray-500 block">Retail Price</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    {cart.length === 0 ? (
+                      <div className="text-center text-xs text-gray-500 py-8 border border-dashed border-gray-800 rounded-xl bg-gray-950/15 flex flex-col items-center gap-2.5">
+                        <ShoppingBag className="w-6.5 h-6.5 text-gray-600 stroke-[1.5]" />
+                        <span>Your cart is empty. Search a product and add sizes to simulate bracketing.</span>
+                      </div>
+                    ) : (
+                      cart.map(item => (
+                        <div key={item.id} className="flex justify-between items-center bg-gray-900/80 p-3 px-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-all shadow-sm">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="font-semibold text-xs text-gray-200">{item.name}</div>
+                            <div className="text-[10px] text-gray-400">SKU: {item.sku} | Size: <span className="text-indigo-400 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded">{item.size}</span></div>
+                          </div>
+                          <button 
+                            className="text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-full transition-all" 
+                            onClick={() => handleRemoveFromCart(item.id)}
+                            title="Remove item"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2.5 mt-4 pt-4 border-t border-gray-800">
+                    <span className="text-xs font-semibold text-gray-300">Simulate Bracketing — Select Size to Add:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {(PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0]).sizes.map(size => (
+                        <button
+                          key={size}
+                          className="min-w-[48px] h-10 px-3 flex items-center justify-center rounded-lg bg-gray-900 hover:bg-indigo-950/30 border border-gray-800 hover:border-indigo-500 text-xs text-gray-200 hover:text-white transition-all font-semibold active:scale-95 shadow-sm"
+                          onClick={() => handleAddToCart(size)}
+                          title={`Add ${size} to Cart`}
+                        >
+                          {size}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
 
                 <div className="glass-card flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-gray-200">Sizing selfie Capture Engine</h3>
-                  {showBracketingModal ? (
-                    <div className="p-3 border border-indigo-500/20 bg-indigo-950/10 rounded-xl flex flex-col gap-3">
-                      <WebcamCapture onCapture={(base64) => setSizingImage(base64)} overlayType="sizing" />
-                      
-                      {sizingImage && (
-                        <div className="text-center mt-2">
-                          <span className="mini-badge success">✓ Live Selfie Captured</span>
-                          <img src={sizingImage} className="upload-preview mt-2 border border-gray-800" alt="Selfie" />
-                        </div>
-                      )}
+                  <h3 className="text-sm font-semibold text-gray-200">Sizing Selfie Capture Engine</h3>
+                  {(() => {
+                    const isSizingProductSelected = (PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0]).sizes.length > 1;
+                    if (isSizingProductSelected) {
+                      return (
+                        <div className="p-3 border border-indigo-500/20 bg-indigo-950/10 rounded-xl flex flex-col gap-3">
+                          <div className="text-[10px] text-indigo-300">
+                            Capture a selfie focusing on your upper torso/chest for AI sizing proportion checks.
+                          </div>
+                          <WebcamCapture onCapture={(base64) => setSizingImage(base64)} overlayType="sizing" />
+                          
+                          {sizingImage && (
+                            <div className="text-center mt-2">
+                              <span className="mini-badge success">✓ Live Selfie Captured</span>
+                              <img src={sizingImage} className="upload-preview mt-2 border border-gray-800" alt="Selfie" />
+                            </div>
+                          )}
 
-                      <button 
-                        className="btn btn-primary w-full py-2" 
-                        disabled={!sizingImage || sizingLoading}
-                        onClick={triggerSizeAssist}
-                      >
-                        {sizingLoading ? "Llama Vision Analyzing..." : "Run Llama 4 Vision Sizing Check"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
-                      Add a duplicate size in the shopping cart to prompt hardware sizing interception modal.
-                    </div>
-                  )}
+                          <button 
+                            className="btn btn-primary w-full py-2" 
+                            disabled={!sizingImage || sizingLoading}
+                            onClick={triggerSizeAssist}
+                          >
+                            {sizingLoading ? "Llama Vision Analyzing..." : "Run Llama 4 Vision Sizing Check"}
+                          </button>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="bg-gray-900/60 p-6 rounded-lg text-center text-xs text-gray-500 my-auto">
+                          Select an Apparel product (Denim Jacket/Tee) to activate the Sizing Selfie Engine.
+                        </div>
+                      );
+                    }
+                  })()}
 
                   {sizingResult && (
                     <div className="bg-gray-900/80 p-4 rounded-xl border border-gray-800 flex flex-col gap-3">
@@ -1609,26 +1894,36 @@ export default function Home() {
 
               <div className="demo-split-grid">
                 <div className="glass-card flex flex-col gap-4 border-amber-500/10 bg-amber-950/5">
-                  <h3 className="text-sm font-semibold text-amber-300">Product Selection</h3>
-                  <div>
-                    <label>Appliance Category</label>
-                    <select 
-                      value={deflectProduct}
-                      onChange={(e) => {
-                        const prod = e.target.value;
-                        setDeflectProduct(prod);
-                        const sku = prod.includes("Coffee") ? "CF-Mkr-99" : "SPK-AIR-12";
-                        setDeflectSku(sku);
-                        fetchGuidesForProduct(prod.includes("Coffee") ? "coffee maker" : "speaker");
-                        setChatMessages([{
-                          role: "bot",
-                          content: `Hi there! I see you want to return your **${prod}** due to functionality issues. Before we generate a shipping label, let's see if we can resolve this together! I've loaded the troubleshooting guide. Can you tell me if the device turns on at all when plugged in?`
-                        }]);
+                  <h3 className="text-sm font-semibold text-amber-300">Product for Repair</h3>
+                  <div className="bg-amber-950/20 border border-amber-500/10 p-3 rounded-lg flex flex-col gap-1 text-xs">
+                    <div className="text-[10px] uppercase text-amber-400/80 font-bold tracking-wider">Active Device Checked</div>
+                    <div className="flex justify-between items-center mt-1">
+                      <div>
+                        <div className="font-semibold text-gray-200">{deflectProduct}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">SKU: {deflectSku}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1 mt-2">
+                    <label className="text-[11px] text-amber-200/80">Search Custom Guides</label>
+                    <input
+                      type="text"
+                      className="bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-xs text-gray-200 focus:outline-none focus:border-amber-500 placeholder-gray-600 transition-colors"
+                      placeholder="Search manual (e.g. coffee, phone, battery...)"
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          const query = (e.target as HTMLInputElement).value;
+                          if (query.trim()) {
+                            await fetchGuidesForProduct(query);
+                            setChatMessages([{
+                              role: "bot",
+                              content: `Hi there! I've loaded the custom troubleshooting manuals for **${query}**. How can I assist you today?`
+                            }]);
+                          }
+                        }
                       }}
-                    >
-                      <option value="Smart Drip Coffee Maker">Smart Drip Coffee Maker</option>
-                      <option value="HiFi Wireless Speaker">HiFi Wireless Speaker</option>
-                    </select>
+                    />
                   </div>
                   <div className="text-xs">
                     <span className="font-bold text-indigo-300 block mb-1">Loaded iFixit Context:</span>

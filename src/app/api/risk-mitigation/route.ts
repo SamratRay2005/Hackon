@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryGroq, db } from "@/lib/services";
+import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 export async function POST(req: NextRequest) {
   try {
@@ -100,7 +101,11 @@ Provide your analysis in the following strict JSON format:
       ipqsPromise
     ]);
 
-    const groqAnalysis = JSON.parse(groqRes.content);
+    let cleanContent = groqRes.content.trim();
+    if (cleanContent.startsWith("```")) {
+      cleanContent = cleanContent.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+    }
+    const groqAnalysis = JSON.parse(cleanContent);
     
     // Scale Groq scores from 0-10 to 0-100
     const groqAiScore = Math.round(groqAnalysis.aiGenerationScore * 10);
@@ -110,10 +115,20 @@ Provide your analysis in the following strict JSON format:
     // Combine Hive signal and Groq AI signal
     const finalAiScore = hiveScore !== null ? Math.max(hiveScore, groqAiScore) : groqAiScore;
 
-    // 4. Calculate User Return Velocity Score from DynamoDB history
-    const userHistory = db.getUserReturnHistory(userId, parseInt(priorReturns) || 0);
-    // Formula: 25 points per return in the last 30 days, capped at 100
-    const velocityScore = Math.min(100, userHistory.totalReturns30Days * 25);
+    // 4. Calculate User Return Velocity Score (with Sybil Aggregation check)
+    const allClaims = await db.getClaims();
+    const emailDomain = email && email.includes("@") ? email.split("@")[1] : "";
+    
+    const matchingClaims = allClaims.filter((c: any) => {
+      const isSameUser = c.userId === userId;
+      const isSameDomain = emailDomain && c.email && c.email.endsWith(emailDomain);
+      return isSameUser || isSameDomain;
+    });
+
+    const userHistory = await db.getUserReturnHistory(userId, parseInt(priorReturns) || 0);
+    // Combine local claims count with historical domain matching
+    const totalVelocityCount = Math.max(userHistory.totalReturns30Days, matchingClaims.length);
+    const velocityScore = Math.min(100, totalVelocityCount * 25);
 
     // 5. Calculate IPQS Risk Score (fallback to simulated IP score if null)
     const finalIpqsScore = ipqsScore !== null ? ipqsScore : (email && email.includes("fraud") ? 95 : 15);
@@ -128,19 +143,33 @@ Provide your analysis in the following strict JSON format:
       (finalIpqsScore * 0.2)
     );
 
-    // 7. Recommended Action thresholds
+    // 7. Recommended Action thresholds based on dynamic item value
+    const product = PRODUCT_CATALOG.find(p => p.sku === sku);
+    const itemPrice = product ? product.price : 50.00;
+
     let recommendedAction: "APPROVE" | "MANUAL_REVIEW" | "BLOCK" = "APPROVE";
-    if (weightedRiskScore > 70) {
-      recommendedAction = "BLOCK";
-    } else if (weightedRiskScore >= 40) {
-      recommendedAction = "MANUAL_REVIEW";
+    if (itemPrice > 200) {
+      // High value items are routed strictly
+      if (weightedRiskScore > 50) {
+        recommendedAction = "BLOCK";
+      } else if (weightedRiskScore >= 15) {
+        recommendedAction = "MANUAL_REVIEW";
+      }
+    } else {
+      // Normal thresholds
+      if (weightedRiskScore > 70) {
+        recommendedAction = "BLOCK";
+      } else if (weightedRiskScore >= 40) {
+        recommendedAction = "MANUAL_REVIEW";
+      }
     }
 
     // Save claim record in DynamoDB return ledger
-    const claimRecord = db.saveClaim(userId, {
+    const claimRecord = await db.saveClaim(userId, {
       sku,
       item: itemName || "Product",
       riskScore: weightedRiskScore,
+      email,
       status: recommendedAction === "APPROVE" ? "APPROVED" : (recommendedAction === "BLOCK" ? "BLOCKED" : "MANUAL_REVIEW"),
       imageUrl: "data:image/jpeg;base64,image_placeholder" // in-memory placeholder
     });

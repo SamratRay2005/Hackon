@@ -9,6 +9,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing conversation messages" }, { status: 400 });
     }
 
+    // Enforce hard turn limit (5 user messages + 5 bot messages = 10 total)
+    if (messages.length > 10) {
+      return new Response(`data: ${JSON.stringify({
+        choices: [
+          {
+            delta: {
+              content: "⚠️ **Maximum troubleshooting turns reached (5 turns).** To optimize resource utilization, please finalize your decision: select **'Resolved'** to cancel the return, or click **'Still need to return'** to proceed."
+            }
+          }
+        ]
+      })}\n\ndata: [DONE]\n\n`, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive"
+        }
+      });
+    }
+
     const latestMessage = messages[messages.length - 1].content;
     const guidesContext = guides && guides.length > 0 
       ? guides.map((g: any) => `Guide: ${g.title}\nURL: ${g.url}\nSummary: ${g.summary}`).join("\n\n")

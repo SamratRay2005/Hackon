@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Leaflet Map Stylesheets and Scripts (100% Free OpenStreetMap client) */}
         <link 
