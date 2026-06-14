@@ -129,6 +129,13 @@ const MOCK_GRADING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6
 // SOLID MOCK IMAGE FALLBACK
 const SAMPLE_MOCK_IMAGE = svgToDataUrl(MOCK_DAMAGE_SVG);
 
+const SKU_REFERENCE_IMAGES: Record<string, string> = {
+  "DENIM-JKT-001": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500",
+  "SLIM-FIT-TEE": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500",
+  "CF-Mkr-99": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
+  "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500"
+};
+
 // ----------------------------------------------------
 // WEBCAM & FILE UPLOADER UTILITY COMPONENT
 // ----------------------------------------------------
@@ -379,6 +386,9 @@ export default function Home() {
   const [gradingLoading, setGradingLoading] = useState(false);
   const [gradingResult, setGradingResult] = useState<any>(null);
   const [ledgerRecords, setLedgerRecords] = useState<Array<any>>([]);
+  const [gradingVideoUrl, setGradingVideoUrl] = useState<string>("");
+  const [gradingVideoBase64, setGradingVideoBase64] = useState<string>("");
+  const videoPlayerRef = useRef<HTMLVideoElement>(null);
 
   // Layer 5 - P2P Logistics State
   const [logisticsSku, setLogisticsSku] = useState("DENIM-JKT-001");
@@ -784,14 +794,15 @@ export default function Home() {
 
   // --- LAYER 4 AUTO INSPECTOR GRADING HANDLERS ---
   const triggerWarehouseGrading = async () => {
-    if (gradingPhotos.length === 0) return;
+    if (!gradingVideoUrl && !gradingVideoBase64) return;
     setGradingLoading(true);
     try {
       const res = await fetch("/api/grading", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          images: gradingPhotos,
+          video: gradingVideoBase64 || undefined,
+          videoUrl: gradingVideoUrl.startsWith("blob:") ? undefined : gradingVideoUrl || undefined,
           sku: gradingSku,
           itemName: gradingItemName,
           userId: profileUserId
@@ -1366,9 +1377,11 @@ export default function Home() {
                   </div>
                   <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-gray-800">
                     <label>Simulate Bracketing - Add Duplicate Size:</label>
-                    <div className="flex gap-2">
-                      <button className="btn btn-secondary flex-1 py-1.5 text-xs" onClick={() => handleAddToCart("M")}>Add Size M</button>
-                      <button className="btn btn-secondary flex-1 py-1.5 text-xs" onClick={() => handleAddToCart("L")}>Add Size L</button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("S")}>Add Size S</button>
+                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("M")}>Add Size M</button>
+                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("L")}>Add Size L</button>
+                      <button className="btn btn-secondary py-1.5 text-xs" onClick={() => handleAddToCart("XL")}>Add Size XL</button>
                     </div>
                   </div>
                 </div>
@@ -1691,33 +1704,93 @@ export default function Home() {
 
               <div className="demo-split-grid">
                 <div className="glass-card flex flex-col gap-4 border-purple-500/10 bg-purple-950/5">
-                  <h3 className="text-sm font-semibold text-purple-300">Inspector Camera Feed ({profileUserId})</h3>
+                  <div className="flex flex-col">
+                    <h3 className="text-sm font-semibold text-purple-300">Inspector Camera Feed ({profileUserId})</h3>
+                    <span className="text-[10px] text-gray-500">Record or upload a return inspection video showing all viewpoints of the product.</span>
+                  </div>
                   <div>
                     <label>Returned Item SKU</label>
                     <input type="text" value={`${gradingItemName} (${gradingSku})`} disabled />
                   </div>
 
-                  <div className="p-3 border border-purple-500/10 rounded-xl bg-gray-950/40">
-                    <label className="text-[10px] text-purple-300 font-semibold mb-2">Capture Return Condition Snap:</label>
-                    <WebcamCapture onCapture={(base64) => {
-                      setGradingSampleType("custom");
-                      setGradingPhotos([base64]);
-                    }} overlayType="grading" />
-                    
-                    {gradingPhotos.length > 0 && (
-                      <div className="text-center mt-3">
-                        <span className="mini-badge success">✓ Photo Loaded Successfully</span>
-                        <img src={gradingPhotos[0]} className="upload-preview mt-2 border border-gray-800" alt="Grading" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 border border-purple-500/10 rounded-xl bg-gray-950/40 flex flex-col items-center justify-between">
+                      <label className="text-[10px] text-purple-300 font-semibold mb-2 text-center uppercase tracking-wider">Catalog DB Reference:</label>
+                      <img 
+                        src={SKU_REFERENCE_IMAGES[gradingSku] || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500"} 
+                        className="upload-preview border border-gray-800 object-cover rounded-lg aspect-video w-full" 
+                        alt="Catalog Reference" 
+                      />
+                    </div>
+
+                    <div className="p-3 border border-purple-500/10 rounded-xl bg-gray-950/40 flex flex-col justify-between">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] text-purple-300 font-semibold text-center uppercase tracking-wider">Upload Product Rotation Video:</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="btn btn-secondary py-1 text-[11px] text-center cursor-pointer">
+                            📁 File Video
+                            <input 
+                              type="file" 
+                              accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setGradingVideoUrl(URL.createObjectURL(file));
+                                  // Convert to Base64 for API upload
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    if (reader.result) {
+                                      setGradingVideoBase64(reader.result as string);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }} 
+                              className="hidden" 
+                            />
+                          </label>
+                          <button 
+                            type="button" 
+                            className="btn btn-secondary py-1 text-[11px]"
+                            onClick={() => {
+                              // Use the local public asset video for instant mock loading
+                              setGradingVideoUrl("/demo_return.mp4");
+                              setGradingVideoBase64("");
+                            }}
+                          >
+                            💻 Tech Demo
+                          </button>
+                        </div>
+
+                        {gradingVideoUrl ? (
+                          <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-purple-500/20 bg-black mt-2">
+                            <video 
+                              ref={videoPlayerRef} 
+                              src={gradingVideoUrl} 
+                              controls 
+                              autoPlay
+                              muted
+                              playsInline
+                              crossOrigin="anonymous"
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-gray-500 text-center py-8 border border-dashed border-gray-800 rounded-lg mt-2 flex flex-col items-center justify-center my-auto">
+                            <span>Upload a product inspection video file (.mp4, .webm)</span>
+                            <span className="text-[9px] text-gray-600 mt-1">or click "Tech Demo" to load local video</span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   <button 
                     className="btn btn-primary w-full py-2.5" 
-                    disabled={gradingPhotos.length === 0 || gradingLoading}
+                    disabled={(!gradingVideoUrl && !gradingVideoBase64) || gradingLoading}
                     onClick={triggerWarehouseGrading}
                   >
-                    {gradingLoading ? "Analyzing defect textures..." : "Grade Product Conditions"}
+                    {gradingLoading ? "Extracting rotation angles & analyzing defect textures..." : "Grade Product Conditions"}
                   </button>
                 </div>
 
@@ -1734,12 +1807,67 @@ export default function Home() {
                           Grade {gradingResult.grade}
                         </span>
                       </div>
+
+                      {/* Variant Verification check */}
+                      <div className="text-xs border-y border-gray-800 py-2 my-1 flex justify-between items-center">
+                        <span className="text-gray-400">Database Variant Check:</span>
+                        {gradingResult.isCorrectVariant ? (
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[10px]">
+                            ✓ MATCHED CATALOG VARIANT
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-bold text-[10px]">
+                            ✗ MISMATCHED PRODUCT VARIANT
+                          </span>
+                        )}
+                      </div>
+
                       <div className="text-xs">
                         <span className="font-semibold text-purple-300 block mb-1">Defect Taxonomy Findings:</span>
                         <ul className="list-disc pl-4 text-gray-300 flex flex-col gap-1">
-                          {gradingResult.defects.map((d: string, i: number) => <li key={i}>{d}</li>)}
+                          {gradingResult.defects && gradingResult.defects.map((d: string, i: number) => <li key={i}>{d}</li>)}
                         </ul>
                       </div>
+
+                      {/* Missing Components verification */}
+                      <div className="text-xs border-t border-gray-800 pt-2.5">
+                        <span className="font-semibold text-purple-300 block mb-1">Missing DB Accessories:</span>
+                        {gradingResult.missingComponents && gradingResult.missingComponents.length > 0 ? (
+                          <ul className="list-disc pl-4 text-rose-300 flex flex-col gap-0.5">
+                            {gradingResult.missingComponents.map((c: string, i: number) => <li key={i}>{c}</li>)}
+                          </ul>
+                        ) : (
+                          <span className="text-emerald-400 font-medium">None (All parts accounted for)</span>
+                        )}
+                      </div>
+
+                      {/* Viewpoints Breakdown list */}
+                      {gradingResult.viewpoints && gradingResult.viewpoints.length > 1 && (
+                        <div className="text-xs border-t border-gray-800 pt-2.5">
+                          <span className="font-semibold text-purple-300 block mb-1.5">Viewpoint Screenshot Inspection:</span>
+                          <div className="flex flex-col gap-1 bg-gray-950/60 p-2 rounded-lg border border-gray-800">
+                            {gradingResult.viewpoints.map((v: any, idx: number) => (
+                              <div key={idx} className="flex justify-between items-start text-[11px] py-1 border-b border-gray-800 last:border-0">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-gray-400 font-medium">Angle {v.viewpointIndex || idx + 1}:</span>
+                                  {v.defects && v.defects.length > 0 ? (
+                                    <span className="text-[10px] text-amber-300 italic">{v.defects.join(", ")}</span>
+                                  ) : (
+                                    <span className="text-[10px] text-emerald-400 italic">No defects</span>
+                                  )}
+                                </div>
+                                <span className="font-mono text-gray-200 bg-gray-900 px-1 py-0.5 rounded">
+                                  Score: {v.functionalScore}/10
+                                </span>
+                              </div>
+                            ))}
+                            <div className="text-[10px] text-purple-400 text-center font-bold pt-1.5">
+                              Averaged Score: ({gradingResult.viewpoints.map((v: any) => v.functionalScore).join(" + ")}) / {gradingResult.viewpoints.length} = {gradingResult.functionalScore}/10
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex justify-between text-xs pt-2 border-t border-gray-800">
                         <span className="text-gray-500">Functional Score:</span>
                         <span className="font-bold text-emerald-400">{gradingResult.functionalScore}/10</span>

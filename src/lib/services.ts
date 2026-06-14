@@ -66,9 +66,23 @@ const globalState: {
 };
 
 // ----------------------------------------------------
+// PRODUCT REFERENCE IMAGES CATALOG
+// ----------------------------------------------------
+export const SKU_REFERENCE_IMAGES: Record<string, string> = {
+  "DENIM-JKT-001": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500",
+  "SLIM-FIT-TEE": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500",
+  "CF-Mkr-99": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
+  "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500"
+};
+
+// ----------------------------------------------------
 // 1. DYNAMODB / S3 LEDGER SIMULATOR
 // ----------------------------------------------------
 export const db = {
+  getSKUReferenceImage: (sku: string) => {
+    return SKU_REFERENCE_IMAGES[sku] || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500";
+  },
+
   initUser: (userId: string) => {
     if (!userId) return;
     if (!globalState.claims[userId]) globalState.claims[userId] = [];
