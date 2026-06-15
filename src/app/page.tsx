@@ -38,6 +38,7 @@ import {
   Image as ImageIcon,
   Copy,
   Shirt,
+  ChevronLeft,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -202,7 +203,6 @@ function getDynamicSizeChart(sku: string) {
   return null;
 }
 
-// Simple markdown bold/italic renderer
 function renderMarkdown(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
@@ -309,34 +309,34 @@ function WebcamCapture({ onCapture, overlayType, compact }: WebcamCaptureProps) 
   return (
     <div className="flex flex-col gap-2.5 w-full">
       {active ? (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-indigo-500/30 bg-black shadow-lg">
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 bg-black shadow-lg">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           {overlayType === "sizing" && (
-            <div className="absolute inset-0 border-2 border-dashed border-indigo-400/40 pointer-events-none flex flex-col justify-between p-4">
+            <div className="absolute inset-0 border-2 border-dashed border-indigo-400/50 pointer-events-none flex flex-col justify-between p-4">
               <div className="border-b border-indigo-400/30 h-1/3 w-full flex justify-between items-start">
-                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">ALIGN SHOULDERS</span>
-                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">ALIGN SHOULDERS</span>
+                <span className="text-[9px] text-indigo-100 bg-indigo-600/80 px-1.5 py-0.5 rounded backdrop-blur-sm">ALIGN SHOULDERS</span>
+                <span className="text-[9px] text-indigo-100 bg-indigo-600/80 px-1.5 py-0.5 rounded backdrop-blur-sm">ALIGN SHOULDERS</span>
               </div>
               <div className="border-y border-indigo-400/30 h-1/3 w-full flex items-center justify-center">
-                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">ALIGN CHEST LEVEL</span>
+                <span className="text-[9px] text-indigo-100 bg-indigo-600/80 px-1.5 py-0.5 rounded backdrop-blur-sm">ALIGN CHEST LEVEL</span>
               </div>
               <div className="h-1/3 w-full flex items-end justify-center">
-                <span className="text-[9px] text-indigo-200 bg-black/60 px-1.5 py-0.5 rounded">FULL BODY FRAME</span>
+                <span className="text-[9px] text-indigo-100 bg-indigo-600/80 px-1.5 py-0.5 rounded backdrop-blur-sm">FULL BODY FRAME</span>
               </div>
             </div>
           )}
           {overlayType === "damage" && (
-            <div className="absolute inset-0 border-2 border-dashed border-rose-400/40 pointer-events-none flex items-center justify-center">
-              <div className="w-3/4 h-3/4 border-2 border-dashed border-rose-500/50 rounded flex items-center justify-center">
-                <span className="text-[9px] text-rose-200 bg-black/60 px-2 py-1 rounded">CENTER DAMAGED ITEM</span>
+            <div className="absolute inset-0 border-2 border-dashed border-rose-400/50 pointer-events-none flex items-center justify-center">
+              <div className="w-3/4 h-3/4 border-2 border-dashed border-rose-500/60 rounded flex items-center justify-center">
+                <span className="text-[9px] text-rose-100 bg-rose-600/80 px-2 py-1 rounded backdrop-blur-sm">CENTER DAMAGED ITEM</span>
               </div>
             </div>
           )}
           {overlayType === "grading" && (
-            <div className="absolute inset-0 border-2 border-dashed border-purple-400/40 pointer-events-none flex items-center justify-center">
+            <div className="absolute inset-0 border-2 border-dashed border-purple-400/50 pointer-events-none flex items-center justify-center">
               <div className="w-5/6 h-5/6 border border-dashed border-purple-500/50 flex flex-col justify-between p-3">
-                <span className="text-[9px] text-purple-200 bg-black/60 self-start px-1 py-0.5 rounded">CASING ALIGN</span>
-                <span className="text-[9px] text-purple-200 bg-black/60 self-end px-1 py-0.5 rounded">LABEL ALIGN</span>
+                <span className="text-[9px] text-purple-100 bg-purple-600/80 self-start px-1 py-0.5 rounded backdrop-blur-sm">CASING ALIGN</span>
+                <span className="text-[9px] text-purple-100 bg-purple-600/80 self-end px-1 py-0.5 rounded backdrop-blur-sm">LABEL ALIGN</span>
               </div>
             </div>
           )}
@@ -370,6 +370,219 @@ function WebcamCapture({ onCapture, overlayType, compact }: WebcamCaptureProps) 
         </div>
       )}
       <canvas ref={canvasRef} className="hidden" />
+    </div>
+  );
+}
+
+// ----------------------------------------------------
+// HERO CAROUSEL COMPONENT
+// ----------------------------------------------------
+// Pull real product data from catalog to build slides
+const CAROUSEL_SKUS = ["DENIM-JKT-001", "SPK-AIR-12", "RUN-SHOE-30", "PARKA-WTR-06", "MONITOR-54"];
+
+const CAROUSEL_THEMES = [
+  {
+    eyebrowBg: "bg-violet-100 text-violet-700",
+    gradient: "from-violet-50 via-white to-indigo-50",
+    accentColor: "#4f46e5",
+    tag: "★ Trending Now",
+  },
+  {
+    eyebrowBg: "bg-sky-100 text-sky-700",
+    gradient: "from-sky-50 via-white to-cyan-50",
+    accentColor: "#0284c7",
+    tag: "⚡ New Arrival",
+  },
+  {
+    eyebrowBg: "bg-emerald-100 text-emerald-700",
+    gradient: "from-emerald-50 via-white to-teal-50",
+    accentColor: "#059669",
+    tag: "🌿 Eco Pick",
+  },
+  {
+    eyebrowBg: "bg-amber-100 text-amber-700",
+    gradient: "from-amber-50 via-white to-orange-50",
+    accentColor: "#d97706",
+    tag: "🔥 Best Seller",
+  },
+  {
+    eyebrowBg: "bg-rose-100 text-rose-700",
+    gradient: "from-rose-50 via-white to-pink-50",
+    accentColor: "#e11d48",
+    tag: "💎 Premium",
+  },
+];
+
+function HeroCarousel({ onShopNow }: { onShopNow: (sku: string) => void }) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const slides = CAROUSEL_SKUS.map((sku, i) => {
+    const product = PRODUCT_CATALOG.find(p => p.sku === sku) || PRODUCT_CATALOG[i] || PRODUCT_CATALOG[0];
+    return {
+      product,
+      theme: CAROUSEL_THEMES[i % CAROUSEL_THEMES.length],
+      image: getSKUReferenceImage(product.sku),
+    };
+  });
+
+  const goToSlide = (idx: number) => {
+    if (isAnimating || idx === currentSlide) return;
+    setIsAnimating(true);
+    setCurrentSlide(idx);
+    setTimeout(() => setIsAnimating(false), 650);
+  };
+
+  const next = () => goToSlide((currentSlide + 1) % slides.length);
+  const prev = () => goToSlide((currentSlide - 1 + slides.length) % slides.length);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 4000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [slides.length]);
+
+  const resetInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 4000);
+  };
+
+  const handleDotClick = (idx: number) => {
+    goToSlide(idx);
+    resetInterval();
+  };
+  const handlePrev = () => { prev(); resetInterval(); };
+  const handleNext = () => { next(); resetInterval(); };
+
+  const slide = slides[currentSlide];
+
+  return (
+    <div className="hero-carousel">
+      <div
+        className={`hero-slide active w-full bg-gradient-to-br ${slide.theme.gradient}`}
+        key={currentSlide}
+        style={{
+          animation: "carouselSlideIn 0.6s cubic-bezier(0.16,1,0.3,1) both",
+        }}
+      >
+        {/* Content col */}
+        <div className="hero-slide-content">
+          <div className={`hero-slide-eyebrow ${slide.theme.eyebrowBg}`}>
+            <span>{slide.theme.tag}</span>
+          </div>
+
+          <h1 className="hero-slide-headline">
+            {slide.product.name.split(" ").slice(0, 3).join(" ")}
+            {slide.product.name.split(" ").length > 3 && (
+              <span style={{ color: slide.theme.accentColor }}>
+                {" " + slide.product.name.split(" ").slice(3, 6).join(" ")}
+              </span>
+            )}
+          </h1>
+
+          <p className="hero-slide-subline">
+            {slide.product.description}
+          </p>
+
+          <div className="hero-slide-price" style={{ color: slide.theme.accentColor }}>
+            ${slide.product.price.toFixed(2)}
+            <span className="text-sm font-medium text-slate-400 ml-2 line-through">
+              ${(slide.product.price * 1.4).toFixed(2)}
+            </span>
+          </div>
+
+          <div className="hero-slide-actions">
+            <button
+              className="hero-btn-primary"
+              onClick={() => onShopNow(slide.product.sku)}
+            >
+              Shop Now <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              className="hero-btn-secondary"
+              onClick={() => onShopNow(slide.product.sku)}
+            >
+              See Collection
+            </button>
+          </div>
+
+          {/* Stars */}
+          <div className="flex items-center gap-1.5 mt-4">
+            {[1,2,3,4,5].map(i => (
+              <Star
+                key={i}
+                className="w-3.5 h-3.5"
+                style={{
+                  fill: i <= Math.round(slide.product.reviewScore) ? slide.theme.accentColor : "transparent",
+                  color: slide.theme.accentColor,
+                }}
+              />
+            ))}
+            <span className="text-xs text-slate-500 font-medium ml-1">
+              {slide.product.reviewScore} ({slide.product.reviewCount.toLocaleString()} reviews)
+            </span>
+          </div>
+        </div>
+
+        {/* Image col */}
+        <div
+          className="hero-slide-image-col"
+          style={{
+            background: `linear-gradient(135deg, ${slide.theme.accentColor}08, ${slide.theme.accentColor}14)`,
+          }}
+        >
+          {/* Decorative background circles */}
+          <div
+            className="absolute w-72 h-72 rounded-full opacity-10 blur-3xl"
+            style={{ background: slide.theme.accentColor, right: "-3rem", top: "50%", transform: "translateY(-50%)" }}
+          />
+          <img
+            src={slide.image}
+            alt={slide.product.name}
+            className="w-full h-full object-cover"
+            style={{ position: "relative", zIndex: 1 }}
+          />
+          {/* Brand chip */}
+          <div
+            className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-100 rounded-xl px-3 py-2 shadow-md flex items-center gap-2"
+            style={{ zIndex: 2 }}
+          >
+            <div className="w-2 h-2 rounded-full" style={{ background: slide.theme.accentColor }} />
+            <span className="text-xs font-bold text-slate-700">{slide.product.brand}</span>
+            <span className="text-xs text-slate-400">•</span>
+            <span className="text-xs text-slate-500 font-medium">{slide.product.category}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Counter */}
+      <div className="carousel-counter">
+        {currentSlide + 1} / {slides.length}
+      </div>
+
+      {/* Navigation arrows */}
+      <button className="carousel-arrow prev" onClick={handlePrev} aria-label="Previous slide">
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      <button className="carousel-arrow next" onClick={handleNext} aria-label="Next slide">
+        <ChevronRight className="w-4 h-4" />
+      </button>
+
+      {/* Dots */}
+      <div className="carousel-dots">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            className={`carousel-dot ${i === currentSlide ? "active" : ""}`}
+            onClick={() => handleDotClick(i)}
+            aria-label={`Go to slide ${i + 1}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -539,7 +752,7 @@ export default function Home() {
       if (isElectrical) {
         fetchGuidesForProduct(p.name);
       } else {
-        setIfixitGuides([]); // Clear electrical guides for non-electrical items
+        setIfixitGuides([]);
       }
     }
   }, [selectedProductSku]);
@@ -776,7 +989,6 @@ export default function Home() {
     setChatInput("");
     setChatLoading(true);
     try {
-      // Find the specific order context
       const order = walletInfo.orders?.find(o => o.sku === deflectSku);
       const purchaseDate = order?.purchaseDate || "2026-06-01";
       const returnWindowDays = order?.returnWindowDays || 30;
@@ -902,11 +1114,11 @@ export default function Home() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <div className="flex justify-center mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 2 L2 22 L22 22 Z" />
-                  <circle cx="12" cy="14" r="4" strokeDasharray="3 2" />
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg">
+                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
                 </svg>
               </div>
             </div>
@@ -987,20 +1199,22 @@ export default function Home() {
   // ============================================
   const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
 
+  const isApparelOrFootwear = !!(selectedProduct && (selectedProduct.category === "Apparel" || selectedProduct.category === "Footwear"));
+
   const navItems = [
-    { id: "dashboard",        icon: BarChart2,  label: "Core Ledger Hub",   badge: "" },
-    { id: "size-assist",      icon: Layers,     label: "L1: Sizing Assist", badge: "L1" },
-    { id: "fraud-mitigation", icon: Shield,     label: "L2: Fraud Shield",  badge: "L2" },
-    { id: "deflection",       icon: MessageSquare, label: "L3: Intercept Chat", badge: "L3" },
-    { id: "grading",          icon: Camera,     label: "L4: Auto Inspector",badge: "L4" },
-    { id: "logistics",        icon: Map,        label: "L5: P2P Logistics", badge: "L5" },
-    { id: "wallet",           icon: Wallet,     label: "L6: Loyalty Wallet",badge: "L6" },
-    { id: "marketplace",      icon: ShoppingBag,label: "Circular Marketplace",badge: "NEW" },
+    { id: "dashboard",        icon: BarChart2,     label: "Home",                  subtitle: "Dashboard & orders" },
+    { id: "size-assist",      icon: Shirt,         label: "Find My Size",           subtitle: "AI size recommender" },
+    { id: "fraud-mitigation", icon: ShieldCheck,   label: "Verify Return",          subtitle: "Scan & authenticate" },
+    { id: "deflection",       icon: MessageSquare, label: "Get Help",               subtitle: "Chat before you return" },
+    { id: "grading",          icon: Camera,        label: "Inspect Item",           subtitle: "Grade condition" },
+    { id: "logistics",        icon: Truck,         label: "Arrange Shipping",       subtitle: "Eco-route optimizer" },
+    { id: "wallet",           icon: Wallet,        label: "My Wallet",              subtitle: "Credits & refunds" },
+    { id: "marketplace",      icon: ShoppingBag,   label: "Shop Pre-Loved",         subtitle: "Buy near you" },
   ];
 
   return (
     <>
-      <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 40%, #f0fdf4 100%)" }}>
+      <div className="min-h-screen">
 
       {/* ── NAVBAR ── */}
       <nav className="navbar">
@@ -1015,7 +1229,7 @@ export default function Home() {
         </a>
 
         {/* Vibrant Pill Navigation Links */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
           <button onClick={() => setShowXRayModal(true)} className="flex items-center gap-2 text-[11px] font-extrabold text-amber-800 bg-amber-100 px-4 py-2 rounded-full border border-amber-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-amber-200 transition-all active:scale-95">
             <Zap className="w-4 h-4 text-amber-600" /> Architecture X-Ray
           </button>
@@ -1083,7 +1297,7 @@ export default function Home() {
           {/* Session Card */}
           <div className="glass-card flex flex-col gap-2.5">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
                 <UserCheck className="w-4 h-4 text-indigo-600" />
               </div>
               <div className="min-w-0">
@@ -1119,7 +1333,7 @@ export default function Home() {
           {/* Architecture Nav */}
           <div className="glass-card flex flex-col gap-2">
             <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100">
-              Architecture Layers
+              Return Flow
             </div>
             <nav className="sidebar-nav-list">
               {navItems.map(item => {
@@ -1131,7 +1345,10 @@ export default function Home() {
                     className={`layer-sidebar-btn ${activeTab === item.id ? "active" : ""}`}
                   >
                     <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate flex flex-col text-left leading-none">
+                      <span>{item.label}</span>
+                      <span className="text-[9px] font-normal opacity-60 mt-0.5">{item.subtitle}</span>
+                    </span>
                   </button>
                 );
               })}
@@ -1183,7 +1400,7 @@ export default function Home() {
             <div className="product-info-container">
               <div>
                 <span className="text-[9px] text-indigo-600 font-bold uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
-                  Selected for Return Audit
+                  {isApparelOrFootwear ? "Sizing & Return Flow" : "Return Flow"}
                 </span>
                 <h2 className="text-xl font-extrabold text-slate-800 mt-1.5 leading-tight">
                   {selectedProduct?.name || "Classic Denim Jacket"}
@@ -1224,44 +1441,84 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Sizing AI capture — only for apparel */}
-              {selectedProduct && selectedProduct.sizes.some(s => ["S","M","L","XL","XXL","XS","7","8","9","10","11","12"].includes(s)) && (
+              {/* Camera capture — always visible, purpose adapts by product type */}
+              {selectedProduct && (
                 <div className="border-t border-slate-100 pt-3">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2">
-                    <Camera className="w-3.5 h-3.5 text-indigo-500" />
-                    AI Size Capture (Selfie Scan)
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <Camera className="w-3.5 h-3.5 text-indigo-500" />
+                      {isApparelOrFootwear ? "Selfie Size Scan" : "Return Photo Capture"}
+                    </div>
+                    <span className="text-[9px] text-slate-400 font-medium">
+                      {isApparelOrFootwear ? "Maps your body to the size chart" : "Photo for return verification"}
+                    </span>
                   </div>
-                  <WebcamCapture onCapture={(base64) => setSizingImage(base64)} overlayType="sizing" compact />
-                  {sizingImage && (
+                  <WebcamCapture
+                    onCapture={(base64) => {
+                      if (isApparelOrFootwear) {
+                        setSizingImage(base64);
+                      } else {
+                        setFraudImage(base64);
+                        setFraudImageType("custom");
+                      }
+                    }}
+                    overlayType={isApparelOrFootwear ? "sizing" : "damage"}
+                    compact
+                  />
+                  {isApparelOrFootwear && sizingImage && (
                     <div className="mt-2">
                       <span className="mini-badge success mb-1.5">Image Ready</span>
                       <img src={sizingImage} className="upload-preview mt-1" alt="Sizing photo" />
                     </div>
                   )}
-                  {sizingImage && (
+                  {!isApparelOrFootwear && fraudImage && (
+                    <div className="mt-2">
+                      <span className="mini-badge success mb-1.5">Photo captured — head to Verify Return tab to scan</span>
+                    </div>
+                  )}
+                  {isApparelOrFootwear && sizingImage && (
                     <button
                       className="btn btn-primary w-full py-2 rounded-xl text-xs font-bold mt-2"
                       disabled={sizingLoading}
                       onClick={triggerSizeAssist}
                     >
-                      {sizingLoading ? <><span className="spinner" /> Analyzing...</> : "Analyze Photo & Recommend Size"}
+                      {sizingLoading ? <><span className="spinner" /> Analyzing...</> : "Analyze & Recommend My Size"}
+                    </button>
+                  )}
+                  {!isApparelOrFootwear && fraudImage && (
+                    <button
+                      className="btn btn-secondary w-full py-2 rounded-xl text-xs font-bold mt-2"
+                      onClick={() => setActiveTab("fraud-mitigation")}
+                    >
+                      <Shield className="w-3.5 h-3.5" /> Go to Verify Return →
                     </button>
                   )}
                 </div>
               )}
 
-              {/* Recommended size result */}
-              <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3">
-                <div className="text-2xl font-extrabold text-indigo-600 bg-white border border-indigo-200 py-1 px-3 rounded-xl font-mono min-w-[3rem] text-center shadow-sm">
-                  {sizingResult?.recommendedSize || (selectedProduct?.sizes[1] || "M")}
+              {/* Recommended size result — only for apparel/footwear */}
+              {isApparelOrFootwear ? (
+                <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3">
+                  <div className="text-2xl font-extrabold text-indigo-600 bg-white border border-indigo-200 py-1 px-3 rounded-xl font-mono min-w-[3rem] text-center shadow-sm">
+                    {sizingResult?.recommendedSize || selectedProduct?.sizes[0] || "M"}
+                  </div>
+                  <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
+                    {sizingResult?.reasoning || "Snap a selfie above to get a personalised AI size recommendation for this item."}
+                  </div>
+                  {sizingResult && (
+                    <span className="mini-badge info flex-shrink-0">AI Result</span>
+                  )}
                 </div>
-                <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
-                  {sizingResult?.reasoning || "Based on standard sizing charts. Use the camera scan for a personalized AI recommendation."}
+              ) : (
+                <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center flex-shrink-0">
+                    <Camera className="w-5 h-5 text-slate-500" />
+                  </div>
+                  <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
+                    Snap a return photo above. It will auto-populate the <strong className="text-slate-700">Verify Return</strong> tab so our AI can scan it for authenticity.
+                  </div>
                 </div>
-                {sizingResult && (
-                  <span className="mini-badge info flex-shrink-0">AI Result</span>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
@@ -1338,6 +1595,15 @@ export default function Home() {
           {/* TAB: CORE LEDGER HUB */}
           {activeTab === "dashboard" && (
             <div className="flex flex-col gap-5">
+
+              {/* ── HERO CAROUSEL ── */}
+              <HeroCarousel
+                onShopNow={(sku) => {
+                  setSelectedProductSku(sku);
+                  setActiveTab("marketplace");
+                }}
+              />
+
               {/* Recommendation + Blueprint */}
               <div className="glass-card flex flex-col gap-4">
                 <div className="flex items-center justify-between">
@@ -1509,13 +1775,16 @@ export default function Home() {
             <div className="flex flex-col gap-5">
               <div className="glass-card flex flex-col gap-4">
                 <div className="section-title-bar">
-                  <h2>L1: AI Sizing Chart & Fit Assistant</h2>
-                  <span className="section-badge badge-layer-1">Layer 1</span>
+                  <h2>Find My Size — AI Fit Recommender</h2>
+                  <span className="section-badge badge-layer-1">Size AI</span>
                 </div>
 
                 <div className="info-callout">
                   <Camera className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Use the selfie scanner in the product card above to capture a body photo. The AI will map your proportions to the size chart below and recommend your optimal fit — reducing size-related returns by up to 68%.</span>
+                  {isApparelOrFootwear
+                    ? <span>Snap a selfie using the camera in the <strong>product card above</strong>. Our AI maps your body proportions to the size chart below and picks your perfect fit — cutting size-related returns by up to 68%.</span>
+                    : <span>The selected item (<strong>{selectedProduct?.category}</strong>) doesn't require size selection. Switch to an <strong>Apparel or Footwear</strong> product using the search bar to use AI size scanning.</span>
+                  }
                 </div>
 
                 {/* Size chart for product */}
@@ -1573,31 +1842,10 @@ export default function Home() {
                     <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <div>
                       <div className="font-bold">Sizing Scan Ledger Entry</div>
-                      <div className="mt-0.5">Recommended: <strong>{sizingResult.recommendedSize}</strong> | Confidence: <strong>{sizingResult.confidenceScore}%</strong></div>
-                      <div className="mt-0.5 opacity-80">{sizingResult.reasoning}</div>
+                      <div className="mt-0.5">Recommended: <strong>{sizingResult.recommendedSize}</strong> — Confidence: <strong>{sizingResult.confidenceScore}%</strong></div>
                     </div>
                   </div>
                 )}
-
-                {/* Bracketing flow info */}
-                <div className="border-t border-slate-100 pt-3">
-                  <h4 className="text-xs font-bold text-slate-700 mb-2">How Bracketing Works</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[
-                      { step: "1", title: "Select 2 sizes", desc: "Add adjacent sizes (e.g. M + L) to the cart using the size buttons above." },
-                      { step: "2", title: "Scan your photo", desc: "Use the webcam or upload a full-body photo in the product card above." },
-                      { step: "3", title: "Accept AI pick", desc: "AI maps your body to the size chart. Keep one, return the other — zero waste." },
-                    ].map(({ step, title, desc }) => (
-                      <div key={step} className="flex gap-2.5 bg-slate-50 border border-slate-100 p-3 rounded-xl">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center flex-shrink-0">{step}</div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-800">{title}</div>
-                          <div className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -1606,8 +1854,8 @@ export default function Home() {
           {activeTab === "fraud-mitigation" && (
             <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>L2: AI Fraud Shield & Return Image Scanner</h2>
-                <span className="section-badge badge-layer-2">Layer 2</span>
+                <h2>Verify Return — Authenticity Scanner</h2>
+                <span className="section-badge badge-layer-2">AI Scan</span>
               </div>
 
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700 p-3.5 rounded-xl flex items-start gap-2.5 shadow-md">
@@ -1748,8 +1996,8 @@ export default function Home() {
           {activeTab === "deflection" && (
             <div className="glass-card flex flex-col gap-4">
               <div className="section-title-bar">
-                <h2>L3: Intercept Chat — Repair Deflector</h2>
-                <span className="section-badge badge-layer-3">Layer 3</span>
+                <h2>Get Help — Chat Before You Return</h2>
+                <span className="section-badge badge-layer-3">AI Support</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] gap-4">
@@ -1854,8 +2102,8 @@ export default function Home() {
           {activeTab === "grading" && (
             <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>L4: Warehouse Rotation Inspector & Condition Grader</h2>
-                <span className="section-badge badge-layer-4">Layer 4</span>
+                <h2>Inspect Item — Condition Grader</h2>
+                <span className="section-badge badge-layer-4">AI Grade</span>
               </div>
 
               <div className="warning-callout">
@@ -1982,8 +2230,8 @@ export default function Home() {
           {activeTab === "logistics" && (
             <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>L5: Geocoded P2P Logistics Router</h2>
-                <span className="section-badge badge-layer-5">Layer 5</span>
+                <h2>Arrange Shipping — Eco Route Optimizer</h2>
+                <span className="section-badge badge-layer-5">P2P Ship</span>
               </div>
 
               <div className="success-callout">
@@ -2090,8 +2338,8 @@ export default function Home() {
           {activeTab === "wallet" && (
             <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>L6: Loyalty Wallet & Refund Routing Engine</h2>
-                <span className="section-badge badge-layer-6">Layer 6</span>
+                <h2>My Wallet — Refund &amp; Green Credits</h2>
+                <span className="section-badge badge-layer-6">Rewards</span>
               </div>
 
               {/* Wallet summary */}
@@ -2209,7 +2457,7 @@ export default function Home() {
           {activeTab === "marketplace" && (
             <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
-                <h2>Circular Re-Commerce Marketplace</h2>
+                <h2>Shop Pre-Loved — Buy Near You</h2>
                 <span className="section-badge badge-layer-5">Local Feed</span>
               </div>
               <div className="info-callout mb-2">
@@ -2217,7 +2465,7 @@ export default function Home() {
                 <span>Items shown below have been returned by users within a 100km radius. By purchasing locally, you earn Green Credits and save shipping emissions.</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {marketplaceLoading ? (
                   <div className="col-span-full py-12 text-center text-slate-400">
                     <span className="spinner mb-3" />
@@ -2225,21 +2473,24 @@ export default function Home() {
                   </div>
                 ) : (
                   marketplaceFeed.map((item, i) => (
-                    <div key={i} className="glass-card flex flex-col group relative overflow-hidden p-0">
+                    <div key={i} className="marketplace-item-card group relative">
                       {item.trust < 40 && (
                         <div className="absolute top-2 right-2 bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-rose-200 z-10 shadow-sm flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" /> High Risk Seller
                         </div>
                       )}
-                      <div className="aspect-[4/3] overflow-hidden relative border-b border-slate-100">
-                        <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
+                      <div className="marketplace-item-image">
+                        <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover" alt={item.name} />
+                        {/* Overlay badges on image */}
+                        <div className="absolute top-3 left-3 flex gap-1.5">
+                          <span className={`mini-badge ${item.grade.startsWith("A") ? "success" : "warning"}`}>Grade {item.grade}</span>
+                        </div>
                       </div>
                       
                       <div className="p-4 flex flex-col flex-1">
-                        <div className="flex gap-1.5 mb-3 flex-wrap">
-                          <span className={`mini-badge ${item.grade.startsWith("A") ? "success" : "warning"}`}>Grade {item.grade}</span>
-                          <span className="mini-badge bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1"><Leaf className="w-2.5 h-2.5" /> -{item.co2Saved}kg CO₂</span>
-                          <span className="mini-badge bg-slate-50 text-slate-600 border-slate-200 flex items-center gap-1"><Map className="w-2.5 h-2.5" /> {item.distance} away</span>
+                        <div className="flex gap-1.5 mb-2 flex-wrap">
+                          <span className="mini-badge bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1"><Leaf className="w-2.5 h-2.5" /> -{item.co2Saved}kg CO₂</span>
+                          <span className="mini-badge bg-slate-50 text-slate-600 border border-slate-200 flex items-center gap-1"><Map className="w-2.5 h-2.5" /> {item.distance} away</span>
                         </div>
                         
                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{item.brand}</div>
@@ -2254,48 +2505,36 @@ export default function Home() {
                             <div className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Seller Trust</div>
                             <div className="flex items-center gap-1.5">
                               <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div className={`h-full ${item.trust > 80 ? "bg-emerald-500" : item.trust > 40 ? "bg-amber-500" : "bg-rose-500"}`} style={{ width: `${item.trust}%` }} />
+                                <div
+                                  className="h-full rounded-full transition-all duration-700"
+                                  style={{
+                                    width: `${item.trust}%`,
+                                    background: item.trust > 70 ? "linear-gradient(90deg,#059669,#10b981)" : item.trust > 40 ? "linear-gradient(90deg,#d97706,#f59e0b)" : "linear-gradient(90deg,#dc2626,#ef4444)"
+                                  }}
+                                />
                               </div>
-                              <span className={`font-mono text-[10px] font-bold ${item.trust > 80 ? "text-emerald-600" : item.trust > 40 ? "text-amber-600" : "text-rose-600"}`}>{item.trust}%</span>
+                              <span className="text-[10px] font-bold text-slate-600">{item.trust}%</span>
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="text-[10px] text-emerald-700 font-medium mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-start gap-1.5 mt-auto">
-                          <Award className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
-                          <span><strong>Earn {Math.round(item.price * 0.3)} Green Credits</strong> instantly by choosing this circular item.</span>
+
+                        <div className="flex gap-2 mt-auto">
+                          <button
+                            className="btn btn-primary flex-1 py-2 text-xs font-bold"
+                            onClick={() => {
+                              setSelectedProductSku(item.sku);
+                              confetti({ particleCount: 60, spread: 55, origin: { y: 0.7 }, colors: ["#10b981","#059669"] });
+                            }}
+                          >
+                            Buy Now
+                          </button>
+                          <button
+                            className="btn btn-secondary py-2 px-3 text-xs font-bold"
+                            onClick={() => setSelectedProductSku(item.sku)}
+                          >
+                            <Heart className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        
-                        <button 
-                          className="btn btn-primary w-full py-2 text-xs font-bold"
-                          onClick={async () => {
-                            const res = await fetch("/api/checkout", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ sku: item.sku, name: item.name, price: item.price })
-                            });
-                            if(res.ok) {
-                              const data = await res.json();
-                              if(data.url) window.location.href = data.url;
-                              else if(data.locked) {
-                                const jump = confirm("This item is currently locked by another buyer. Do you want to pay a $5 Priority Routing Fee to jump the queue?");
-                                if(jump) {
-                                  const jumpRes = await fetch("/api/checkout", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ sku: item.sku, name: item.name, price: item.price, priorityQueue: true })
-                                  });
-                                  if(jumpRes.ok) {
-                                    const jumpData = await jumpRes.json();
-                                    if(jumpData.url) window.location.href = jumpData.url;
-                                  }
-                                }
-                              }
-                            }
-                          }}
-                        >
-                          Checkout via Stripe
-                        </button>
                       </div>
                     </div>
                   ))
@@ -2303,98 +2542,53 @@ export default function Home() {
               </div>
             </div>
           )}
-
         </main>
       </div>
 
-      <footer className="app-footer text-center">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex justify-center mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 2 L2 22 L22 22 Z" />
-                <circle cx="12" cy="14" r="3.5" strokeDasharray="3 2" />
-              </svg>
-            </div>
-          </div>
-          <div className="text-xs font-bold text-slate-500">ReLoop Circular Logistics MVP</div>
-          <div className="text-[10px] text-slate-400 mt-1">Built with Next.js 16 · Vision AI · P2P Routing Engine · Global Ledger</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Personalization Engine · Interactive Repair Integration · SHA-256 Ledger</div>
-        </div>
-      </footer>
-    </div>
-
-    {/* BRACKETING MODAL */}
-      {showBracketingModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-extrabold text-slate-800 text-base">Size Bracketing Activated</h3>
-                <p className="text-xs text-slate-500 mt-1">You've added 2 sizes — this triggers the AI sizing scan to determine your perfect fit.</p>
-              </div>
-              <button onClick={() => setShowBracketingModal(false)} className="text-slate-300 hover:text-slate-600 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs font-medium text-indigo-700">
-              Use the camera/upload button to capture your photo above, then click "Analyze Photo" to get your AI size recommendation.
-            </div>
-            <div className="flex gap-2">
-              <button className="btn btn-primary flex-1 py-2 text-xs" onClick={() => { setShowBracketingModal(false); setActiveTab("size-assist"); }}>
-                View Size Chart
-              </button>
-              <button className="btn btn-secondary flex-1 py-2 text-xs" onClick={() => setShowBracketingModal(false)}>
-                Continue Shopping
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ARCHITECTURE X-RAY MODAL */}
+      {/* X-Ray Architecture Modal */}
       {showXRayModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden max-h-[90vh]">
-            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/50">
-              <div>
-                <h3 className="font-extrabold text-white text-lg flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-amber-500" /> Platform Architecture X-Ray
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">How ReLoop scales using advanced Cloud and AI infrastructure.</p>
-              </div>
-              <button onClick={() => setShowXRayModal(false)} className="text-slate-400 hover:text-white transition-colors">
-                <X className="w-6 h-6" />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(15,23,42,0.7)", backdropFilter: "blur(8px)" }}
+          onClick={() => setShowXRayModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-slate-200"
+            onClick={e => e.stopPropagation()}
+            style={{ animation: "scaleIn 0.3s cubic-bezier(0.16,1,0.3,1) both" }}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                ReLoop Architecture X-Ray
+              </h2>
+              <button onClick={() => setShowXRayModal(false)} className="text-slate-400 hover:text-slate-700 transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
+                <X className="w-4 h-4" />
               </button>
             </div>
-            
-            <div className="p-6 overflow-y-auto flex flex-col gap-6 bg-slate-900">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { layer: "L1 & L2: Predictive & Vision", stack: "Proprietary Vision Engine", desc: "Computer vision models analyze images for fraud artifacts. Predictive LLMs provide proactive return velocity warnings." },
-                  { layer: "L3: Generative AI Chat", stack: "LLM Streaming API", desc: "Streams interactive troubleshooting via Edge API -> Lambda -> LLM to deflect returns before they happen." },
-                  { layer: "L4: Grading Ledger", stack: "Distributed Ledger DB", desc: "Immutable grading records stored in high-throughput NoSQL for fast retrieval, powering dynamic Seller Trust scores." },
-                  { layer: "L5: Distributed Routing", stack: "Geospatial Service", desc: "Calculates local buyer proximity and routes items directly to neighborhood drops, bypassing Central Warehouses." },
-                  { layer: "L6: Green Economy Engine", stack: "Event Queue Manager", desc: "Asynchronous queues manage the Priority Jump ('Rapido') locks and Stripe payment events at massive scale." }
-                ].map((item, i) => (
-                  <div key={i} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col gap-2">
-                    <div className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">{item.layer}</div>
-                    <div className="text-sm font-extrabold text-white font-mono flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> {item.stack}
-                    </div>
-                    <div className="text-xs text-slate-400 leading-relaxed">{item.desc}</div>
+            <div className="flex flex-col gap-3">
+              {[
+                { badge: "L1", label: "AI Sizing Assist", desc: "Body photo → Bedrock AI → size recommendation. Reduces sizing returns by 68%.", color: "badge-layer-1" },
+                { badge: "L2", label: "Fraud Shield", desc: "Image AI + IPQS signals → risk score + APPROVE/REVIEW/BLOCK decision in <2s.", color: "badge-layer-2" },
+                { badge: "L3", label: "Intercept Chat", desc: "Streaming chat deflector with iFixit repair guides. Saves return with self-repair.", color: "badge-layer-3" },
+                { badge: "L4", label: "Auto Inspector", desc: "Video keyframe extraction + defect detection → A/B/C/D grade + SHA-256 ledger hash.", color: "badge-layer-4" },
+                { badge: "L5", label: "P2P Logistics", desc: "Haversine + Nominatim geocoding → direct buyer route → Shippo label generation.", color: "badge-layer-5" },
+                { badge: "L6", label: "Loyalty Wallet", desc: "Green credit augmentation (+30%) for eco actions vs standard cash refund.", color: "badge-layer-6" },
+                { badge: "MKT", label: "Circular Marketplace", desc: "Radius-matched local re-commerce feed with trust scores and CO₂ savings tracking.", color: "badge-catalog" },
+              ].map(({ badge, label, desc, color }) => (
+                <div key={badge} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-all">
+                  <span className={`section-badge ${color} flex-shrink-0 mt-0.5`}>{badge}</span>
+                  <div>
+                    <div className="text-sm font-bold text-slate-800">{label}</div>
+                    <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-5 border-t border-slate-800 bg-slate-900/80 text-center">
-              <button className="btn btn-secondary py-2.5 px-8 text-xs font-bold border-slate-700 text-white hover:bg-slate-800" onClick={() => setShowXRayModal(false)}>
-                Close X-Ray
-              </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
+      </div>
     </>
   );
 }
