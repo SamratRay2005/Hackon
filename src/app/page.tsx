@@ -657,6 +657,8 @@ export default function Home() {
   const [fraudImageType, setFraudImageType] = useState<string>("genuine");
   const [fraudLoading, setFraudLoading] = useState(false);
   const [fraudResult, setFraudResult] = useState<any>(null);
+  const [fraudImageName, setFraudImageName] = useState<string>("");
+  const [fraudDemoCycle, setFraudDemoCycle] = useState(0);
 
   // Layer 3 - Chat
   const [deflectProduct, setDeflectProduct] = useState("Smart Drip Coffee Maker");
@@ -690,6 +692,24 @@ export default function Home() {
   // Marketplace Feed
   const [marketplaceFeed, setMarketplaceFeed] = useState<Array<any>>([]);
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
+
+  // Shopping Bag
+  const [shoppingBag, setShoppingBag] = useState<Array<{ sku: string; name: string; price: number; grade: string; brand: string; co2Saved: number }>>([]);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<"bag" | "summary" | "confirmed">("bag");
+
+  const addToBag = (item: any) => {
+    if (shoppingBag.some(b => b.sku === item.sku)) return;
+    setShoppingBag(prev => [...prev, { sku: item.sku, name: item.name, price: item.price, grade: item.grade, brand: item.brand, co2Saved: item.co2Saved }]);
+  };
+
+  const removeFromBag = (sku: string) => {
+    setShoppingBag(prev => prev.filter(b => b.sku !== sku));
+  };
+
+  const bagSubtotal = shoppingBag.reduce((sum, i) => sum + i.price, 0);
+  const bagTax = bagSubtotal * 0.08;
+  const bagTotal = bagSubtotal + bagTax;
 
   const [walletInfo, setWalletInfo] = useState<{
     credits: number;
@@ -872,13 +892,20 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images: [SAMPLE_MOCK_IMAGE], sku: "INIT_QUERY", itemName: "query", userId: profileUserId })
       });
-      setLedgerRecords([{
-        id: "ph-771", sku: "CF-Mkr-99", itemName: "Smart Drip Coffee Maker",
-        grade: "B", defects: ["Minor scuffing on base", "Reservoir has hardwater lines"],
-        resaleCategory: "Open Box - Very Good",
-        hash: "5d7ee02bca5cf0b04c8614578efbdca9e79435b80a187e148e658a5be89dbf7c0",
-        timestamp: "2026-06-13T10:15:00Z"
-      }]);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.records && data.records.length > 0) {
+          setLedgerRecords(data.records);
+        } else {
+          setLedgerRecords([{
+            id: "ph-771", sku: "CF-Mkr-99", itemName: "Smart Drip Coffee Maker",
+            grade: "B", defects: ["Minor scuffing on base", "Reservoir has hardwater lines"],
+            resaleCategory: "Open Box - Very Good",
+            hash: "5d7ee02bca5cf0b04c8614578efbdca9e79435b80a187e148e658a5be89dbf7c0",
+            timestamp: "2026-06-13T10:15:00Z"
+          }]);
+        }
+      }
     } catch {}
   };
 
@@ -970,7 +997,16 @@ export default function Home() {
       const res = await fetch("/api/risk-mitigation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: fraudImage, userId: profileUserId, email: profileEmail, ipAddress: profileIp, sku: fraudSku, itemName: fraudItemName, priorReturns: profilePriorReturns })
+        body: JSON.stringify({ 
+          image: fraudImage,
+          imageName: fraudImageName,
+          userId: profileUserId,
+          email: profileEmail,
+          ipAddress: profileIp,
+          sku: fraudSku,
+          itemName: fraudItemName,
+          priorReturns: profilePriorReturns
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -978,6 +1014,20 @@ export default function Home() {
         if (data.recommendedAction === "BLOCK") setMetrics(prev => ({ ...prev, fraudAttemptsBlocked: prev.fraudAttemptsBlocked + 1 }));
       }
     } catch {} finally { setFraudLoading(false); }
+  };
+
+  const handleFraudDemoClick = () => {
+    const samples = [
+      { img: svgToDataUrl(MOCK_DAMAGE_SVG), name: "sample_genuine_claim.svg" },
+      { img: svgToDataUrl(MOCK_FRAUD_SUSPICIOUS_SVG), name: "sample_staged_claim.svg" },
+      { img: svgToDataUrl(MOCK_DAMAGE_SVG), name: "sample_item_close_up.svg" }
+    ];
+    const index = fraudDemoCycle % samples.length;
+    setFraudImage(samples[index].img);
+    setFraudImageName(samples[index].name);
+    setFraudImageType("demo_" + index);
+    setFraudDemoCycle(prev => prev + 1);
+    setFraudResult(null);
   };
 
   // ---- L3 CHAT ----
@@ -1503,7 +1553,7 @@ export default function Home() {
                     {sizingResult?.recommendedSize || selectedProduct?.sizes[0] || "M"}
                   </div>
                   <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    {sizingResult?.reasoning || "Snap a selfie above to get a personalised AI size recommendation for this item."}
+                    {sizingResult?.reasoning || "Head to \"Find My Size\" tab to get a personalised AI size recommendation."}
                   </div>
                   {sizingResult && (
                     <span className="mini-badge info flex-shrink-0">AI Result</span>
@@ -1515,10 +1565,52 @@ export default function Home() {
                     <Camera className="w-5 h-5 text-slate-500" />
                   </div>
                   <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    Snap a return photo above. It will auto-populate the <strong className="text-slate-700">Verify Return</strong> tab so our AI can scan it for authenticity.
+                    Head to <strong className="text-slate-700">Verify Return</strong> tab to scan your return photo for AI fraud detection.
                   </div>
                 </div>
               )}
+
+              {/* Global Product Search — Teammate's addition for changing SKU */}
+              <div ref={searchContainerRef} className="relative mt-1">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Search & Change Product</span>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-8 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_0_3px_rgba(79,70,229,0.08)] placeholder-slate-400 transition-all font-semibold"
+                    placeholder="Search 150+ products by name or SKU..."
+                    value={searchQuery}
+                    onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                    onFocus={() => setShowSuggestions(true)}
+                  />
+                  {searchQuery && (
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600" onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                {showSuggestions && filteredSuggestions.length > 0 && (
+                  <div className="absolute z-[999] top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-slate-100">
+                    {filteredSuggestions.map(p => (
+                      <div
+                        key={p.sku}
+                        className="p-2.5 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                        onClick={() => {
+                          setSelectedProductSku(p.sku);
+                          setSearchQuery(`${p.name} (${p.sku})`);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">{p.name}</div>
+                          <div className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</div>
+                        </div>
+                        <span className="text-emerald-600 font-extrabold text-xs font-mono">${p.price.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1846,6 +1938,26 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
+                {/* How Bracketing Works */}
+                <div className="border-t border-slate-100 pt-4">
+                  <h4 className="text-xs font-bold text-slate-700 mb-3">How Size Bracketing Works</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { step: "1", title: "Select 2 adjacent sizes", desc: "Use the buttons above to add 2 sizes (e.g. M + L) to your size cart on the left." },
+                      { step: "2", title: "Scan with your selfie", desc: "Use Camera or Upload above to submit a full-body photo for AI body mapping." },
+                      { step: "3", title: "Accept AI pick", desc: "AI maps your body to the size chart. Keep one, return the other — zero waste." },
+                    ].map(({ step, title, desc }) => (
+                      <div key={step} className="flex gap-2.5 bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center flex-shrink-0">{step}</div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">{title}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1861,136 +1973,222 @@ export default function Home() {
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700 p-3.5 rounded-xl flex items-start gap-2.5 shadow-md">
                 <Shield className="w-5 h-5 text-sky-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">Powered by Amazon Bedrock Insights & IPQS</div>
+                  <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">Back-Office Returns Security Console</div>
                   <div className="text-xs text-slate-300 font-medium leading-relaxed">
-                    Bedrock neural image models actively scan uploads for AI-generated pixels, shadow staging artifacts, and IP reputation. Predictive risk models flag fraudulent claims in under 2 seconds.
+                    AI vision models scan claim photos against product catalog for staging artifacts, shadow inconsistencies, and IP reputation. Risk decisions in under 2 seconds.
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Input column */}
+              {/* Split Panel: Customer Claim vs Catalog Reference */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Left: Claim Photo */}
                 <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-3">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5" /> Return Claim Photo
+                  <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-slate-400" /> Customer-Submitted Evidence Photo
+                    </span>
+                    {fraudImage && (
+                      <span className="text-[9px] font-mono text-slate-400 truncate max-w-[150px]" title={fraudImageName}>
+                        {fraudImageName}
+                      </span>
+                    )}
                   </div>
 
-                  <WebcamCapture onCapture={(base64) => { setFraudImageType("custom"); setFraudImage(base64); }} overlayType="damage" />
-
-                  {fraudImage ? (
-                    <div>
-                      <span className="mini-badge success mb-1.5">Photo Loaded</span>
-                      <img src={fraudImage} className="upload-preview mt-1" alt="Fraud scan preview" />
-                    </div>
-                  ) : (
-                    <div className="empty-state-card mt-1">
-                      <ImageIcon className="icon" />
-                      <div className="text">No image selected yet</div>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <button
-                      className={`btn btn-secondary flex-1 py-1 text-[11px] font-bold ${fraudImageType === "genuine" ? "border-indigo-500 text-indigo-600 bg-indigo-50" : ""}`}
-                      onClick={() => { setFraudImageType("genuine"); setFraudImage(svgToDataUrl(MOCK_DAMAGE_SVG)); }}
-                    >
-                      ✅ Genuine Preset
-                    </button>
-                    <button
-                      className={`btn btn-secondary flex-1 py-1 text-[11px] font-bold ${fraudImageType === "staged" ? "border-rose-500 text-rose-600 bg-rose-50" : ""}`}
-                      onClick={() => { setFraudImageType("staged"); setFraudImage(svgToDataUrl(MOCK_FRAUD_SUSPICIOUS_SVG)); }}
-                    >
-                      ⚠️ Staged Preset
-                    </button>
+                  <div className="relative aspect-video w-full rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shadow-sm">
+                    {fraudImage ? (
+                      <img src={fraudImage} className="w-full h-full object-contain" alt="Customer evidence photo" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2">
+                        <ImageIcon className="w-10 h-10 text-slate-300" />
+                        <span className="text-xs font-semibold text-slate-500">No Claim Photo Loaded</span>
+                        <span className="text-[10px] text-slate-400">Use camera, upload, or load a sample below</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="border-t border-slate-200 pt-3">
-                    <div className="font-bold text-slate-600 mb-2 text-[10px] uppercase tracking-wider">Claim Context</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
-                        <span className="text-xs font-mono text-slate-800 font-medium">{fraudSku}</span>
-                      </div>
-                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">IP</span>
-                        <span className="text-xs font-mono text-slate-800 font-medium">{profileIp}</span>
-                      </div>
-                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
-                        <span className="text-xs text-slate-800 font-medium">{profileUserId}</span>
-                      </div>
-                      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Prior Returns</span>
-                        <span className="text-xs text-slate-800 font-medium">{profilePriorReturns}</span>
-                      </div>
+                  <div className="mt-1">
+                    <WebcamCapture
+                      onCapture={(base64: string) => {
+                        setFraudImageType("custom");
+                        setFraudImage(base64);
+                        setFraudImageName("uploaded_claim_evidence.jpg");
+                        setFraudResult(null);
+                      }}
+                      overlayType="damage"
+                    />
+                  </div>
+                </div>
+
+                {/* Right: Catalog Reference */}
+                <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col gap-3">
+                  <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5 text-slate-400" /> Original Product Reference (Catalog)
+                    </span>
+                    <span className="mini-badge info text-[9px] font-mono font-bold">SKU: {fraudSku}</span>
+                  </div>
+
+                  <div className="relative aspect-video w-full rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shadow-sm">
+                    <img
+                      src={getSKUReferenceImage(fraudSku)}
+                      className="w-full h-full object-contain"
+                      alt={`Original product catalog for SKU ${fraudSku}`}
+                    />
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-1">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">Product Catalog Title</span>
+                    <span className="text-xs font-bold text-slate-800">{fraudItemName}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Claim Evaluation Console */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 pt-4">
+                {/* Column 1: Metadata + Run Button */}
+                <div className="md:col-span-1 bg-slate-50/60 border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 justify-between">
+                  <div>
+                    <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Claim Intake Metadata</h3>
+                    <div className="flex flex-col gap-2">
+                      {[
+                        { label: "Claim Product", value: fraudItemName },
+                        { label: "Claim SKU", value: fraudSku },
+                        { label: "Analyst ID", value: "T1-RETAIL-AUDIT" },
+                        { label: "Claimant User", value: profileUserId },
+                        { label: "Prior Return Count", value: String(profilePriorReturns) },
+                        { label: "Claim Network IP", value: profileIp },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="flex justify-between border-b border-slate-100 pb-1.5 text-xs last:border-0">
+                          <span className="text-slate-400 font-medium">{label}:</span>
+                          <span className="font-bold text-slate-700 truncate max-w-[120px] font-mono" title={value}>{value}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   <button
-                    className="btn btn-primary w-full py-2.5 font-bold text-xs mt-1"
+                    className="btn btn-primary w-full py-2.5 font-bold text-xs mt-2"
                     disabled={!fraudImage || fraudLoading}
                     onClick={triggerFraudCheck}
                   >
-                    {fraudLoading ? <><span className="spinner" /> Analyzing Risk Signals...</> : <><Shield className="w-4 h-4" /> Scan Claim Risk & Authenticate</>}
+                    {fraudLoading ? (
+                      <><span className="spinner" /> Performing Fraud Audit...</>
+                    ) : (
+                      <><Shield className="w-4 h-4" /> Run Fraud Analysis</>
+                    )}
                   </button>
                 </div>
 
-                {/* Result column */}
-                <div className="border border-slate-200 p-4 rounded-2xl bg-white flex flex-col gap-3">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Audit Results</div>
-                  {fraudResult ? (
-                    <div className="flex flex-col gap-4">
-                      {/* Score + decision */}
-                      <div className="flex items-center gap-4">
-                        <div className={`text-2xl font-extrabold px-4 py-2 rounded-xl border-2 font-mono flex-shrink-0 ${fraudResult.riskScore > 70 ? "bg-rose-50 border-rose-200 text-rose-600" : fraudResult.riskScore > 40 ? "bg-amber-50 border-amber-200 text-amber-600" : "bg-emerald-50 border-emerald-200 text-emerald-600"}`}>
-                          {fraudResult.riskScore}
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-slate-400 font-bold uppercase">Risk Score /100</div>
-                          <div className="text-sm font-bold text-slate-700 mt-0.5">
-                            Decision: <span className={fraudResult.recommendedAction === "BLOCK" ? "text-rose-600" : fraudResult.recommendedAction === "REVIEW" ? "text-amber-600" : "text-emerald-600"}>
-                              {fraudResult.recommendedAction}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                {/* Column 2 & 3: Results */}
+                <div className="md:col-span-2 border border-slate-200 p-4 rounded-2xl bg-white flex flex-col gap-3">
+                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Risk Evaluation Dashboard</h3>
 
-                      {/* Score breakdown */}
-                      {fraudResult.breakdown && (
-                        <div className="flex flex-col gap-2 text-xs border-t border-slate-100 pt-3">
-                          {[
-                            { label: "AI Image Generation", val: fraudResult.breakdown.aiGenerationScore },
-                            { label: "Photo Staging Signs", val: fraudResult.breakdown.photoStagingSigns },
-                            { label: "IP Reputation (IPQS)", val: fraudResult.breakdown.ipqsScore },
-                            { label: "Return Velocity Index", val: fraudResult.breakdown.userVelocityScore },
-                          ].map(({ label, val }) => (
-                            <div key={label}>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-slate-500">{label}</span>
-                                <span className="font-bold text-slate-800">{val}%</span>
-                              </div>
-                              <div className="progress-bar-container" style={{ height: "4px" }}>
-                                <div className="progress-bar-fill" style={{ width: `${val}%`, background: val > 70 ? "linear-gradient(90deg,#dc2626,#ef4444)" : val > 40 ? "linear-gradient(90deg,#d97706,#f59e0b)" : "linear-gradient(90deg,#059669,#10b981)" }} />
+                  {fraudLoading ? (
+                    <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
+                      <div className="spinner w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs text-slate-500 font-medium animate-pulse">Running advanced pixel & metadata auditing patterns...</span>
+                    </div>
+                  ) : fraudResult ? (
+                    <div className="flex flex-col gap-4 flex-1">
+                      {fraudResult.isRelevant === false ? (
+                        <div className="flex flex-col gap-3 flex-1 justify-center">
+                          <div className="bg-rose-50 border-2 border-rose-200 p-4 rounded-xl flex items-start gap-3 text-rose-700 shadow-sm">
+                            <AlertTriangle className="w-6 h-6 flex-shrink-0 text-rose-600 mt-0.5" />
+                            <div>
+                              <div className="font-extrabold text-sm text-rose-800">Claim Evidence Rejected</div>
+                              <div className="text-xs font-semibold leading-relaxed mt-1">
+                                ⚠️ Image Rejected: The submitted photo does not appear to contain the claimed return product. Manual escalation required.
                               </div>
                             </div>
-                          ))}
+                          </div>
+                          <div className="flex gap-2.5 mt-2">
+                            <button className="btn btn-danger flex-1 py-2 text-xs font-bold" onClick={() => { alert("Claim escalated to Tier 2."); setFraudResult(null); }}>
+                              Escalate to Tier 2
+                            </button>
+                            <button className="btn btn-secondary flex-1 py-2 text-xs font-bold" onClick={() => { alert("Photo re-request sent to customer."); setFraudResult(null); }}>
+                              Request Correct Image
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-4 justify-between flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 border border-slate-100 p-3.5 rounded-xl">
+                            <div className="flex items-center gap-3">
+                              <div className={`text-3xl font-black px-4 py-2 rounded-xl border-2 font-mono flex-shrink-0 ${
+                                fraudResult.riskScore > 70
+                                  ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm"
+                                  : fraudResult.riskScore > 40
+                                    ? "bg-amber-50 border-amber-200 text-amber-600 shadow-sm"
+                                    : "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm"
+                              }`}>
+                                {fraudResult.riskScore}
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">Fraud Risk Index</span>
+                                <span className="text-xs font-bold text-slate-700 font-mono">Range 0–100</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Analyst Verdict</span>
+                              {fraudResult.riskScore > 70 ? (
+                                <span className="inline-flex items-center gap-1 bg-rose-100 border border-rose-200 text-rose-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🔴 High Suspicion — Block & Escalate</span>
+                              ) : fraudResult.riskScore > 40 ? (
+                                <span className="inline-flex items-center gap-1 bg-amber-100 border border-amber-200 text-amber-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🟡 Moderate Risk — Flag for Review</span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🟢 Genuine Claim — Approve Return</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {fraudResult.breakdown && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-y border-slate-100 py-3">
+                              {[
+                                { label: "AI Image Generation Score", val: fraudResult.breakdown.aiGenerationScore },
+                                { label: "Photo Staging Signs Index", val: fraudResult.breakdown.photoStagingSigns },
+                                { label: "IP Rep Fraud Score (IPQS)", val: fraudResult.breakdown.ipqsScore },
+                                { label: "User Return Velocity Index", val: fraudResult.breakdown.userVelocityScore },
+                              ].map(({ label, val }) => (
+                                <div key={label} className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col gap-1.5">
+                                  <div className="flex justify-between font-semibold text-slate-500 text-[10px] uppercase">
+                                    <span>{label}</span>
+                                    <span className="font-extrabold text-slate-800">{val}%</span>
+                                  </div>
+                                  <div className="progress-bar-container" style={{ height: "4px" }}>
+                                    <div className="progress-bar-fill" style={{ width: `${val}%`, background: val > 70 ? "linear-gradient(90deg,#dc2626,#ef4444)" : val > 40 ? "linear-gradient(90deg,#d97706,#f59e0b)" : "linear-gradient(90deg,#059669,#10b981)" }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {fraudResult.signals && (
+                            <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">AI Signal Analysis</div>
+                              <ul className="flex flex-col gap-1">
+                                {fraudResult.signals.map((sig: string, i: number) => (
+                                  <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                                    <span className="text-indigo-400 mt-0.5">›</span> {sig}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       )}
-
-                      <div className={`p-3 rounded-xl border text-xs italic leading-relaxed ${fraudResult.recommendedAction === "BLOCK" ? "bg-rose-50 border-rose-100 text-rose-700" : "bg-slate-50 border-slate-100 text-slate-600"}`}>
-                        "{fraudResult.defectExplanation}"
-                      </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-3">
-                      <Shield className="w-10 h-10 text-slate-200" />
-                      <span className="text-xs text-slate-400 italic">Upload a return claim photo and run the fraud scan to see results here.</span>
+                    <div className="empty-state-card flex-1 mt-2">
+                      <Shield className="icon" />
+                      <div className="text">Load a claim photo on the left and click "Run Fraud Analysis" to evaluate authenticity.</div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           )}
+
+
 
           {/* TAB: L3 INTERCEPT CHAT */}
           {activeTab === "deflection" && (
@@ -2458,7 +2656,21 @@ export default function Home() {
             <div className="glass-card flex flex-col gap-5">
               <div className="section-title-bar">
                 <h2>Shop Pre-Loved — Buy Near You</h2>
-                <span className="section-badge badge-layer-5">Local Feed</span>
+                <div className="flex items-center gap-2">
+                  <span className="section-badge badge-layer-5">Local Feed</span>
+                  <button
+                    className="relative btn btn-secondary py-1.5 px-3 text-xs font-bold flex items-center gap-1.5"
+                    onClick={() => { setCheckoutStep("bag"); setShowCheckoutModal(true); }}
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    My Bag
+                    {shoppingBag.length > 0 && (
+                      <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-indigo-600 text-white text-[9px] font-extrabold flex items-center justify-center shadow">
+                        {shoppingBag.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="info-callout mb-2">
                 <ShoppingBag className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -2518,15 +2730,21 @@ export default function Home() {
                           </div>
                         </div>
 
+                        <div className="text-[10px] text-emerald-700 font-medium mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-start gap-1.5 mt-auto">
+                          <Award className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
+                          <span><strong>Earn {Math.round(item.price * 0.3)} Green Credits</strong> instantly by choosing this circular item.</span>
+                        </div>
+
                         <div className="flex gap-2 mt-auto">
                           <button
                             className="btn btn-primary flex-1 py-2 text-xs font-bold"
-                            onClick={() => {
-                              setSelectedProductSku(item.sku);
-                              confetti({ particleCount: 60, spread: 55, origin: { y: 0.7 }, colors: ["#10b981","#059669"] });
-                            }}
+                            onClick={() => addToBag(item)}
+                            disabled={shoppingBag.some(b => b.sku === item.sku)}
                           >
-                            Buy Now
+                            {shoppingBag.some(b => b.sku === item.sku)
+                              ? <><CheckCircle className="w-3.5 h-3.5" /> Added to Bag</>
+                              : <><ShoppingBag className="w-3.5 h-3.5" /> Add to Bag</>
+                            }
                           </button>
                           <button
                             className="btn btn-secondary py-2 px-3 text-xs font-bold"
@@ -2545,45 +2763,211 @@ export default function Home() {
         </main>
       </div>
 
-      {/* X-Ray Architecture Modal */}
+      {/* X-Ray Architecture Modal — Updated with tech stack grid */}
       {showXRayModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(15,23,42,0.7)", backdropFilter: "blur(8px)" }}
+          className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
           onClick={() => setShowXRayModal(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-slate-200"
+            className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden max-h-[90vh]"
             onClick={e => e.stopPropagation()}
-            style={{ animation: "scaleIn 0.3s cubic-bezier(0.16,1,0.3,1) both" }}
           >
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-500" />
-                ReLoop Architecture X-Ray
-              </h2>
-              <button onClick={() => setShowXRayModal(false)} className="text-slate-400 hover:text-slate-700 transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
-                <X className="w-4 h-4" />
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/50">
+              <div>
+                <h3 className="font-extrabold text-white text-lg flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-amber-500" /> Platform Architecture X-Ray
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">How ReLoop scales using advanced Cloud and AI infrastructure.</p>
+              </div>
+              <button onClick={() => setShowXRayModal(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="flex flex-col gap-3">
-              {[
-                { badge: "L1", label: "AI Sizing Assist", desc: "Body photo → Bedrock AI → size recommendation. Reduces sizing returns by 68%.", color: "badge-layer-1" },
-                { badge: "L2", label: "Fraud Shield", desc: "Image AI + IPQS signals → risk score + APPROVE/REVIEW/BLOCK decision in <2s.", color: "badge-layer-2" },
-                { badge: "L3", label: "Intercept Chat", desc: "Streaming chat deflector with iFixit repair guides. Saves return with self-repair.", color: "badge-layer-3" },
-                { badge: "L4", label: "Auto Inspector", desc: "Video keyframe extraction + defect detection → A/B/C/D grade + SHA-256 ledger hash.", color: "badge-layer-4" },
-                { badge: "L5", label: "P2P Logistics", desc: "Haversine + Nominatim geocoding → direct buyer route → Shippo label generation.", color: "badge-layer-5" },
-                { badge: "L6", label: "Loyalty Wallet", desc: "Green credit augmentation (+30%) for eco actions vs standard cash refund.", color: "badge-layer-6" },
-                { badge: "MKT", label: "Circular Marketplace", desc: "Radius-matched local re-commerce feed with trust scores and CO₂ savings tracking.", color: "badge-catalog" },
-              ].map(({ badge, label, desc, color }) => (
-                <div key={badge} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-all">
-                  <span className={`section-badge ${color} flex-shrink-0 mt-0.5`}>{badge}</span>
-                  <div>
-                    <div className="text-sm font-bold text-slate-800">{label}</div>
-                    <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
+
+            <div className="p-6 overflow-y-auto flex flex-col gap-6 bg-slate-900">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { layer: "L1 & L2: Predictive & Vision", stack: "Proprietary Vision Engine", desc: "Computer vision models analyze images for fraud artifacts. Predictive LLMs provide proactive return velocity warnings." },
+                  { layer: "L3: Generative AI Chat", stack: "LLM Streaming API", desc: "Streams interactive troubleshooting via Edge API → Lambda → LLM to deflect returns before they happen." },
+                  { layer: "L4: Grading Ledger", stack: "Distributed Ledger DB", desc: "Immutable grading records stored in high-throughput NoSQL for fast retrieval, powering dynamic Seller Trust scores." },
+                  { layer: "L5: Distributed Routing", stack: "Geospatial Service", desc: "Calculates local buyer proximity and routes items directly to neighborhood drops, bypassing Central Warehouses." },
+                  { layer: "L6: Green Economy Engine", stack: "Event Queue Manager", desc: "Asynchronous queues manage the Priority Jump ('Rapido') locks and Stripe payment events at massive scale." },
+                  { layer: "MKT: Circular Marketplace", stack: "Radius-Match Feed Engine", desc: "Local re-commerce feed matched within 100km radius with trust scores, CO₂ savings, and grading ledger integration." },
+                ].map((item, i) => (
+                  <div key={i} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col gap-2">
+                    <div className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">{item.layer}</div>
+                    <div className="text-sm font-extrabold text-white font-mono flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> {item.stack}
+                    </div>
+                    <div className="text-xs text-slate-400 leading-relaxed">{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-5 border-t border-slate-800 bg-slate-900/80 text-center">
+              <button className="btn btn-secondary py-2.5 px-8 text-xs font-bold border-slate-700 text-white hover:bg-slate-800" onClick={() => setShowXRayModal(false)}>
+                Close X-Ray
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SHOPPING BAG / CHECKOUT MODAL */}
+      {showCheckoutModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-indigo-500" />
+                {checkoutStep === "bag" && "Your Circular Bag"}
+                {checkoutStep === "summary" && "Order Summary"}
+                {checkoutStep === "confirmed" && "Purchase Confirmed 🎉"}
+              </h3>
+              <button onClick={() => { setShowCheckoutModal(false); setCheckoutStep("bag"); }} className="text-slate-300 hover:text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Step 1: Bag Contents */}
+            {checkoutStep === "bag" && (
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+                  {shoppingBag.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-300">
+                      <ShoppingBag className="w-12 h-12" />
+                      <p className="text-sm font-medium text-slate-400">Your bag is empty</p>
+                      <p className="text-xs text-slate-300">Browse the marketplace and add circular items.</p>
+                    </div>
+                  ) : (
+                    shoppingBag.map(item => (
+                      <div key={item.sku} className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <img src={getSKUReferenceImage(item.sku)} className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-slate-100" alt={item.name} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-slate-800 truncate">{item.name}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{item.brand} · Grade {item.grade}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-emerald-600 font-extrabold text-sm font-mono">${item.price.toFixed(2)}</span>
+                            <span className="text-[9px] text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">-{item.co2Saved}kg CO₂</span>
+                          </div>
+                        </div>
+                        <button onClick={() => removeFromBag(item.sku)} className="text-slate-200 hover:text-rose-400 transition-colors flex-shrink-0">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {shoppingBag.length > 0 && (
+                  <div className="px-5 py-4 border-t border-slate-100 flex flex-col gap-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500 font-medium">Subtotal</span>
+                      <span className="font-extrabold text-slate-800 font-mono">${bagSubtotal.toFixed(2)}</span>
+                    </div>
+                    <button className="btn btn-primary w-full py-2.5 font-bold text-sm" onClick={() => setCheckoutStep("summary")}>
+                      <ArrowRight className="w-4 h-4" /> Review Order
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Order Summary */}
+            {checkoutStep === "summary" && (
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+                  {shoppingBag.map(item => (
+                    <div key={item.sku} className="flex justify-between items-center text-xs py-2 border-b border-slate-50">
+                      <div>
+                        <div className="font-bold text-slate-700">{item.name}</div>
+                        <div className="text-[10px] text-slate-400">Grade {item.grade} · {item.brand}</div>
+                      </div>
+                      <span className="font-bold text-slate-800 font-mono">${item.price.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-slate-100 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Subtotal</span>
+                      <span className="font-bold text-slate-700 font-mono">${bagSubtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Tax (8%)</span>
+                      <span className="font-bold text-slate-700 font-mono">${bagTax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-1 pt-2 border-t border-slate-100">
+                      <span className="font-extrabold text-slate-800">Total</span>
+                      <span className="font-extrabold text-indigo-600 font-mono text-base">${bagTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs text-emerald-700 flex items-start gap-2 mt-1">
+                    <Leaf className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>By buying circular, you're saving <strong>{shoppingBag.reduce((s, i) => s + i.co2Saved, 0)} kg CO₂</strong> and earning <strong>{Math.round(bagSubtotal * 0.3)} Green Credits</strong>.</span>
                   </div>
                 </div>
-              ))}
+                <div className="px-5 py-4 border-t border-slate-100 flex gap-2">
+                  <button className="btn btn-secondary flex-1 py-2.5 text-xs font-bold" onClick={() => setCheckoutStep("bag")}>Edit Bag</button>
+                  <button className="btn btn-success flex-1 py-2.5 text-xs font-bold" onClick={() => {
+                    setCheckoutStep("confirmed");
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ["#10b981", "#6366f1", "#f59e0b"] });
+                    setWalletInfo(prev => ({ ...prev, credits: prev.credits + Math.round(bagSubtotal * 0.3) }));
+                  }}>
+                    <CheckCircle className="w-4 h-4" /> Confirm Purchase
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Confirmed */}
+            {checkoutStep === "confirmed" && (
+              <div className="flex flex-col items-center gap-5 px-5 py-6">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 border-2 border-emerald-300 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-emerald-600" />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-extrabold text-slate-800 text-base">Order Placed!</h4>
+                  <p className="text-xs text-slate-400 mt-1">Your circular items are on their way.</p>
+                </div>
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700 text-center w-full">
+                  <strong>+{Math.round(bagSubtotal * 0.3)} Green Credits</strong> added to your wallet!
+                </div>
+                <button className="btn btn-secondary w-full py-2.5 text-xs font-bold" onClick={() => {
+                  setShowCheckoutModal(false);
+                  setCheckoutStep("bag");
+                  setShoppingBag([]);
+                }}>
+                  Done — Continue Shopping
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* BRACKETING MODAL */}
+      {showBracketingModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex flex-col gap-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base">Size Bracketing Activated 🎯</h3>
+                <p className="text-xs text-slate-500 mt-1">You've added 2 sizes — this triggers the AI sizing scan to determine your perfect fit.</p>
+              </div>
+              <button onClick={() => setShowBracketingModal(false)} className="text-slate-300 hover:text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs font-medium text-indigo-700">
+              Head to the <strong>Find My Size</strong> tab, capture your photo and click "Analyze Photo" to get your AI size recommendation.
+            </div>
+            <div className="flex gap-2">
+              <button className="btn btn-primary flex-1 py-2 text-xs" onClick={() => { setShowBracketingModal(false); setActiveTab("size-assist"); }}>
+                Go to Size Finder
+              </button>
+              <button className="btn btn-secondary flex-1 py-2 text-xs" onClick={() => setShowBracketingModal(false)}>
+                Continue Shopping
+              </button>
             </div>
           </div>
         </div>
