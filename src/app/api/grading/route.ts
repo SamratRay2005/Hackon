@@ -112,6 +112,22 @@ async function extractVideoFrames(videoBase64?: string, videoUrl?: string, sku?:
   }
 }
 
+// Bug fix: GET handler for fetching existing ledger records.
+// Previously fetchLedgerRecords() was calling POST /api/grading with a dummy payload
+// which caused the grading pipeline to run and save phantom health-card records on every
+// page load. This clean GET endpoint just reads and returns the ledger.
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId") || undefined;
+    const records = await db.getLedger(userId);
+    return NextResponse.json({ records: records || [] });
+  } catch (error: any) {
+    console.error("Grading GET (ledger fetch) error:", error);
+    return NextResponse.json({ records: [] });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { images, video, videoUrl, sku, itemName, userId } = await req.json();

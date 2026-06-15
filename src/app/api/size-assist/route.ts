@@ -70,8 +70,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Secure sessionId from client input
+    // Bug fix: use exact equality for "session-temp" — substring check was replacing
+    // valid IDs like "session-temp_user" or "session-temporary_xyz" with a random UUID
     let secureSessionId = sessionId;
-    if (!secureSessionId || secureSessionId.trim() === "" || secureSessionId.includes("../") || secureSessionId.includes("session-temp")) {
+    if (!secureSessionId || secureSessionId.trim() === "" || secureSessionId.includes("../") || secureSessionId === "session-temp") {
       const crypto = require("crypto");
       secureSessionId = `session-${crypto.randomBytes(16).toString("hex")}`;
     }
@@ -137,8 +139,10 @@ You MUST respond ONLY with a JSON object in the following format:
     let predictedDimensions: Record<string, number> = {};
 
     if (response.fromMock) {
-      // Set realistic mock predictions for visual rendering
-      const isFootwear = sku.includes("SHOE") || sku.includes("SNEAK") || sku.includes("BOOT") || sku.includes("SANDAL") || sku.includes("LOAFER") || sku.includes("CHELSEA") || sku.includes("TRAINER") || sku.includes("SLIP-ON") || sku.includes("OXFORD") || sku.includes("SLIPPER") || sku.includes("BROGUE") || sku.includes("ESPADRIL") || sku.includes("RUN-SHOE") || (brandData.dimensions[0] && (brandData.dimensions[0] as any).length !== undefined);
+      // Bug fix: derive isFootwear from the already-computed attributes array (which comes
+      // from getDynamicSizeChart) instead of a fragile SKU string-matching chain that
+      // misses new SKUs and redundantly duplicates logic already in getDynamicSizeChart
+      const isFootwear = attributes.includes("length");
 
       if (isFootwear) {
         predictedDimensions = { length: 9.9 };

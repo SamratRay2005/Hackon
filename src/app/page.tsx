@@ -887,11 +887,9 @@ export default function Home() {
 
   const fetchLedgerRecords = async () => {
     try {
-      const res = await fetch("/api/grading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: [SAMPLE_MOCK_IMAGE], sku: "INIT_QUERY", itemName: "query", userId: profileUserId })
-      });
+      // Bug fix: use GET endpoint to fetch ledger records — avoid POSTing to grading
+      // which would create phantom health-card records in the ledger on every page load
+      const res = await fetch(`/api/grading?userId=${profileUserId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.records && data.records.length > 0) {
@@ -954,9 +952,11 @@ export default function Home() {
   // ---- L1 SIZING ----
   const handleAddToCart = (size: string) => {
     const selectedProd = PRODUCT_CATALOG.find(p => p.sku === selectedProductSku) || PRODUCT_CATALOG[0];
-    const isAlreadyBracketed = cart.some(item => item.sku === selectedProd.sku);
+    // Bug fix: only trigger bracketing modal when the SAME SKU is added with a DIFFERENT size
+    // (not on duplicate same-size additions, which would be misleading)
+    const isActuallyBracketing = cart.some(item => item.sku === selectedProd.sku && item.size !== size);
     setCart(prev => [...prev, { id: Math.random().toString(36).slice(2), sku: selectedProd.sku, name: selectedProd.name, size, price: selectedProd.price }]);
-    if (isAlreadyBracketed) setShowBracketingModal(true);
+    if (isActuallyBracketing) setShowBracketingModal(true);
   };
 
   const handleRemoveFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
@@ -966,7 +966,9 @@ export default function Home() {
     setSizingLoading(true);
     const skuCounts: Record<string, number> = {};
     cart.forEach(item => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
+    // Prefer a bracketed SKU (same SKU added twice with different sizes), else use the selected product
     const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
+    // bracketedSizes may be empty — that's fine for a direct scan (no bracketing needed)
     const bracketedSizes = cart.filter(item => item.sku === bracketedSku).map(item => item.size);
     try {
       const res = await fetch("/api/size-assist", {
@@ -1550,10 +1552,12 @@ export default function Home() {
               {isApparelOrFootwear ? (
                 <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3">
                   <div className="text-2xl font-extrabold text-indigo-600 bg-white border border-indigo-200 py-1 px-3 rounded-xl font-mono min-w-[3rem] text-center shadow-sm">
-                    {sizingResult?.recommendedSize || selectedProduct?.sizes[0] || "M"}
+                    {/* Bug fix: previously showed sizes[0] or "M" as a fake AI recommendation before any scan.
+                        Now shows "—" until a real result exists. */}
+                    {sizingResult?.recommendedSize || "—"}
                   </div>
                   <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">
-                    {sizingResult?.reasoning || "Head to \"Find My Size\" tab to get a personalised AI size recommendation."}
+                    {sizingResult?.reasoning || "Head to \"Find My Size\" tab → scan your selfie → get a personalised AI size recommendation."}
                   </div>
                   {sizingResult && (
                     <span className="mini-badge info flex-shrink-0">AI Result</span>
@@ -1871,13 +1875,118 @@ export default function Home() {
                   <span className="section-badge badge-layer-1">Size AI</span>
                 </div>
 
-                <div className="info-callout">
-                  <Camera className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  {isApparelOrFootwear
-                    ? <span>Snap a selfie using the camera in the <strong>product card above</strong>. Our AI maps your body proportions to the size chart below and picks your perfect fit — cutting size-related returns by up to 68%.</span>
-                    : <span>The selected item (<strong>{selectedProduct?.category}</strong>) doesn't require size selection. Switch to an <strong>Apparel or Footwear</strong> product using the search bar to use AI size scanning.</span>
-                  }
-                </div>
+                {/* Root bug fix: the tab had no way to change the product when a non-apparel
+                    item was selected. User was shown "wrong category" warning with no escape.
+                    Now shows: quick-pick chips from their orders + inline search bar. */}
+                {!isApparelOrFootwear ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="warning-callout">
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>
+                        <strong>{selectedProduct?.name}</strong> ({selectedProduct?.category}) doesn't use size selection.
+                        Pick an Apparel or Footwear item below to activate AI size scanning.
+                      </span>
+                    </div>
+
+                    {/* Quick-pick: apparel/footwear from user's orders */}
+                    {(walletInfo.orders || []).filter(o =>
+                      ["apparel","footwear"].includes(o.category.toLowerCase())
+                    ).length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Your Apparel & Footwear Orders</span>
+                        <div className="flex flex-wrap gap-2">
+                          {(walletInfo.orders || [])
+                            .filter(o => ["apparel","footwear"].includes(o.category.toLowerCase()))
+                            .map(o => (
+                              <button
+                                key={o.sku}
+                                className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                                onClick={() => setSelectedProductSku(o.sku)}
+                              >
+                                <Shirt className="w-3 h-3" />
+                                {o.name.split(" ").slice(0,3).join(" ")}
+                              </button>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Inline search filtered to apparel/footwear */}
+                    <div className="relative">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Or Search by Product Name / SKU</span>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-400 font-semibold"
+                          placeholder="Search jackets, tees, shoes..."
+                          value={searchQuery}
+                          onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                          onFocus={() => setShowSuggestions(true)}
+                        />
+                      </div>
+                      {showSuggestions && searchQuery && (
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-slate-100">
+                          {PRODUCT_CATALOG
+                            .filter(p =>
+                              (p.category === "Apparel" || p.category === "Footwear") &&
+                              (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+                            )
+                            .slice(0, 8)
+                            .map(p => (
+                              <div
+                                key={p.sku}
+                                className="p-2.5 hover:bg-indigo-50 cursor-pointer flex items-center justify-between gap-2"
+                                onClick={() => { setSelectedProductSku(p.sku); setSearchQuery(""); setShowSuggestions(false); }}
+                              >
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800">{p.name}</div>
+                                  <div className="text-[10px] text-indigo-500 font-mono">{p.category} · {p.sku}</div>
+                                </div>
+                                <span className="text-emerald-600 font-extrabold text-xs font-mono">${p.price.toFixed(2)}</span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="info-callout">
+                    <Camera className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Snap a selfie using the camera below. Our AI maps your body proportions to the size chart and picks your perfect fit — cutting size-related returns by up to 68%.</span>
+                  </div>
+                )}
+
+                {isApparelOrFootwear && (
+                  <div className="border border-indigo-100 bg-indigo-50/30 rounded-2xl p-4 flex flex-col gap-3">
+                    <div className="text-xs font-bold text-indigo-700 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5" /> Selfie Size Scan
+                      <span className="text-[10px] font-normal text-indigo-500 ml-1">Maps your body to the size chart below</span>
+                    </div>
+                    <WebcamCapture
+                      onCapture={(base64) => {
+                        setSizingImage(base64);
+                        setSizingResult(null);
+                      }}
+                      overlayType="sizing"
+                    />
+                    {sizingImage && (
+                      <div className="flex flex-col gap-2">
+                        <span className="mini-badge success">Photo Ready — AI will analyse your proportions</span>
+                        <img src={sizingImage} className="upload-preview rounded-xl" alt="Sizing photo" />
+                        <button
+                          className="btn btn-primary w-full py-2.5 text-xs font-bold"
+                          disabled={sizingLoading}
+                          onClick={triggerSizeAssist}
+                        >
+                          {sizingLoading ? <><span className="spinner" /> Analysing proportions...</> : "Analyze & Recommend My Size →"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Size chart for product */}
                 {(() => {
