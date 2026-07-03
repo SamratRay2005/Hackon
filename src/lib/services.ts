@@ -15,7 +15,7 @@ function getSeededOrders(userId: string) {
     hash = (hash << 5) - hash + userId.charCodeAt(i);
     hash |= 0;
   }
-  
+
   const seedRandom = () => {
     const x = Math.sin(hash++) * 10000;
     return x - Math.floor(x);
@@ -30,13 +30,13 @@ function getSeededOrders(userId: string) {
   }
 
   const selected = shuffled.slice(0, 5);
-  
+
   return selected.map((p) => {
     // Distribute purchase dates over the last 60 days to test expiration
     const daysAgo = Math.floor(seedRandom() * 60);
     const d = new Date();
     d.setDate(d.getDate() - daysAgo);
-    
+
     return {
       orderId: `ORD-${Math.floor(seedRandom() * 90000) + 10000}`,
       sku: p.sku,
@@ -173,11 +173,11 @@ export const db = {
     }
     if (!globalState.claims[userId]) globalState.claims[userId] = [];
     if (!globalState.ledger[userId]) globalState.ledger[userId] = [];
-    
+
     // Seed real deterministic orders
     if (!globalState.orders[userId]) {
       globalState.orders[userId] = getSeededOrders(userId);
-      
+
       // Seed Vector DB with user history
       globalState.orders[userId].forEach(o => {
         db.addVectorContext(userId, `Purchased ${o.name} in category ${o.category}. Price ${o.price}.`);
@@ -196,7 +196,7 @@ export const db = {
       }
     }
   },
-  
+
   getOrders: async (userId: string) => {
     await db.initUser(userId);
     return globalState.orders[userId] || [];
@@ -255,7 +255,7 @@ export const db = {
       return globalState.sessions[sessionId];
     }
   },
-  
+
   getCartSession: async (sessionId: string) => {
     if (!useAWS) {
       return globalState.sessions[sessionId] || null;
@@ -345,7 +345,7 @@ export const db = {
       .createHash("sha256")
       .update(JSON.stringify(report))
       .digest("hex");
-    
+
     const record = {
       id: `ph-${Math.floor(100 + Math.random() * 900)}`,
       userId,
@@ -411,8 +411,8 @@ export const db = {
         Key: { userId }
       }));
       if (res.Item) {
-        return { 
-          credits: res.Item.credits, 
+        return {
+          credits: res.Item.credits,
           sustainabilityScore: res.Item.sustainabilityScore
         };
       }
@@ -456,13 +456,13 @@ export const db = {
   getBuyerDemand: (sku: string, returnerZip?: string) => {
     const list = globalState.buyerDemand.filter(d => d.sku === sku && !d.reserved);
     if (list.length > 0) return list;
-    
+
     // Dynamically generate a buyer demand if none exists for this SKU
     const p = PRODUCT_CATALOG.find(x => x.sku === sku);
     if (!p) return [];
 
     const names = ["Alice Chen", "David Kim", "Marcus Aurelius", "Sarah Connor", "Bruce Wayne", "Clark Kent", "Peter Parker"];
-    
+
     // Default to matching returner zip or choosing a close one if returner zip is provided
     let buyerZip = "98004";
     if (returnerZip) {
@@ -490,7 +490,7 @@ export const db = {
       size: p.sizes[sku.length % p.sizes.length],
       reserved: false
     };
-    
+
     globalState.buyerDemand.push(generated);
     return [generated];
   },
@@ -513,38 +513,54 @@ export async function queryGroq(params: {
   messages: Array<{ role: string; content: any }>;
   temperature?: number;
   response_format?: { type: string };
+  reasoning_format?: string;
+  reasoning_effort?: string;
 }) {
   const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey && apiKey.trim() !== "") {
-    try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: params.model,
-          messages: params.messages,
-          temperature: params.temperature ?? 0.2,
-          response_format: params.response_format
-        })
-      });
+    let retries = 1;
+    while (retries >= 0) {
+      try {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: params.model,
+            messages: params.messages,
+            temperature: params.temperature ?? 0.2,
+            max_tokens: 2048,
+            response_format: params.response_format,
+            reasoning_format: params.reasoning_format,
+            reasoning_effort: params.reasoning_effort
+          })
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          content: data.choices[0].message.content,
-          usage: data.usage,
-          fromMock: false
-        };
-      } else {
-        const errText = await response.text();
-        console.warn(`Groq API returned error status: ${response.status}. Body: ${errText}. Falling back to Mock.`);
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            content: data.choices[0].message.content,
+            reasoning: data.choices[0].message.reasoning,
+            usage: data.usage,
+            fromMock: false
+          };
+        } else if (response.status === 429 && retries > 0) {
+          console.warn("Groq rate limit hit (429). Retrying in 6.5s...");
+          await new Promise(resolve => setTimeout(resolve, 6500));
+          retries--;
+          continue;
+        } else {
+          const errText = await response.text();
+          console.warn(`Groq API returned error status: ${response.status}. Body: ${errText}. Falling back to Mock.`);
+          break;
+        }
+      } catch (e) {
+        console.error("Failed to connect to Groq API:", e);
+        break;
       }
-    } catch (e) {
-      console.error("Failed to connect to Groq API:", e);
     }
   }
 
@@ -553,15 +569,26 @@ export async function queryGroq(params: {
 
   // Determine payload context to respond with realistic mock answers
   const userMessageStr = JSON.stringify(params.messages);
-  
+
   // A. BRACKETING SIZE ASSIST (Layer 1)
   if (userMessageStr.includes("sizing") || userMessageStr.includes("proportion") || userMessageStr.includes("fit")) {
+    const isFootwear = userMessageStr.includes("length");
+    const mockContent = isFootwear
+      ? {
+          length: 9.9,
+          length_confidence: 94,
+          confidenceScore: 94
+        }
+      : {
+          chest: 38.5,
+          chest_confidence: 94,
+          shoulders: 17.2,
+          shoulders_confidence: 94,
+          confidenceScore: 94
+        };
     return {
-      content: JSON.stringify({
-        recommendedSize: "M",
-        confidenceScore: 94,
-        reasoning: "Subject has an estimated shoulder width of 17.5 inches and chest depth of 38 inches based on proportions. The M size accommodates up to 40 inches of chest width, offering a tailored, clean fit. The L size (42 inch chest) will result in excess sagging along the sleeves and shoulders (approx 1.5 inches overflow)."
-      }),
+      content: JSON.stringify(mockContent),
+      reasoning: "Subject has an estimated shoulder width of 17.2 inches and chest depth of 38.5 inches based on proportions relative to height. The M size accommodates up to 40 inches of chest width, offering a tailored, clean fit. The L size (42 inch chest) will result in excess sagging along the sleeves and shoulders.",
       fromMock: true
     };
   }
@@ -571,7 +598,7 @@ export async function queryGroq(params: {
     // Mock risk assessment based on prompt contents
     let riskScore = 25;
     let explanation = "Image shows genuine impact cracking consistent with warehouse drop damage. Compression patterns are consistent across shadows, indicating no signs of staging or pixel editing. Double verified with minor metadata validation.";
-    
+
     if (userMessageStr.includes("fake") || userMessageStr.includes("fraud") || userMessageStr.includes("staged")) {
       riskScore = 88;
       explanation = "WARNING: Highly suspicious shadow profiles detected around the fracture area. The lighting source direction is inconsistent with the primary background shadow cast. Staging indicators (visible hot-glue residue in bottom left corner) suggest manual tempering to create a fake defect.";
@@ -596,7 +623,7 @@ export async function queryGroq(params: {
     } else {
       guideSummary = "Step 1: Restart the device and confirm connection inputs are solid. Step 2: Clean the electrical leads. Step 3: Inspect for external physical blockage.";
     }
-    
+
     return {
       content: `I've analyzed your issue and retrieved the troubleshooting manual. Let's try fixing it together!\n\n**Common Solution:**\n${guideSummary}\n\nCan you check if the power indicator light is blinking when you plug it in? If so, this is a simple thermal reset issue which you can fix in 2 minutes!\n\n*Would you like to try resetting it now? (Click "Resolved" to cancel return and keep your item).*`,
       fromMock: true

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryGroq, db } from "@/lib/services";
+import { z } from "zod";
 
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 
@@ -55,7 +56,7 @@ function getDynamicSizeChart(sku: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, brand, sku, sizes, sessionId } = await req.json();
+    const { image, brand, sku, sizes, sessionId, heightInches } = await req.json();
 
     if (!sku || !image) {
       return NextResponse.json({ error: "Missing SKU or image data" }, { status: 400 });
@@ -83,27 +84,65 @@ export async function POST(req: NextRequest) {
     const attributes = Object.keys(dimensionsSample).filter(k => k !== "size"); // e.g. ["chest", "shoulders"]
 
     // Construct Groq prompt asking the LLM to predict the user's numeric measurements
-    const prompt = `You are a high-accuracy body-proportion analysis engine.
-Analyze the uploaded photo of the customer and predict their physical body dimensions in inches for the following attributes:
+    const hasHeightRef = typeof heightInches === "number" && heightInches > 0;
+
+    const systemPrompt = `You are a precise anthropometric estimation engine used for clothing-size recommendations.
+You analyze one photo to infer body-surface dimensions for the attributes requested.
+Photos carry no built-in scale, so you must reason using proportional ratios anchored to a known reference length rather than guessing absolute inches directly from pixels.
+Account for clothing bulk: estimate the outline of the body underneath, not the garment, especially for loose or baggy clothing.
+
+CRITICAL INSTRUCTION: You are strictly FORBIDDEN from using <think> blocks or chain-of-thought reasoning. You must output the final JSON object IMMEDIATELY.
+You MUST output ONLY a raw JSON object string. Do not wrap the JSON object in markdown code blocks, do not use triple backticks (\`\`\`), and do not include any preamble or extra text. Your output must start with '{' and end with '}'.`;
+
+    const isFootwear = attributes.includes("length");
+
+    const methodSection = isFootwear ? `Method:
+1. Locate these landmarks if visible: heel, longest toe, ankle joint.
+2. Estimate the foot length (heel to longest toe) as a proportion of the reference height, or using standard anthropometric ratios if only the foot is visible.
+3. Convert the proportion to inches.` : `Method:
+1. Locate these landmarks if visible: top of head, chin, shoulder points, widest point of the ribcage/chest, waist, wrists, ankles.
+2. Express each landmark's vertical position as a fraction of total height (head-to-floor = 100%).
+3. Estimate each attribute as a proportion of the reference height, adjusted for what you actually see (torso length, shoulder slope, build) rather than generic averages alone.
+4. Convert each proportion to inches using the reference height.`;
+
+    const edgeCasesSection = isFootwear ? `Edge cases and definitions:
+- "length" means foot length (from the back of the heel to the tip of the longest toe).
+- The visibility edge-case rule applies only to the specific attributes requested. If the foot is visible, estimate foot length normally — do not zero it out just because the rest of the body isn't in frame.
+- If the foot is only partly measurable due to pose/occlusion, still estimate it but lower the confidence.` : `Edge cases and definitions:
+- "shoulders" means bi-acromial breadth (the straight-line distance between the two shoulder points), a body measurement — not a garment seam-to-seam width.
+- The visibility edge-case rule applies only to the specific attributes requested, not the whole body. If chest and shoulders are visible from a chest-up photo, estimate them normally — do not zero them out just because legs aren't in frame.
+- If an attribute is only partly measurable due to pose/occlusion, still estimate it but lower that attribute's own confidence.`;
+
+    const userPrompt = `${hasHeightRef
+      ? `Reference height: ${heightInches} inches (self-reported by the customer — treat as ground truth for scale).`
+      : `No reference height was provided. Assume an average adult height (~66 in) as your scale anchor, and reflect that assumption by capping every attribute's confidence at 40.`
+    }
+
+Attributes to estimate, in inches:
 ${attributes.map(attr => `- ${attr}`).join("\n")}
 
-Be realistic. Base your estimates on the subject's proportions relative to their environment.
+${methodSection}
 
-You MUST respond ONLY with a JSON object in the following format:
+${edgeCasesSection}
+
+Respond with ONLY a raw, valid JSON object matching the following structure, and no other text:
 {
-  ${attributes.map(attr => `"${attr}": [predicted floating-point value in inches]`).join(",\n  ")},
-  "confidenceScore": 0-100 (integer representing sizing prediction confidence),
-  "reasoning": "A concise 2-sentence analysis explaining the visual markers (e.g. shoulder slope, torso height, posture) used to estimate these measurements."
-}`;
+  "chainOfThought": "Exactly 1 short sentence summarizing your reasoning.",
+  ${attributes.map(attr => `"${attr}": 38.5,\n  "${attr}_confidence": 95`).join(",\n  ")},
+  "confidenceScore": 92
+}
 
-    // Execute query using Groq Llama 4 Scout Vision
+Replace the example keys and values with the actual attributes requested (${attributes.join(", ")}) and your real estimations. Ensure all values are numbers (no brackets, comments, or units). Do NOT wrap the JSON in markdown code blocks or triple backticks. Start the response with '{' and end it with '}'.`;
+
+    // Execute query using Groq Qwen 3.6-27b Vision
     const response = await queryGroq({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "qwen/qwen3.6-27b",
       messages: [
+        { role: "system", content: systemPrompt },
         {
           role: "user",
           content: [
-            { type: "text", text: prompt },
+            { type: "text", text: userPrompt },
             {
               type: "image_url",
               image_url: {
@@ -113,15 +152,81 @@ You MUST respond ONLY with a JSON object in the following format:
           ]
         }
       ],
-      response_format: { type: "json_object" }
+      temperature: 0,
+      response_format: { type: "json_object" },
+      reasoning_effort: "none"
     });
 
-    const result = JSON.parse(response.content);
-    if (response.fromMock) {
+    // Manually extract JSON string in case the LLM outputs markdown or preamble
+    let jsonString = response.content;
+    const jsonMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      jsonString = jsonMatch[1];
+    } else {
+      const start = jsonString.indexOf('{');
+      const end = jsonString.lastIndexOf('}');
+      if (start !== -1 && end !== -1) {
+        jsonString = jsonString.substring(start, end + 1);
+      }
+    }
+
+    let result;
+    try {
+      result = JSON.parse(jsonString);
+    } catch (error) {
+      console.error("Failed to parse LLM output into JSON. Attempting JSON block salvage...");
+      result = {};
+      const rawText = response.content || "";
+      // Find the last { ... } block in the raw content
+      const start = rawText.indexOf('{');
+      const end = rawText.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && start < end) {
+        try {
+          const substringJson = rawText.substring(start, end + 1);
+          result = JSON.parse(substringJson);
+          console.log("Successfully salvaged JSON block from prose.");
+        } catch (e) {
+          console.error("JSON block salvage failed. Falling back to mock.");
+        }
+      } else {
+        console.error("No JSON block found. Falling back to mock.");
+      }
+    }
+
+    if (response.fromMock || Object.keys(result).length === 0) {
       result.chest = result.chest ?? 38.5;
+      result.chest_confidence = result.chest_confidence ?? 94;
       result.shoulders = result.shoulders ?? 17.2;
-      result.length = result.length ?? 28.0;
+      result.shoulders_confidence = result.shoulders_confidence ?? 94;
+      result.length = result.length ?? 9.9;
+      result.length_confidence = result.length_confidence ?? 94;
       result.confidenceScore = result.confidenceScore ?? 94;
+    }
+
+    // Dynamic Zod Schema Validation
+    const schemaShape: Record<string, z.ZodTypeAny> = {
+      chainOfThought: z.string().optional(),
+      confidenceScore: z.number().int().min(0).max(100)
+    };
+    attributes.forEach(attr => {
+      schemaShape[attr] = z.number();
+      schemaShape[`${attr}_confidence`] = z.number().int().min(0).max(100);
+    });
+    
+    const sizeSchema = z.object(schemaShape);
+    const parsed = sizeSchema.safeParse(result);
+    
+    if (!parsed.success) {
+      console.warn("Zod Validation Warning: Response format did not strictly match schema:", parsed.error.message);
+      // Clean/normalize values into result defensively
+      result.confidenceScore = typeof result.confidenceScore === "number" ? result.confidenceScore : 40;
+      attributes.forEach(attr => {
+        result[attr] = typeof result[attr] === "number" ? result[attr] : (attr === "chest" ? 38.5 : attr === "shoulders" ? 17.2 : 9.9);
+        result[`${attr}_confidence`] = typeof result[`${attr}_confidence`] === "number" ? result[`${attr}_confidence`] : 40;
+      });
+    } else {
+      // Re-assign result to the validated typed object
+      Object.assign(result, parsed.data);
     }
 
     // Validate if a valid human subject was detected
@@ -154,16 +259,25 @@ You MUST respond ONLY with a JSON object in the following format:
         recommendedSize = "M";
       }
     } else {
-      // Local 1-NN Classification algorithm (Euclidean Distance Matcher)
+      // Local 1-NN Classification algorithm (Weighted Euclidean Distance Matcher)
       let minDistance = Infinity;
       brandData.dimensions.forEach((item: any) => {
-        let sumOfSquares = 0;
+        let sumOfWeightedSquares = 0;
+        let sumOfWeights = 0;
         attributes.forEach((attr) => {
           const predictedVal = parseFloat(result[attr]) || 0;
           const chartVal = item[attr] || 0;
-          sumOfSquares += Math.pow(predictedVal - chartVal, 2);
+          
+          // Retrieve attribute confidence (default to overall confidenceScore or 100 if missing)
+          const attrConf = typeof result[`${attr}_confidence`] === "number"
+            ? result[`${attr}_confidence`]
+            : (typeof result.confidenceScore === "number" ? result.confidenceScore : 100);
+          
+          const weight = attrConf / 100;
+          sumOfWeightedSquares += weight * Math.pow(predictedVal - chartVal, 2);
+          sumOfWeights += weight;
         });
-        const distance = Math.sqrt(sumOfSquares);
+        const distance = sumOfWeights > 0 ? Math.sqrt(sumOfWeightedSquares / sumOfWeights) : 0;
         distanceBreakdown[item.size] = Math.round(distance * 100) / 100;
         if (distance < minDistance) {
           minDistance = distance;
@@ -186,11 +300,16 @@ You MUST respond ONLY with a JSON object in the following format:
       confidenceScore: result.confidenceScore,
       resolved: false
     });
+    // Use the 1-line chainOfThought from JSON, otherwise fallback to generic
+    const reasoningText = result.chainOfThought || "Estimation completed successfully.";
+    
+    // Delete chainOfThought so it doesn't accidentally leak to the frontend or database in the raw dump
+    delete result.chainOfThought;
 
     return NextResponse.json({
       recommendedSize,
       confidenceScore: result.confidenceScore,
-      reasoning: result.reasoning,
+      reasoning: reasoningText,
       predictedDimensions,
       distanceBreakdown,
       sessionRecord: dbRecord,
