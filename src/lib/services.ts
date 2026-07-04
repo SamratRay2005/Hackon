@@ -1288,6 +1288,183 @@ export const db = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// GEMINI API WRAPPER
+// ─────────────────────────────────────────────────────────────
+
+// ── Gemini Key Pool Rotation ──
+let activeKeyIndex = 0;
+const exhaustedKeys = new Set<string>();
+let lastErrorWasDailyQuota = false;
+
+export function getGeminiApiKey(): string | null {
+  const keys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3
+  ].map(k => k?.trim()).filter(Boolean) as string[];
+
+  if (keys.length === 0) return null;
+
+  let availableKeys = keys.filter(k => !exhaustedKeys.has(k));
+  if (availableKeys.length === 0) {
+    console.warn("[Gemini KeyPool] All keys marked exhausted. Clearing exhaustion blacklist for retry.");
+    exhaustedKeys.clear();
+    availableKeys = keys;
+  }
+
+  activeKeyIndex = activeKeyIndex % availableKeys.length;
+  const selectedKey = availableKeys[activeKeyIndex];
+  activeKeyIndex++;
+  return selectedKey;
+}
+
+export function markGeminiKeyExhausted(key: string) {
+  if (key) {
+    console.warn(`[Gemini KeyPool] Key starting with "${key.substring(0, 8)}" marked exhausted.`);
+    exhaustedKeys.add(key);
+  }
+}
+
+export function wasGeminiDailyQuotaExhausted(): boolean {
+  return lastErrorWasDailyQuota;
+}
+
+function isDailyQuotaExhausted(errorText: string): boolean {
+  try {
+    const errorBody = JSON.parse(errorText);
+    const violations = errorBody?.error?.details?.find(
+      (d: any) => d["@type"]?.includes("QuotaFailure")
+    )?.violations;
+    return violations?.some((v: any) => v.quotaId?.includes("PerDay")) ?? false;
+  } catch (e) {
+    return errorText.includes("PerDay") || errorText.includes("limit: 20") || errorText.includes("limit: 0");
+  }
+}
+
+export async function queryGemini(params: {
+  model?: string;
+  messages: Array<{ role: string; content: any }>;
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: { type: string };
+  response_schema?: any;
+}) {
+  const model = params.model || "gemini-2.5-flash";
+
+  const allKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3
+  ].map(k => k?.trim()).filter(Boolean) as string[];
+
+  if (allKeys.length === 0) return null;
+
+  lastErrorWasDailyQuota = false;
+
+  for (let attempt = 0; attempt < allKeys.length; attempt++) {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) continue;
+
+    try {
+      // Convert OpenAI-style messages to Gemini parts format
+      const systemParts: Array<any> = [];
+      const userParts: Array<any> = [];
+
+      for (const msg of params.messages) {
+        const targetParts = msg.role === "system" ? systemParts : userParts;
+
+        if (typeof msg.content === "string") {
+          targetParts.push({ text: msg.content });
+        } else if (Array.isArray(msg.content)) {
+          for (const item of msg.content) {
+            if (item.type === "text") {
+              targetParts.push({ text: item.text });
+            } else if (item.type === "image_url") {
+              const url: string = (item.image_url?.url || "").trim();
+              const base64Prefix = "data:";
+              const base64Marker = ";base64,";
+              if (url.startsWith(base64Prefix) && url.includes(base64Marker)) {
+                const markerIndex = url.indexOf(base64Marker);
+                const mimeType = url.substring(base64Prefix.length, markerIndex);
+                const base64Data = url.substring(markerIndex + base64Marker.length);
+                targetParts.push({
+                  inline_data: {
+                    mime_type: mimeType,
+                    data: base64Data.trim()
+                  }
+                });
+              }
+            }
+          }
+        }
+      }
+
+      const requestBody: Record<string, any> = {
+        contents: [{ parts: userParts }],
+        generationConfig: {
+          temperature: params.temperature ?? 0,
+          maxOutputTokens: params.max_tokens ?? 2048,
+          ...(params.response_format?.type === "json_object"
+            ? { responseMimeType: "application/json" }
+            : {}),
+          ...(params.response_schema ? { responseSchema: params.response_schema } : {}),
+          ...(model.startsWith("gemini-2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+        }
+      };
+
+      if (systemParts.length > 0) {
+        requestBody.systemInstruction = { parts: systemParts };
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody)
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        if (!candidate || candidate.finishReason === "SAFETY" || candidate.finishReason === "RECITATION") {
+          console.warn("Gemini returned no usable content. finishReason:", candidate?.finishReason);
+        }
+        if (candidate?.finishReason === "MAX_TOKENS") {
+          console.warn("Gemini output was truncated by maxOutputTokens.");
+        }
+        const text = candidate?.content?.parts?.[0]?.text || "{}";
+        return {
+          content: text,
+          reasoning: null,
+          usage: data.usageMetadata || null,
+          fromMock: false
+        };
+      } else {
+        const errText = await response.text();
+        console.warn(`Gemini API error (${response.status}) on key prefix "${apiKey.substring(0, 8)}": ${errText}`);
+        
+        if (response.status === 429 && isDailyQuotaExhausted(errText)) {
+          markGeminiKeyExhausted(apiKey);
+          lastErrorWasDailyQuota = true;
+          console.warn(`Gemini daily quota exhausted on key. Retrying next key (attempt ${attempt + 1}/${allKeys.length})...`);
+          continue;
+        } else {
+          break; // Stop loop for non-quota errors
+        }
+      }
+    } catch (e) {
+      console.error(`Failed to connect to Gemini API on key prefix "${apiKey.substring(0, 8)}":`, e);
+    }
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────
 // GROQ API WRAPPER
 // ─────────────────────────────────────────────────────────────
 
@@ -1296,11 +1473,12 @@ export async function queryGroq(params: {
   messages: Array<{ role: string; content: any }>;
   temperature?: number;
   response_format?: { type: string };
+  max_tokens?: number;
 }) {
   const apiKey = process.env.GROQ_API_KEY;
   if (apiKey?.trim()) {
     try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
@@ -1308,8 +1486,31 @@ export async function queryGroq(params: {
           messages: params.messages,
           temperature: params.temperature ?? 0.2,
           response_format: params.response_format,
+          max_tokens: params.max_tokens,
         }),
       });
+
+      if (response.status === 400 && params.response_format?.type === "json_object") {
+        try {
+          const errJson = await response.clone().json().catch(() => ({}));
+          if (errJson.error?.code === "json_validate_failed") {
+            console.warn("[Groq] JSON validation failed, retrying without strict json_object format...");
+            response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+              body: JSON.stringify({
+                model: params.model,
+                messages: params.messages,
+                temperature: params.temperature ?? 0.2,
+                max_tokens: params.max_tokens,
+              }),
+            });
+          }
+        } catch (e) {
+          // ignore parsing errors on response clone
+        }
+      }
+
       if (response.ok) {
         const data = await response.json();
         return { content: data.choices[0].message.content, usage: data.usage, fromMock: false };

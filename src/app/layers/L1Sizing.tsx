@@ -42,6 +42,7 @@ export default function L1Sizing() {
   } = useApp();
 
   const [sizingLoading, setSizingLoading] = React.useState(false);
+  const [heightInches, setHeightInches] = React.useState<number | "">("");
   const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
   const isApparelOrFootwear = !!(selectedProduct && (selectedProduct.category === "Apparel" || selectedProduct.category === "Footwear"));
 
@@ -56,7 +57,14 @@ export default function L1Sizing() {
       const res = await fetch("/api/size-assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: sizingImage, brand: "UrbanEco", sku: bracketedSku, sizes: bracketedSizes, sessionId: `session-${bracketedSku}` })
+        body: JSON.stringify({
+          image: sizingImage,
+          brand: "UrbanEco",
+          sku: bracketedSku,
+          sizes: bracketedSizes,
+          sessionId: `session-${bracketedSku}`,
+          heightInches: heightInches !== "" ? Number(heightInches) : undefined
+        })
       });
       if (res.ok) setSizingResult(await res.json());
     } catch { } finally { setSizingLoading(false); }
@@ -175,6 +183,35 @@ export default function L1Sizing() {
               <Camera className="w-3.5 h-3.5" /> Selfie Size Scan
               <span className="text-[10px] font-normal text-indigo-500 ml-1">Maps your body to the size chart below</span>
             </div>
+            
+            {/* Height calibration field */}
+            <div className="flex flex-col gap-1.5 bg-white/70 border border-indigo-50 p-3 rounded-xl">
+              <label htmlFor="height-inches-input" className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Height (Inches) <span className="text-slate-400 font-normal">(Optional but recommended)</span></span>
+                {heightInches !== "" && (
+                  <span className="text-[10px] text-indigo-600 font-mono font-bold">
+                    {Math.floor(Number(heightInches) / 12)}&apos;{Number(heightInches) % 12}&quot;
+                  </span>
+                )}
+              </label>
+              <input
+                id="height-inches-input"
+                type="number"
+                min="36"
+                max="96"
+                placeholder="e.g. 68"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-400 transition-all"
+                value={heightInches}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? "" : Number(e.target.value);
+                  setHeightInches(val);
+                }}
+              />
+              <span className="text-[9px] text-slate-400 leading-normal">
+                Anchors the 2D image scaling coordinates to true dimensions, preventing size hallucination.
+              </span>
+            </div>
+
             <WebcamCapture
               onCapture={(base64) => {
                 setSizingImage(base64);
