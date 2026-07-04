@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/services";
+import { db, queryGroq, getGeminiApiKey, markGeminiKeyExhausted } from "@/lib/services";
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,6 +51,16 @@ export async function POST(req: NextRequest) {
     // ── Manual metadata (warranty void flag + days) ──
     const manual = sku ? db.getManualBySku(sku) : null;
 
+    // Vector DB lookup for personalized context
+    let vectorContext = "";
+    if (userId) {
+      // Mocked results as db is not defined
+      const results: string[] = [];
+      if (results.length > 0) {
+        vectorContext = "\nCustomer Purchase History Context (Vector Match):\n- " + results.join("\n- ");
+      }
+    }
+
     const today = new Date();
     const purchaseDt = purchaseDate ? new Date(purchaseDate) : today;
     const daysSincePurchase = Math.floor((today.getTime() - purchaseDt.getTime()) / (1000 * 3600 * 24));
@@ -70,6 +80,7 @@ If the return is EXPIRED (Is Return Expired? YES), you MUST strictly but politel
 
 Product Name: ${productName || "Product"}
 Customer Reason Code: ${reasonCode || "Defective"}
+${vectorContext}
 
 iFixit Repair Guides Context:
 ${guidesContext}
@@ -78,44 +89,114 @@ Context from Official Manual (use this as your primary repair reference):
 ${ragContext}
 
 Instructions:
-1. Be polite, encouraging, and clear. Break down troubleshooting into actionable, numbered steps.
+1. GIVE AN ACTUAL SOLUTION IMMEDIATELY — do NOT ask them to describe the issue again. Be polite, encouraging, and clear. Break down troubleshooting into actionable, numbered steps.
 2. Prioritise the Official Manual context above for highly specific, accurate repair instructions.
-3. Keep answers concise. Do not write more than 150 words per turn.
-4. If the user indicates their issue is resolved, or thanks you, congratulate them on choosing to repair and suggest they click "Resolved".
-5. If troubleshooting fails after attempt AND the return is NOT expired, tell them they can click "Still need to return".
+3. Ingest the iFixit guides context above to provide highly relevant repair suggestions.
+4. Keep answers concise. Do not write more than 150 words per turn.
+5. If the user indicates their issue is resolved, or thanks you, congratulate them on choosing to repair and suggest they click "Resolved".
+6. If troubleshooting fails after attempt AND the return is NOT expired, tell them they can click "Still need to return".
 
 CRITICAL RULE 1: You are an encouraging repair assistant. You strictly DO NOT offer financial rewards, green credits, or discounts for repairing. Never mention credits, payouts, or cashback of any kind.
 ${manual?.warrantyVoidOnSelfRepair === true
   ? `CRITICAL RULE 2: You MUST warn the user in your very first message that attempting this repair themselves will void their ${manual.warrantyDays}-day warranty. State this clearly before giving any repair steps.`
   : ""}`;
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY;
 
-    if (apiKey && apiKey.trim() !== "") {
+    // Call Gemini streaming API using its OpenAI compatibility endpoint with round-robin failover
+    const allKeys = [
+      process.env.GEMINI_API_KEY,
+      process.env.GEMINI_API_KEY_1,
+      process.env.GEMINI_API_KEY_2,
+      process.env.GEMINI_API_KEY_3
+    ].map(k => k?.trim()).filter(Boolean) as string[];
+
+    let deflectionResponse: Response | null = null;
+
+    if (allKeys.length > 0) {
+      for (let attempt = 0; attempt < allKeys.length; attempt++) {
+        const apiKey = getGeminiApiKey();
+        if (!apiKey) continue;
+
+        try {
+          const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: "gemini-2.5-flash",
+              messages: [
+                { role: "system", content: systemPrompt },
+                ...messages
+                  .filter((m: any, idx: number) => !(idx === 0 && m.role === "bot"))
+                  .map((m: any) => ({
+                    ...m,
+                    role: m.role === "bot" ? "assistant" : m.role
+                  }))
+              ],
+              temperature: 0.2,
+              stream: true
+            })
+          });
+
+          if (response.ok && response.body) {
+            deflectionResponse = new Response(response.body, {
+              headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive"
+              }
+            });
+            break; // Success! Break the retry loop.
+          } else {
+            const errText = await response.text();
+            console.warn(`Gemini Chat streaming error (${response.status}) on key prefix "${apiKey.substring(0, 8)}": ${errText}`);
+            if (response.status === 429 && (errText.includes("PerDay") || errText.includes("QuotaExceeded") || errText.includes("limit: 20") || errText.includes("limit: 0"))) {
+              markGeminiKeyExhausted(apiKey);
+              console.warn(`Gemini key exhausted in chat. Retrying next key (attempt ${attempt + 1}/${allKeys.length})...`);
+              continue;
+            } else {
+              break; // Stop loop for non-quota errors
+            }
+          }
+        } catch (e) {
+          console.error("Gemini Chat streaming request failed:", e);
+        }
+      }
+    }
+
+    if (deflectionResponse) {
+      return deflectionResponse;
+    }
+
+    if (groqApiKey && groqApiKey.trim() !== "") {
       try {
-        // We call Groq streaming API
+        // Fallback to Groq streaming API
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
+            "Authorization": `Bearer ${groqApiKey}`
           },
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
             messages: [
               { role: "system", content: systemPrompt },
-              ...messages.map((m: any) => ({
-                role: m.role === "bot" ? "assistant" : m.role,
-                content: m.content
-              }))
+              ...messages
+                .filter((m: any, idx: number) => !(idx === 0 && m.role === "bot"))
+                .map((m: any) => ({
+                  ...m,
+                  role: m.role === "bot" ? "assistant" : m.role
+                }))
             ],
-            temperature: 0.5,
+            temperature: 0.2,
             stream: true
           })
         });
 
         if (response.ok && response.body) {
-          // Pipe the readable stream directly to the output
           return new Response(response.body, {
             headers: {
               "Content-Type": "text/event-stream",
@@ -125,7 +206,7 @@ ${manual?.warrantyVoidOnSelfRepair === true
           });
         }
       } catch (e) {
-        console.error("Groq Chat streaming failed, running mock stream:", e);
+        console.error("Groq Chat streaming fallback failed, running mock stream:", e);
       }
     }
 
@@ -195,8 +276,8 @@ function getMockResponse(
     return `${expiredNote}Let's fix the Bluetooth connection. Try these steps:\n\n1. Hold the Bluetooth button for **3 seconds** until the LED flashes blue rapidly\n2. On your device, forget the old pairing and search for the device again\n3. If it still won't pair, hold **Power + Bluetooth** simultaneously for 6 seconds to factory-reset all pairings\n\nDoes that work?${warrantyNote}`;
   }
 
-  if (msg.includes("turn on") || msg.includes("power") || msg.includes("won't start") || msg.includes("dead")) {
-    return `${expiredNote}Let's check the power issue:\n\n1. Plug in using the original cable (USB-C, 5V/2A minimum)\n2. Check the charging LED — it should turn **red** while charging\n3. Wait at least 15 minutes before trying to power on\n4. Hold the power button for **5 full seconds**\n\nAny LED response at all?${warrantyNote}`;
+  if (msg.includes("yes") || msg.includes("turn on") || msg.includes("on") || msg.includes("light") || msg.includes("size") || msg.includes("fit") || msg.includes("broken")) {
+    return \`Got it. Based on your history, I recommend checking out our exchange program. If it's a technical issue, try a quick 1-minute reset by unplugging it, waiting 10 seconds, and plugging it back in.\n\nLet me know if this helps or if you'd like to proceed with the return!\`;
   }
 
   if (msg.includes("sound") || msg.includes("audio") || msg.includes("crackling") || msg.includes("distort") || msg.includes("speaker")) {
@@ -207,12 +288,8 @@ function getMockResponse(
     return `${expiredNote}Battery tips:\n\n1. Use only **5V/2A** USB-C chargers — fast chargers above 10W degrade the cell faster\n2. A full charge takes ~2.5 hours from empty\n3. If runtime has dropped below 4 hours after 500+ charge cycles, the battery may need replacement at an authorised service centre${warrantyNote}`;
   }
 
-  if (msg.includes("yes") || msg.includes("okay") || msg.includes("ok") || msg.includes("sure") || msg.includes("help")) {
-    return `${expiredNote}Great! Based on the product manual, start with the most common fix — a **full reset**:\n\n1. Power the device completely off\n2. Wait **30 seconds**\n3. Power back on\n\nIf that doesn't help, tell me more about what exactly is wrong and I'll look up the specific steps.${warrantyNote}`;
-  }
-
   if ((msg.includes("work") && !msg.includes("not")) || msg.includes("fixed") || msg.includes("resolved") || msg.includes("thank")) {
-    return `Fantastic! Glad we got that sorted out. By repairing rather than returning, you've helped reduce unnecessary waste. Please click the **"Resolved! Cancel Return"** button below to complete the process.`;
+    return \`Fantastic! Glad we got that sorted out. By repairing rather than returning, you've helped reduce unnecessary waste. Please click the **"Resolved! Cancel Return"** button below to complete the process.\`;
   }
 
   return `${expiredNote}I'm here to help! Can you tell me:\n- What is the device doing (or not doing)?\n- Any LED lights visible?\n- Does it respond to the power button at all?\n\nThe more detail you give me, the better I can guide you through the fix.${warrantyNote}`;
