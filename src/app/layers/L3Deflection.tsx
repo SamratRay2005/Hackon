@@ -11,11 +11,13 @@ import React, { useRef, useEffect } from "react";
 import {
   CheckCircle,
   ExternalLink,
+  AlertTriangle,
 } from "lucide-react";
 import {
   useApp,
   renderMarkdown,
 } from "./AppContext";
+import { db } from "@/lib/services";
 
 export default function L3Deflection() {
   const {
@@ -37,6 +39,15 @@ export default function L3Deflection() {
   const [chatInput, setChatInput] = React.useState(_chatInput || "");
   const [chatLoading, setChatLoading] = React.useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Look up manual for the current product to check warranty void status
+  const manual = deflectSku ? db.getManualBySku(deflectSku) : null;
+  const warrantyVoidWarning = manual?.warrantyVoidOnSelfRepair === true;
+
+  // Clear chat history whenever the user switches to a different product
+  useEffect(() => {
+    setChatMessages([]);
+  }, [deflectSku]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -64,7 +75,8 @@ export default function L3Deflection() {
           guides: ifixitGuides,
           userId: profileUserId,
           purchaseDate,
-          returnWindowDays
+          returnWindowDays,
+          sku: deflectSku,
         })
       });
       if (res.ok) {
@@ -108,7 +120,7 @@ export default function L3Deflection() {
       totalProcessed: prev.totalProcessed + 1,
       deflectedRate: Math.round(((prev.totalProcessed * prev.deflectedRate / 100) + 1) / (prev.totalProcessed + 1) * 100)
     }));
-    setChatMessages((prev: any) => [...prev, { role: "bot", content: "🎉 **Deflection Successful!** Your return has been cancelled. We've logged this to the cryptographic ledger and rewarded your green loyalty credits. Thank you for choosing to repair!" }]);
+    setChatMessages((prev: any) => [...prev, { role: "bot", content: "🎉 **Deflection Successful!** Your return has been cancelled. Thank you for choosing to repair — you've helped reduce unnecessary waste and carbon emissions!" }]);
     try {
       const confetti = (window as any).confetti;
       if (confetti) confetti({ colors: ["#10b981", "#6366f1"], particleCount: 100, spread: 70 });
@@ -121,6 +133,21 @@ export default function L3Deflection() {
         <h2>Get Help — Chat Before You Return</h2>
         <span className="section-badge badge-layer-3">AI Support</span>
       </div>
+
+      {/* Warranty void warning banner */}
+      {warrantyVoidWarning && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-amber-800">
+              ⚠️ WARNING: Attempting to fix this yourself will void your {manual!.warrantyDays}-day warranty.
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Consider contacting the manufacturer's authorised service centre to preserve your warranty coverage.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] gap-4">
         {/* Guides panel */}
@@ -191,7 +218,7 @@ export default function L3Deflection() {
           <div className="mt-auto flex flex-col flex-shrink-0">
             <div className="flex gap-2 px-3 py-2 bg-slate-50 border-t border-slate-100">
               <button className="btn btn-success flex-1 py-1.5 text-[11px] font-bold" onClick={resolveDeflection}>
-                <CheckCircle className="w-3 h-3" /> Resolved! Claim Payout
+                <CheckCircle className="w-3 h-3" /> Resolved! Cancel Return
               </button>
               <button className="btn btn-secondary flex-1 py-1.5 text-[11px] font-bold" onClick={() => {
                 setChatMessages((prev: any) => [...prev, { role: "bot", content: "Understood. Proceeding to circular logistics router. Head to L5 for shipping options, or L6 for refund routing." }]);

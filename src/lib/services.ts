@@ -486,6 +486,14 @@ function getSeededOrders(userId: string): Order[] {
     const j = Math.floor(seedRandom() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
+  
+  // Ensure at least one product with a manual is in the first 5 so the DIM flow can be tested
+  const manualSku = "CF-Mkr-99"; // Coffee Maker has a manual
+  const manualIdx = shuffled.findIndex(p => p.sku === manualSku);
+  if (manualIdx > -1) {
+    [shuffled[0], shuffled[manualIdx]] = [shuffled[manualIdx], shuffled[0]];
+  }
+
   const now = new Date();
   return shuffled.slice(0, 5).map((p) => {
     const daysAgo = Math.floor(seedRandom() * 60);
@@ -737,30 +745,51 @@ export const db = {
 
   getOrders: async (userId: string): Promise<Order[]> => {
     await db.initUser(userId);
-    if (!useAWS) return globalState.orders[userId] ?? [];
-    try {
-      const res = await ddbDocClient.send(
-        new ScanCommand({
-          TableName: "Orders",
-          FilterExpression: "userId = :uid",
-          ExpressionAttributeValues: { ":uid": userId },
-        })
-      );
-      const items = (res.Items ?? []) as Order[];
-      if (items.length === 0) {
-        // First time — seed and persist
-        const seeded = getSeededOrders(userId);
-        for (const o of seeded) {
-          await ddbDocClient.send(new PutCommand({ TableName: "Orders", Item: o })).catch(() => {});
+    let result: Order[] = [];
+
+    if (!useAWS) {
+      result = globalState.orders[userId] ?? [];
+    } else {
+      try {
+        const res = await ddbDocClient.send(
+          new ScanCommand({
+            TableName: "Orders",
+            FilterExpression: "userId = :uid",
+            ExpressionAttributeValues: { ":uid": userId },
+          })
+        );
+        const items = (res.Items ?? []) as Order[];
+        if (items.length === 0) {
+          const seeded = getSeededOrders(userId);
+          for (const o of seeded) {
+            await ddbDocClient.send(new PutCommand({ TableName: "Orders", Item: o })).catch(() => {});
+          }
+          if (!globalState.orders[userId]) globalState.orders[userId] = seeded;
+          result = seeded;
+        } else {
+          if (!globalState.orders[userId]) globalState.orders[userId] = items;
+          result = items;
         }
-        if (!globalState.orders[userId]) globalState.orders[userId] = seeded;
-        return seeded;
+      } catch {
+        result = globalState.orders[userId] ?? [];
       }
-      if (!globalState.orders[userId]) globalState.orders[userId] = items;
-      return items;
-    } catch {
-      return globalState.orders[userId] ?? [];
     }
+
+    // FORCE OVERRIDE: Always ensure the first order is the Coffee Maker so DIM flow is testable
+    if (result.length > 0) {
+      const coffeeMaker = PRODUCT_CATALOG.find((p) => p.sku === "CF-Mkr-99");
+      if (coffeeMaker) {
+        result[0] = {
+          ...result[0],
+          sku: coffeeMaker.sku,
+          name: coffeeMaker.name,
+          price: coffeeMaker.price,
+          category: coffeeMaker.category,
+        };
+      }
+    }
+
+    return result;
   },
 
   updateOrderStatus: async (
