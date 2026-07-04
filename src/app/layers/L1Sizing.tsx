@@ -20,6 +20,7 @@ import {
   useApp,
   WebcamCapture,
   getDynamicSizeChart,
+  getSKUReferenceImage,
 } from "./AppContext";
 
 export default function L1Sizing() {
@@ -158,9 +159,12 @@ export default function L1Sizing() {
                         className="p-2.5 hover:bg-indigo-50 cursor-pointer flex items-center justify-between gap-2"
                         onClick={() => { setSelectedProductSku(p.sku); setSearchQuery(""); setShowSuggestions(false); }}
                       >
-                        <div>
-                          <div className="text-xs font-bold text-slate-800">{p.name}</div>
-                          <div className="text-[10px] text-indigo-500 font-mono">{p.category} · {p.sku}</div>
+                        <div className="flex items-center gap-3">
+                          <img src={getSKUReferenceImage(p.sku)} alt={p.name} className="w-8 h-8 rounded object-cover flex-shrink-0 bg-slate-100" />
+                          <div>
+                            <div className="text-xs font-bold text-slate-800">{p.name}</div>
+                            <div className="text-[10px] text-indigo-500 font-mono">{p.category} · {p.sku}</div>
+                          </div>
                         </div>
                         <span className="text-emerald-600 font-extrabold text-xs font-mono">${p.price.toFixed(2)}</span>
                       </div>
@@ -183,7 +187,7 @@ export default function L1Sizing() {
               <Camera className="w-3.5 h-3.5" /> Selfie Size Scan
               <span className="text-[10px] font-normal text-indigo-500 ml-1">Maps your body to the size chart below</span>
             </div>
-            
+
             {/* Height calibration field */}
             <div className="flex flex-col gap-1.5 bg-white/70 border border-indigo-50 p-3 rounded-xl">
               <label htmlFor="height-inches-input" className="text-xs font-bold text-slate-700 flex items-center justify-between">

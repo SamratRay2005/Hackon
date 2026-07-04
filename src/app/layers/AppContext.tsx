@@ -121,8 +121,8 @@ export function svgToDataUrl(svgStr: string) {
 }
 
 export const SKU_REFERENCE_IMAGES: Record<string, string> = {
-  "DENIM-JKT-001": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500",
-  "SLIM-FIT-TEE": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500",
+  "DENIM-JKT-001": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500", // Fixed: Denim jacket
+  "SLIM-FIT-TEE": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500", // Fixed: T-shirt
   "CF-Mkr-99": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
   "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500",
   "YRDLY-GNTLMN-001": "/yardley-gentleman.webp",
@@ -131,20 +131,59 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
 export const getSKUReferenceImage = (sku: string) => {
   if (SKU_REFERENCE_IMAGES[sku]) return SKU_REFERENCE_IMAGES[sku];
   const p = PRODUCT_CATALOG.find(x => x.sku === sku);
+  
   if (p) {
-    const name = p.name.toLowerCase();
-    if (name.includes("hoodie") || name.includes("pullover")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
-    if (name.includes("shirt") || name.includes("polo") || name.includes("tee")) return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500";
-    if (name.includes("jacket") || name.includes("parka") || name.includes("windbreaker") || name.includes("vest")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
-    if (name.includes("jean") || name.includes("pants") || name.includes("chinos") || name.includes("cargo") || name.includes("jogger") || name.includes("skirt")) return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
-    if (name.includes("shoe") || name.includes("sneaker") || name.includes("boot") || name.includes("sandal") || name.includes("loafer") || name.includes("chelsea") || name.includes("oxford")) return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
-    if (name.includes("coffee") || name.includes("kettle") || name.includes("grinder") || name.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
-    if (name.includes("speaker") || name.includes("headphone") || name.includes("earbuds") || name.includes("soundbar")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
-    if (name.includes("keyboard") || name.includes("mouse") || name.includes("monitor") || name.includes("webcam")) return "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500";
-    if (name.includes("blender") || name.includes("toaster") || name.includes("fryer") || name.includes("juicer") || name.includes("cooker") || name.includes("mixer")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
-    if (name.includes("backpack") || name.includes("bag") || name.includes("duffel") || name.includes("bottle")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+    const n = p.name.toLowerCase();
+    const c = p.category;
+    
+    if (c === "Apparel") {
+      if (n.includes("jacket") || n.includes("coat") || n.includes("parka") || n.includes("windbreaker") || n.includes("blazer")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
+      if (n.includes("hoodie") || n.includes("pullover") || n.includes("sweater") || n.includes("cardigan")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
+      if (n.includes("jean") || n.includes("denim") || n.includes("overalls")) return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
+      if (n.includes("pant") || n.includes("chino") || n.includes("jogger") || n.includes("legging") || n.includes("short")) return "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500";
+      if (n.includes("dress") || n.includes("skirt")) return "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500";
+      // Fallback for apparel (shirts, tees, polos, etc.)
+      return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
+    }
+    
+    if (c === "Footwear") {
+      if (n.includes("boot")) return "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500";
+      if (n.includes("sandal") || n.includes("slipper") || n.includes("loafer") || n.includes("oxford") || n.includes("espadril")) return "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500";
+      // Fallback for footwear (sneakers, trainers, running shoes)
+      return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
+    }
+    
+    if (c === "Electronics") {
+      if (n.includes("monitor") || n.includes("display") || n.includes("screen")) return "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500";
+      if (n.includes("speaker") || n.includes("audio") || n.includes("sound")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
+      if (n.includes("headphone") || n.includes("earbud")) return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
+      if (n.includes("keyboard") || n.includes("mouse") || n.includes("webcam")) return "https://images.unsplash.com/photo-1595225476474-87563907a212?w=500";
+      if (n.includes("watch") || n.includes("tracker")) return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
+      if (n.includes("camera") || n.includes("drone")) return "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500";
+      if (n.includes("tablet") || n.includes("reader")) return "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500";
+      return "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500";
+    }
+    
+    if (c === "Home & Kitchen") {
+      if (n.includes("knife") || n.includes("cutlery")) return "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500";
+      if (n.includes("coffee") || n.includes("espresso") || n.includes("kettle") || n.includes("grinder") || n.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
+      if (n.includes("blender") || n.includes("mixer") || n.includes("juicer") || n.includes("cooker") || n.includes("toaster") || n.includes("fryer")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
+      if (n.includes("pan") || n.includes("pot") || n.includes("skillet") || n.includes("cookware")) return "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500";
+      if (n.includes("vacuum") || n.includes("mop") || n.includes("purifier")) return "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=500";
+      if (n.includes("towel") || n.includes("sheet") || n.includes("duvet") || n.includes("pillow")) return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
+      return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
+    }
+    
+    if (c === "Recreation & Lifestyle") {
+      if (n.includes("backpack") || n.includes("bag") || n.includes("duffel") || n.includes("luggage")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+      if (n.includes("tent") || n.includes("camp") || n.includes("mat") || n.includes("sleep")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+      if (n.includes("bottle") || n.includes("flask") || n.includes("tumbler") || n.includes("vacuum insulated")) return "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500";
+      if (n.includes("yoga") || n.includes("fitness") || n.includes("roller")) return "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500";
+      return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+    }
   }
-  return "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=500";
+  
+  return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
 };
 
 export function getDynamicSizeChart(sku: string) {

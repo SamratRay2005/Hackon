@@ -277,7 +277,7 @@ function getMockResponse(
   }
 
   if (msg.includes("yes") || msg.includes("turn on") || msg.includes("on") || msg.includes("light") || msg.includes("size") || msg.includes("fit") || msg.includes("broken")) {
-    return \`Got it. Based on your history, I recommend checking out our exchange program. If it's a technical issue, try a quick 1-minute reset by unplugging it, waiting 10 seconds, and plugging it back in.\n\nLet me know if this helps or if you'd like to proceed with the return!\`;
+    return `Got it. Based on your history, I recommend checking out our exchange program. If it's a technical issue, try a quick 1-minute reset by unplugging it, waiting 10 seconds, and plugging it back in.\n\nLet me know if this helps or if you'd like to proceed with the return!`;
   }
 
   if (msg.includes("sound") || msg.includes("audio") || msg.includes("crackling") || msg.includes("distort") || msg.includes("speaker")) {
@@ -289,7 +289,7 @@ function getMockResponse(
   }
 
   if ((msg.includes("work") && !msg.includes("not")) || msg.includes("fixed") || msg.includes("resolved") || msg.includes("thank")) {
-    return \`Fantastic! Glad we got that sorted out. By repairing rather than returning, you've helped reduce unnecessary waste. Please click the **"Resolved! Cancel Return"** button below to complete the process.\`;
+    return `Fantastic! Glad we got that sorted out. By repairing rather than returning, you've helped reduce unnecessary waste. Please click the **"Resolved! Cancel Return"** button below to complete the process.`;
   }
 
   return `${expiredNote}I'm here to help! Can you tell me:\n- What is the device doing (or not doing)?\n- Any LED lights visible?\n- Does it respond to the power button at all?\n\nThe more detail you give me, the better I can guide you through the fix.${warrantyNote}`;

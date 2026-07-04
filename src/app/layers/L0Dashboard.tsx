@@ -115,9 +115,12 @@ export default function L0Dashboard() {
                   setShowSuggestions(false);
                 }}
               >
-                <div>
-                  <div className="text-xs font-bold text-slate-800">{p.name}</div>
-                  <div className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</div>
+                <div className="flex items-center gap-3">
+                  <img src={getSKUReferenceImage(p.sku)} alt={p.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-slate-100" />
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">{p.name}</div>
+                    <div className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</div>
+                  </div>
                 </div>
                 <span className="text-emerald-600 font-extrabold text-sm font-mono">${p.price.toFixed(2)}</span>
               </div>
