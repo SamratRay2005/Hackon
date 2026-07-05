@@ -123,6 +123,10 @@ export default function Home() {
   // Fraud Claim Type
   const [fraudClaimType, setFraudClaimType] = useState<"damaged_product" | "different_product">("damaged_product");
 
+  // Global Modes & Inspect Queue
+  const [globalMode, setGlobalMode] = useState<"user" | "admin">("user");
+  const [inspectQueue, setInspectQueue] = useState<any[]>([]);
+
   // ── SEARCH CLICK-OUTSIDE ──
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -371,6 +375,7 @@ export default function Home() {
     fraudClaimType, setFraudClaimType,
     resaleListings, setResaleListings,
     isAdminMode, setIsAdminMode,
+    inspectQueue, setInspectQueue,
     // extra fields consumed by L3 via any-cast
     chatInput: "",
   };
@@ -483,6 +488,17 @@ export default function Home() {
                     <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Signed in as</div>
                       <div className="text-[11px] font-bold text-slate-800 truncate mt-0.5">{profileEmail}</div>
+                      <button
+                        className="mt-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                        onClick={() => {
+                          const newMode = globalMode === "user" ? "admin" : "user";
+                          setGlobalMode(newMode);
+                          setActiveTab(newMode === "user" ? "dashboard" : "grading");
+                          setShowLogoutDropdown(false);
+                        }}
+                      >
+                        Switch to {globalMode === "user" ? "Admin" : "User"} Mode
+                      </button>
                     </div>
                     <div className="p-2 flex flex-col gap-1.5">
                       <button onClick={() => { setShowLogoutDropdown(false); setActiveTab("dashboard"); }} className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg shadow-sm hover:bg-white hover:border-indigo-300 hover:shadow transition-all flex items-center gap-2 group">
@@ -535,9 +551,20 @@ export default function Home() {
               </div>
 
               <div className="glass-card flex flex-col gap-2">
-                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100">Return Flow</div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100">
+                  {globalMode === "user" ? "Customer Flow" : "Admin Backoffice"}
+                </div>
                 <nav className="sidebar-nav-list">
-                  {navItems.map(item => {
+                  {navItems
+                    .filter((item) => {
+                      if (globalMode === "user") {
+                        return ["dashboard", "size-assist", "fraud-mitigation", "deflection", "logistics", "wallet", "marketplace"].includes(item.id);
+                      } else {
+                        // Admin mode
+                        return ["grading", "fraud-mitigation"].includes(item.id);
+                      }
+                    })
+                    .map(item => {
                     const Icon = item.icon;
                     return (
                       <button key={item.id} onClick={() => setActiveTab(item.id)} className={`layer-sidebar-btn ${activeTab === item.id ? "active" : ""}`}>
@@ -555,7 +582,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {cart.length > 0 && (
+              {cart.length > 0 && globalMode === "user" && (
                 <div className="glass-card flex flex-col gap-2">
                   <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1.5 flex items-center justify-between">
                     <span>Size Cart</span>
@@ -580,107 +607,109 @@ export default function Home() {
             <main className="flex flex-col gap-5 min-w-0">
 
               {/* ── PRODUCT CARD ── */}
-              <div className="glass-card product-card-restructured">
-                <div className="product-image-container">
-                  <img src={getSKUReferenceImage(selectedProductSku)} alt={selectedProduct?.name || "Product"} className="product-image" />
-                </div>
-
-                <div className="product-info-container">
-                  <div>
-                    <span className="text-[9px] text-indigo-600 font-bold uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
-                      {isApparelOrFootwear ? "Sizing & Return Flow" : "Return Flow"}
-                    </span>
-                    <h2 className="text-xl font-extrabold text-slate-800 mt-1.5 leading-tight">{selectedProduct?.name || "Classic Denim Jacket"}</h2>
-                    <div className="flex items-center gap-2.5 mt-1.5 flex-wrap text-sm text-slate-500 font-medium">
-                      <span className="text-2xl font-bold text-slate-900 font-mono">${(selectedProduct?.price || 68.00).toFixed(2)}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="font-mono text-slate-400">SKU: {selectedProductSku}</span>
-                      {selectedProduct?.category && (
-                        <><span className="text-slate-300">•</span><span className="mini-badge" style={{ background: '#f1f5f9', color: '#64748b' }}>{selectedProduct.category}</span></>
-                      )}
-                    </div>
+              {globalMode === "user" && (
+                <div className="glass-card product-card-restructured">
+                  <div className="product-image-container">
+                    <img src={getSKUReferenceImage(selectedProductSku)} alt={selectedProduct?.name || "Product"} className="product-image" />
                   </div>
 
-                  {selectedProduct && selectedProduct.sizes.length > 1 && (
+                  <div className="product-info-container">
                     <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Select Size (Add to cart to bracket)</span>
-                      <div className="fit-chip-grid">
-                        {selectedProduct.sizes.map(sz => {
-                          const inCart = cart.some(x => x.sku === selectedProductSku && x.size === sz);
-                          return (<button key={sz} onClick={() => handleAddToCart(sz)} className={`fit-chip ${inCart ? "active" : ""}`}>{sz}</button>);
-                        })}
+                      <span className="text-[9px] text-indigo-600 font-bold uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                        {isApparelOrFootwear ? "Sizing & Return Flow" : "Return Flow"}
+                      </span>
+                      <h2 className="text-xl font-extrabold text-slate-800 mt-1.5 leading-tight">{selectedProduct?.name || "Classic Denim Jacket"}</h2>
+                      <div className="flex items-center gap-2.5 mt-1.5 flex-wrap text-sm text-slate-500 font-medium">
+                        <span className="text-2xl font-bold text-slate-900 font-mono">${(selectedProduct?.price || 68.00).toFixed(2)}</span>
+                        <span className="text-slate-300">•</span>
+                        <span className="font-mono text-slate-400">SKU: {selectedProductSku}</span>
+                        {selectedProduct?.category && (
+                          <><span className="text-slate-300">•</span><span className="mini-badge" style={{ background: '#f1f5f9', color: '#64748b' }}>{selectedProduct.category}</span></>
+                        )}
                       </div>
                     </div>
-                  )}
 
-                  {selectedProduct && (
-                    <div className="border-t border-slate-100 pt-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                          <Camera className="w-3.5 h-3.5 text-indigo-500" />
-                          {isApparelOrFootwear ? "Selfie Size Scan" : "Return Photo Capture"}
+                    {selectedProduct && selectedProduct.sizes.length > 1 && (
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Select Size (Add to cart to bracket)</span>
+                        <div className="fit-chip-grid">
+                          {selectedProduct.sizes.map(sz => {
+                            const inCart = cart.some(x => x.sku === selectedProductSku && x.size === sz);
+                            return (<button key={sz} onClick={() => handleAddToCart(sz)} className={`fit-chip ${inCart ? "active" : ""}`}>{sz}</button>);
+                          })}
                         </div>
-                        <span className="text-[9px] text-slate-400 font-medium">{isApparelOrFootwear ? "Maps your body to the size chart" : "Photo for return verification"}</span>
-                      </div>
-                      <WebcamCapture
-                        onCapture={(base64) => {
-                          if (isApparelOrFootwear) { setSizingImage(base64); }
-                          else { setFraudImage(base64); setFraudImageType("custom"); }
-                        }}
-                        overlayType={isApparelOrFootwear ? "sizing" : "damage"}
-                        compact
-                      />
-                      {isApparelOrFootwear && sizingImage && (
-                        <div className="mt-2">
-                          <span className="mini-badge success mb-1.5">Image Ready</span>
-                          <img src={sizingImage} className="upload-preview mt-1" alt="Sizing photo" />
-                        </div>
-                      )}
-                      {!isApparelOrFootwear && fraudImage && (
-                        <div className="mt-2"><span className="mini-badge success mb-1.5">Photo captured — head to Verify Return tab to scan</span></div>
-                      )}
-                    </div>
-                  )}
-
-                  {isApparelOrFootwear ? (
-                    <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3">
-                      <div className="text-2xl font-extrabold text-indigo-600 bg-white border border-indigo-200 py-1 px-3 rounded-xl font-mono min-w-[3rem] text-center shadow-sm">{sizingResult?.recommendedSize || "—"}</div>
-                      <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">{sizingResult?.reasoning || "Head to \"Find My Size\" tab → scan your selfie → get a personalised AI size recommendation."}</div>
-                      {sizingResult && <span className="mini-badge info flex-shrink-0">AI Result</span>}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center flex-shrink-0"><Camera className="w-5 h-5 text-slate-500" /></div>
-                      <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">Head to <strong className="text-slate-700">Verify Return</strong> tab to scan your return photo for AI fraud detection.</div>
-                    </div>
-                  )}
-
-                  {/* Product Search */}
-                  <div ref={searchContainerRef} className="relative mt-1">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Search &amp; Change Product</span>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                      <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-8 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_0_3px_rgba(79,70,229,0.08)] placeholder-slate-400 transition-all font-semibold"
-                        placeholder="Search 150+ products by name or SKU..."
-                        value={searchQuery}
-                        onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
-                        onFocus={() => setShowSuggestions(true)}
-                      />
-                      {searchQuery && (<button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600" onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}><X className="w-3 h-3" /></button>)}
-                    </div>
-                    {showSuggestions && filteredSuggestions.length > 0 && (
-                      <div className="absolute z-[999] top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-slate-100">
-                        {filteredSuggestions.map(p => (
-                          <div key={p.sku} className="p-2.5 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center justify-between gap-2" onClick={() => { setSelectedProductSku(p.sku); setSearchQuery(`${p.name} (${p.sku})`); setShowSuggestions(false); }}>
-                            <div><div className="text-xs font-bold text-slate-800">{p.name}</div><div className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</div></div>
-                            <span className="text-emerald-600 font-extrabold text-xs font-mono">${p.price.toFixed(2)}</span>
-                          </div>
-                        ))}
                       </div>
                     )}
+
+                    {selectedProduct && (
+                      <div className="border-t border-slate-100 pt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                            <Camera className="w-3.5 h-3.5 text-indigo-500" />
+                            {isApparelOrFootwear ? "Selfie Size Scan" : "Return Photo Capture"}
+                          </div>
+                          <span className="text-[9px] text-slate-400 font-medium">{isApparelOrFootwear ? "Maps your body to the size chart" : "Photo for return verification"}</span>
+                        </div>
+                        <WebcamCapture
+                          onCapture={(base64) => {
+                            if (isApparelOrFootwear) { setSizingImage(base64); }
+                            else { setFraudImage(base64); setFraudImageType("custom"); }
+                          }}
+                          overlayType={isApparelOrFootwear ? "sizing" : "damage"}
+                          compact
+                        />
+                        {isApparelOrFootwear && sizingImage && (
+                          <div className="mt-2">
+                            <span className="mini-badge success mb-1.5">Image Ready</span>
+                            <img src={sizingImage} className="upload-preview mt-1" alt="Sizing photo" />
+                          </div>
+                        )}
+                        {!isApparelOrFootwear && fraudImage && (
+                          <div className="mt-2"><span className="mini-badge success mb-1.5">Photo captured — head to Verify Return tab to scan</span></div>
+                        )}
+                      </div>
+                    )}
+
+                    {isApparelOrFootwear ? (
+                      <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3">
+                        <div className="text-2xl font-extrabold text-indigo-600 bg-white border border-indigo-200 py-1 px-3 rounded-xl font-mono min-w-[3rem] text-center shadow-sm">{sizingResult?.recommendedSize || "—"}</div>
+                        <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">{sizingResult?.reasoning || "Head to \"Find My Size\" tab → scan your selfie → get a personalised AI size recommendation."}</div>
+                        {sizingResult && <span className="mini-badge info flex-shrink-0">AI Result</span>}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center flex-shrink-0"><Camera className="w-5 h-5 text-slate-500" /></div>
+                        <div className="flex-1 text-xs text-slate-500 font-medium leading-relaxed">Head to <strong className="text-slate-700">Verify Return</strong> tab to scan your return photo for AI fraud detection.</div>
+                      </div>
+                    )}
+
+                    {/* Product Search */}
+                    <div ref={searchContainerRef} className="relative mt-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Search &amp; Change Product</span>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-8 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_0_3px_rgba(79,70,229,0.08)] placeholder-slate-400 transition-all font-semibold"
+                          placeholder="Search 150+ products by name or SKU..."
+                          value={searchQuery}
+                          onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                          onFocus={() => setShowSuggestions(true)}
+                        />
+                        {searchQuery && (<button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600" onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}><X className="w-3 h-3" /></button>)}
+                      </div>
+                      {showSuggestions && filteredSuggestions.length > 0 && (
+                        <div className="absolute z-[999] top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-slate-100">
+                          {filteredSuggestions.map(p => (
+                            <div key={p.sku} className="p-2.5 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center justify-between gap-2" onClick={() => { setSelectedProductSku(p.sku); setSearchQuery(`${p.name} (${p.sku})`); setShowSuggestions(false); }}>
+                              <div><div className="text-xs font-bold text-slate-800">{p.name}</div><div className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</div></div>
+                              <span className="text-emerald-600 font-extrabold text-xs font-mono">${p.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* ── SIZING RESULT CARD ── */}
               {sizingResult && (

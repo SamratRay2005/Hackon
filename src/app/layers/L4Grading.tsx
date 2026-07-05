@@ -25,8 +25,13 @@ export default function L4Grading() {
     profileUserId,
     setActiveTab,
     setLedgerRecords,
-    setMetrics,
-  } = useApp();
+    setResaleListings,
+    setLogisticsSku,
+    inspectQueue,
+    setInspectQueue,
+    setGradingSku,
+    setGradingItemName,
+  } = useApp() as any;
 
   const [gradingVideoUrl, setGradingVideoUrl] = React.useState("");
   const [gradingVideoBase64, setGradingVideoBase64] = React.useState("");
@@ -58,7 +63,45 @@ export default function L4Grading() {
   };
 
   return (
-    <div className="glass-card flex flex-col gap-5">
+    <div className="flex flex-col lg:flex-row gap-5">
+      
+      {/* ── LEFT COLUMN: INSPECT QUEUE ── */}
+      <div className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-3">
+        <div className="glass-card flex flex-col gap-2 h-full">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100 flex items-center justify-between">
+            <span>Inspect Queue</span>
+            <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-[9px]">{inspectQueue?.length || 0}</span>
+          </div>
+          <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px] pr-1">
+            {inspectQueue && inspectQueue.length > 0 ? inspectQueue.map((item: any) => (
+              <button 
+                key={item.id} 
+                className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
+                onClick={() => {
+                  setGradingSku(item.sku);
+                  setGradingItemName(item.itemName);
+                  setGradingResult(null);
+                  setGradingVideoUrl("");
+                  setGradingVideoBase64("");
+                }}
+              >
+                <div className="font-bold text-slate-800 truncate w-full">{item.itemName}</div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="font-mono text-[9px] text-slate-500">SKU: {item.sku}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${item.source === "fraud" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                    {item.source === "fraud" ? "Damaged" : "Vibe"}
+                  </span>
+                </div>
+              </button>
+            )) : (
+              <div className="text-[10px] text-slate-400 text-center py-6 italic">Queue is empty</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN: GRADING STATION ── */}
+      <div className="glass-card flex flex-col gap-5 flex-1 min-w-0">
       <div className="section-title-bar">
         <h2>Inspect Item — Condition Grader</h2>
         <span className="section-badge badge-layer-4">AI Grade</span>
@@ -169,8 +212,60 @@ export default function L4Grading() {
                 <div className="font-mono text-[9px] text-indigo-700 break-all leading-relaxed">{gradingResult.hash}</div>
               </div>
 
-              <button className="btn btn-success w-full py-2 text-xs font-bold" onClick={() => setActiveTab("logistics")}>
-                <Truck className="w-4 h-4" /> Route to L5 P2P Logistics
+              <button
+                className="btn btn-success w-full py-2 text-xs font-bold"
+                onClick={() => {
+                  const grade: string = gradingResult.grade ?? "D";
+                  const gradeUpper = grade.toUpperCase();
+
+                  if (gradeUpper === "D" || gradeUpper === "F") {
+                    // Grade D/F → Poor Quality Flag, remove from queue
+                    alert(`Flagged: Poor Quality Found for ${gradingItemName}. Item sent to deep warehouse.`);
+                    setInspectQueue((prev: any[]) => prev.filter(q => q.sku !== gradingSku));
+                    setGradingResult(null);
+                    setGradingVideoUrl("");
+                    setGradingVideoBase64("");
+                    return;
+                  }
+
+                  // Grade A, B, C → Add to Dark Store Resale Queue
+                  const isReturnedProduct = gradeUpper !== "A"; // Grade A starts as "new"
+                  setResaleListings((prev: any[]) => {
+                    // Avoid duplicates
+                    if (prev.some((r: any) => r.sku === gradingSku)) return prev;
+                    return [
+                      ...prev,
+                      {
+                        sku: gradingSku,
+                        name: gradingItemName,
+                        price: parseFloat((gradingResult.price ?? 29.99).toFixed(2)),
+                        originalPrice: parseFloat((gradingResult.price ?? 29.99).toFixed(2)),
+                        brand: gradingResult.brand ?? "Returned Item",
+                        grade: gradeUpper,
+                        co2Saved: gradeUpper === "A" ? 4 : gradeUpper === "B" ? 6 : 8,
+                        distance: "2.1 km",
+                        trust: gradeUpper === "A" ? 96 : gradeUpper === "B" ? 84 : 72,
+                        addedToStoreAt: Date.now(),
+                        isReturnedProduct,
+                      },
+                    ];
+                  });
+
+                  // Remove from inspect queue
+                  setInspectQueue((prev: any[]) => prev.filter(q => q.sku !== gradingSku));
+
+                  // Reset grader for next item
+                  setGradingResult(null);
+                  setGradingVideoUrl("");
+                  setGradingVideoBase64("");
+                  
+                  alert(`Successfully listed ${gradingItemName} to Resale Marketplace!`);
+                }}
+              >
+                <Zap className="w-4 h-4" />
+                {gradingResult.grade === "D" || gradingResult.grade === "F"
+                  ? "Flag: Poor Quality Found"
+                  : `List in Dark Store (Grade ${gradingResult.grade})`}
               </button>
             </div>
           ) : (

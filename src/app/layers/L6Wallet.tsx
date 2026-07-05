@@ -225,6 +225,7 @@ export default function L6Wallet() {
     fetchGuidesForProduct,
     setChatMessages,
     setIfixitGuides,
+    setInspectQueue,
   } = useApp() as any;
 
   const [refundSelection, setRefundSelection] = React.useState<"cash" | "credits">("credits");
@@ -328,6 +329,18 @@ export default function L6Wallet() {
       refundType: "Drop Off Required",
       walletBalance: walletInfo.credits,
       sustainabilityScore: walletInfo.sustainabilityScore
+    });
+    // Push to admin inspect queue
+    setInspectQueue((prev: any[]) => {
+      if (prev.find(item => item.orderId === order.orderId)) return prev;
+      return [...prev, {
+        id: Math.random().toString(36).substr(2, 9),
+        orderId: order.orderId,
+        sku: order.sku,
+        itemName: order.name,
+        source: "vibe",
+        timestamp: new Date().toISOString()
+      }];
     });
   };
 
@@ -685,15 +698,6 @@ export default function L6Wallet() {
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center text-slate-500 text-[11px] leading-relaxed italic mt-1">
                   {refundResult.message}
                 </div>
-
-                {refundResult.refundType === "Drop Off Required" && (
-                  <button
-                    className="btn btn-secondary w-full py-2.5 mt-2 text-[11px] font-bold border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm"
-                    onClick={() => setActiveTab("inspect")}
-                  >
-                    Admin: Inspect Item at Dark Store ➡
-                  </button>
-                )}
               </div>
             ) : (
               <div className="empty-state-card flex-1 mt-2">

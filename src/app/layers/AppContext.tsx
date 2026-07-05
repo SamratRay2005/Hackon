@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 
+export interface InspectQueueItem {
+  id: string;
+  orderId: string;
+  sku: string;
+  itemName: string;
+  source: "fraud" | "vibe";
+  timestamp: string;
+}
+
 // ─────────────────────────────────────────────
 // MOCK SVG ILLUSTRATIONS (shared)
 // ─────────────────────────────────────────────
@@ -591,6 +600,10 @@ export interface AppContextType {
   setFraudImageType: (v: string) => void;
   fraudClaimType: "damaged_product" | "different_product";
   setFraudClaimType: (v: "damaged_product" | "different_product") => void;
+
+  // Admin Inspect Queue
+  inspectQueue: InspectQueueItem[];
+  setInspectQueue: React.Dispatch<React.SetStateAction<InspectQueueItem[]>>;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);

@@ -38,6 +38,7 @@ export default function L2Fraud() {
     fraudClaimType: claimType,
     setFraudClaimType: setClaimType,
     setActiveTab,
+    setInspectQueue,
   } = useApp() as any;
 
   const [fraudLoading, setFraudLoading] = React.useState(false);
@@ -73,6 +74,22 @@ export default function L2Fraud() {
       if (res.ok) {
         const data = await res.json();
         setFraudResult(data);
+
+        // If it's not a retake and score is <= 70 (Approved or Moderate Risk), push to inspect queue
+        if (data && !data.shouldRetake && data.riskScore <= 70) {
+          setInspectQueue((prev: any[]) => {
+            if (prev.find(item => item.sku === fraudSku)) return prev;
+            return [...prev, {
+              id: Math.random().toString(36).substr(2, 9),
+              orderId: Math.random().toString(36).substr(2, 9),
+              sku: fraudSku,
+              itemName: fraudItemName,
+              source: "fraud",
+              timestamp: new Date().toISOString()
+            }];
+          });
+        }
+
         if (data.recommendedAction === "BLOCK") setMetrics((prev: any) => ({ ...prev, fraudAttemptsBlocked: prev.fraudAttemptsBlocked + 1 }));
       }
     } catch { } finally { setFraudLoading(false); }
@@ -571,16 +588,6 @@ export default function L2Fraud() {
                         "{fraudResult.reasoning}"
                       </div>
                     </div>
-                  )}
-
-                  {/* Admin Shortcut for Jury Demo */}
-                  {fraudResult.riskScore <= 70 && (
-                    <button
-                      className="btn btn-secondary w-full py-2.5 mt-2 text-[11px] font-bold border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm"
-                      onClick={() => setActiveTab("inspect")}
-                    >
-                      Admin: Process in Warehouse ➡
-                    </button>
                   )}
                 </div>
               )}
