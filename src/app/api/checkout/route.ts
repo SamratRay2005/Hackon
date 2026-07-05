@@ -1,88 +1,128 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import { db } from "@/lib/services";
 
-// Simulate an in-memory queue/lock system for the "Rapido" style race condition
-const lockedItems = new Map<string, number>(); // sku -> timestamp
+/**
+ * POST /api/checkout
+ *
+ * Body:
+ *   userId       — string
+ *   items        — Array<{ sku, name, price, grade: "A" | "B" | "C" }>
+ *   applyVoucher — string | null  (voucherId to redeem)
+ *   applyCashback — boolean       (true = spend available cashback toward total)
+ *
+ * Cashback incentive rules (grade-based):
+ *   Grade A → 7%  : price >= $50 → issue Voucher, else → direct cashback
+ *   Grade B → 5%  : price >= $50 → issue Voucher, else → direct cashback
+ *   Grade C → 3%  : always direct cashback regardless of price
+ */
+
+const CASHBACK_RATE: Record<string, number> = {
+  A: 0.03,  // Like New — sells itself, minimal nudge needed
+  B: 0.05,  // Very Good — moderate incentive
+};
+
+const VOUCHER_THRESHOLD = 50; // any item >= $50 gets a Voucher; below $50 gets direct cashback
 
 export async function POST(req: NextRequest) {
   try {
-    const { sku, name, price, priorityQueue } = await req.json();
+    const { userId, items, applyVoucher, applyCashback, currentWallet } = await req.json();
 
-    if (!sku || !price) {
-      return NextResponse.json({ error: "Missing product details" }, { status: 400 });
+    if (!userId || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: "Missing required fields: userId and items[]" }, { status: 400 });
     }
 
-    const now = Date.now();
-    const lockTime = lockedItems.get(sku);
-
-    // If item is locked by someone else and it hasn't expired (e.g. 5 mins)
-    // AND the user hasn't opted to pay the Priority Routing Fee (Rapido style jump)
-    if (lockTime && (now - lockTime < 5 * 60 * 1000) && !priorityQueue) {
-      return NextResponse.json({ locked: true, message: "Item is currently being purchased by someone nearby." });
-    }
-
-    // Lock the item
-    lockedItems.set(sku, now);
-
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const isLocalhost = req.headers.get("origin")?.includes("localhost") || true; 
-    const successUrl = `${req.headers.get("origin") || "http://localhost:3000"}?checkout=success`;
-    const cancelUrl = `${req.headers.get("origin") || "http://localhost:3000"}?checkout=cancel`;
-
-    if (stripeKey) {
-      const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" as any });
-      
-      const lineItems = [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `Circular Re-Commerce: ${name}`,
-              description: "Locally sourced returned item. Saved 4.8kg CO2.",
-            },
-            unit_amount: Math.round(price * 100), // cents
-          },
-          quantity: 1,
-        }
-      ];
-
-      // Add Priority Fee
-      if (priorityQueue) {
-        lineItems.push({
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "Priority P2P Routing Fee",
-              description: "Jump the queue for highly contested local items.",
-            },
-            unit_amount: 500, // $5.00
-          },
-          quantity: 1,
-        });
-      }
-
-      // Log simulated SQS dispatch
-      const sqsEventId = `sqs-${Math.random().toString(36).substring(2, 9)}-${now}`;
-      console.log(`[AWS SQS] Async Payment intent dispatched to processing queue. MessageID: ${sqsEventId}`);
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: lineItems,
-        mode: "payment",
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      });
-
-      return NextResponse.json({ url: session.url });
+    if (currentWallet) {
+      await db.seedWallet(userId, currentWallet.cashbackBalance ?? 0, currentWallet.vouchers ?? []);
     } else {
-      // Mock Stripe Checkout for hackathon demo if no keys are provided
-      const sqsEventId = `sqs-${Math.random().toString(36).substring(2, 9)}-${now}`;
-      console.log(`[AWS SQS] Priority lock acquired and payment intent dispatched to processing queue. MessageID: ${sqsEventId}`);
-      return NextResponse.json({ url: successUrl, messageId: sqsEventId });
+      await db.initUser(userId);
     }
 
+    const wallet = await db.getWallet(userId);
+
+    // ── 1. Calculate subtotal ──────────────────────────────────────
+    const subtotal: number = items.reduce((sum: number, i: any) => sum + (i.price ?? 0), 0);
+    const tax = parseFloat((subtotal * 0.08).toFixed(2));
+    let orderTotal = parseFloat((subtotal + tax).toFixed(2));
+    let discountApplied = 0;
+
+    // ── 2. Redeem voucher (if requested) ──────────────────────────
+    let voucherApplied: { id: string; discountAmount: number } | null = null;
+    if (applyVoucher) {
+      const voucherDiscount = await db.redeemVoucher(userId, applyVoucher);
+      if (voucherDiscount > 0) {
+        discountApplied += voucherDiscount;
+        voucherApplied = { id: applyVoucher, discountAmount: voucherDiscount };
+      }
+    }
+
+    // ── 3. Spend cashback balance (if requested) ───────────────────
+    let cashbackSpent = 0;
+    if (applyCashback && wallet.cashbackBalance > 0) {
+      const spendable = Math.min(wallet.cashbackBalance, orderTotal - discountApplied);
+      cashbackSpent = parseFloat(spendable.toFixed(2));
+      discountApplied += cashbackSpent;
+      await db.spendCashback(userId, cashbackSpent);
+    }
+
+    orderTotal = parseFloat(Math.max(0, orderTotal - discountApplied).toFixed(2));
+
+    // ── 4. Calculate & award grade-based cashback / vouchers ───────
+    const cashbackEarned: Array<{ itemName: string; grade: string; rate: string; reward: "cashback" | "voucher"; amount: number }> = [];
+    const vouchersIssued: Array<{ id: string; title: string; discountAmount: number }> = [];
+    let totalCashbackAdded = 0;
+
+    for (const item of items) {
+      const grade = (item.grade ?? "B").toUpperCase();
+      const rate = CASHBACK_RATE[grade] ?? CASHBACK_RATE["B"];
+      const rewardAmount = parseFloat((item.price * rate).toFixed(2));
+
+      // Price-only rule: ≥$50 → Voucher (drive re-engagement), <$50 → direct cashback
+      const isVoucherEligible = item.price >= VOUCHER_THRESHOLD;
+
+      if (isVoucherEligible) {
+        // Issue a voucher for high-value Grade A/B purchases
+        const voucher = await db.issueVoucher(
+          userId,
+          rewardAmount,
+          `Grade ${grade} Pre-Loved Reward`
+        );
+        cashbackEarned.push({ itemName: item.name, grade, rate: `${(rate * 100).toFixed(0)}%`, reward: "voucher", amount: rewardAmount });
+        vouchersIssued.push({ id: voucher.id, title: voucher.title, discountAmount: voucher.discountAmount });
+      } else {
+        // Add directly to cashback balance
+        await db.addCashback(userId, rewardAmount);
+        totalCashbackAdded += rewardAmount;
+        cashbackEarned.push({ itemName: item.name, grade, rate: `${(rate * 100).toFixed(0)}%`, reward: "cashback", amount: rewardAmount });
+      }
+    }
+
+    // ── 5. Return receipt ──────────────────────────────────────────
+    const updatedWallet = await db.getWallet(userId);
+
+    return NextResponse.json({
+      success: true,
+      receipt: {
+        items: items.map((i: any) => ({ name: i.name, price: i.price, grade: i.grade })),
+        subtotal,
+        tax,
+        discountApplied,
+        voucherApplied,
+        cashbackSpent,
+        orderTotal,
+      },
+      rewards: {
+        cashbackEarned,
+        totalCashbackAdded: parseFloat(totalCashbackAdded.toFixed(2)),
+        vouchersIssued,
+      },
+      wallet: {
+        cashbackBalance: updatedWallet.cashbackBalance,
+        activeVouchers: updatedWallet.vouchers.filter((v: { status: string }) => v.status === "active"),
+      },
+      message: `Order confirmed! You earned ${Math.round(totalCashbackAdded * 100)} Green Credits${vouchersIssued.length > 0 ? ` and ${vouchersIssued.length} voucher(s)` : ""}.`,
+    });
   } catch (error: any) {
-    console.error("Checkout Error:", error);
-    return NextResponse.json({ error: "Failed to generate checkout session" }, { status: 500 });
+    console.error("Checkout API Error:", error);
+    return NextResponse.json({ error: "Failed to process checkout" }, { status: 500 });
   }
 }

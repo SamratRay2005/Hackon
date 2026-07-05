@@ -72,23 +72,31 @@ export interface BodyMeasurements {
   capturedAt?: string;  // ISO timestamp
 }
 
+export interface WalletVoucher {
+  id: string;
+  title: string;          // e.g. "Grade A Purchase Reward"
+  discountAmount: number; // absolute $ value
+  issuedAt: string;       // ISO timestamp
+  status: "active" | "redeemed";
+}
+
 export interface UserRecord {
   userId: string;
   email: string;
   role: UserRole;
   activeRole: UserActiveRole;
   zipCode: string;
-  credits: number;
-  sustainabilityScore: number;
-  credibilityScore: number;   // 0-100, starts 70
+  cashbackBalance: number;      // replaces old `credits` — stored in $ (e.g. 4.50)
+  vouchers: WalletVoucher[];    // redeemable vouchers earned at checkout
+  credibilityScore: number;     // 0-100, starts 70
   priorReturnsCount: number;
   totalReturns: number;
   totalResales: number;
   goodResaleCount: number;
   fraudFlagCount: number;
   bodyMeasurements: BodyMeasurements;
-  sellerBrand?: string;       // only role=seller
-  sellerApproved?: boolean;   // admin-approved sellers
+  sellerBrand?: string;         // only role=seller
+  sellerApproved?: boolean;     // admin-approved sellers
   createdAt: string;
 }
 
@@ -662,8 +670,8 @@ export const db = {
         role,
         activeRole: "buyer",
         zipCode: "560034",
-        credits: 1000,
-        sustainabilityScore: 0,
+        cashbackBalance: 0,
+        vouchers: [],
         credibilityScore: 70,
         priorReturnsCount: 0,
         totalReturns: 0,
@@ -673,6 +681,11 @@ export const db = {
         bodyMeasurements: {},
         createdAt: new Date().toISOString(),
       };
+    } else {
+      // Migrate existing in-memory users that still have old credits field
+      const u = globalState.users[userId] as any;
+      if (u.cashbackBalance === undefined) u.cashbackBalance = 0;
+      if (u.vouchers === undefined) u.vouchers = [];
     }
     if (!globalState.claims[userId]) globalState.claims[userId] = [];
     if (!globalState.ledger[userId]) globalState.ledger[userId] = [];
@@ -695,6 +708,14 @@ export const db = {
       } catch {
         // User already exists — ignore
       }
+    }
+  },
+
+  seedWallet: async (userId: string, cashbackBalance: number, vouchers: WalletVoucher[]): Promise<void> => {
+    await db.initUser(userId);
+    if (!useAWS) {
+      globalState.users[userId].cashbackBalance = cashbackBalance;
+      globalState.users[userId].vouchers = vouchers;
     }
   },
 
@@ -1214,15 +1235,19 @@ export const db = {
     }
   },
 
-  // ── Wallet & Loyalty (L6) ──────────────────────────────────
+  // ── Wallet & Loyalty ────────────────────────────────────────
+  // Incentive is grade-based on marketplace pre-loved purchases:
+  //   Grade A → 7% cashback (≥$50 → voucher, <$50 → direct cashback)
+  //   Grade B → 5% cashback (≥$50 → voucher, <$50 → direct cashback)
+  //   Grade C → 3% cashback (always direct cashback)
 
   getWallet: async (userId: string) => {
     await db.initUser(userId);
     if (!useAWS) {
       const u = globalState.users[userId];
       return {
-        credits: u?.credits ?? 1000,
-        sustainabilityScore: u?.sustainabilityScore ?? 0,
+        cashbackBalance: u?.cashbackBalance ?? 0,
+        vouchers: u?.vouchers ?? [],
         credibilityScore: u?.credibilityScore ?? 70,
         bodyMeasurements: u?.bodyMeasurements ?? {},
         activeRole: u?.activeRole ?? "buyer",
@@ -1233,48 +1258,108 @@ export const db = {
       const res = await ddbDocClient.send(new GetCommand({ TableName: "Users", Key: { userId } }));
       if (res.Item) {
         return {
-          credits: res.Item.credits,
-          sustainabilityScore: res.Item.sustainabilityScore,
+          cashbackBalance: res.Item.cashbackBalance ?? 0,
+          vouchers: res.Item.vouchers ?? [],
           credibilityScore: res.Item.credibilityScore ?? 70,
           bodyMeasurements: res.Item.bodyMeasurements ?? {},
           activeRole: res.Item.activeRole ?? "buyer",
           role: res.Item.role ?? "buyer",
         };
       }
-      return { credits: 1000, sustainabilityScore: 0, credibilityScore: 70, bodyMeasurements: {}, activeRole: "buyer", role: "buyer" };
+      return { cashbackBalance: 0, vouchers: [], credibilityScore: 70, bodyMeasurements: {}, activeRole: "buyer", role: "buyer" };
     } catch {
       const u = globalState.users[userId];
-      return { credits: u?.credits ?? 1000, sustainabilityScore: u?.sustainabilityScore ?? 0, credibilityScore: u?.credibilityScore ?? 70, bodyMeasurements: u?.bodyMeasurements ?? {}, activeRole: u?.activeRole ?? "buyer", role: u?.role ?? "buyer" };
+      return { cashbackBalance: u?.cashbackBalance ?? 0, vouchers: u?.vouchers ?? [], credibilityScore: u?.credibilityScore ?? 70, bodyMeasurements: u?.bodyMeasurements ?? {}, activeRole: u?.activeRole ?? "buyer", role: u?.role ?? "buyer" };
     }
   },
 
-  updateWallet: async (userId: string, creditsAdded: number, co2SavedAdded: number) => {
+  /**
+   * addCashback — adds $ amount directly to user's cashback balance.
+   */
+  addCashback: async (userId: string, amount: number): Promise<number> => {
     await db.initUser(userId);
-    if (!useAWS) {
-      const u = globalState.users[userId];
-      u.credits += creditsAdded;
-      u.sustainabilityScore += co2SavedAdded;
-      return { credits: u.credits, sustainabilityScore: u.sustainabilityScore };
-    }
-    try {
-      const res = await ddbDocClient.send(
-        new UpdateCommand({
+    const u = globalState.users[userId];
+    u.cashbackBalance = parseFloat(((u.cashbackBalance ?? 0) + amount).toFixed(2));
+    if (useAWS && ddbDocClient) {
+      try {
+        await ddbDocClient.send(new UpdateCommand({
           TableName: "Users",
           Key: { userId },
-          UpdateExpression: "ADD credits :c, sustainabilityScore :s",
-          ExpressionAttributeValues: { ":c": creditsAdded, ":s": co2SavedAdded },
-          ReturnValues: "ALL_NEW",
-        })
-      );
-      const u = globalState.users[userId];
-      if (u) { u.credits = res.Attributes?.credits ?? u.credits; u.sustainabilityScore = res.Attributes?.sustainabilityScore ?? u.sustainabilityScore; }
-      return { credits: res.Attributes?.credits ?? 0, sustainabilityScore: res.Attributes?.sustainabilityScore ?? 0 };
-    } catch {
-      const u = globalState.users[userId];
-      u.credits += creditsAdded;
-      u.sustainabilityScore += co2SavedAdded;
-      return { credits: u.credits, sustainabilityScore: u.sustainabilityScore };
+          UpdateExpression: "SET cashbackBalance = :b",
+          ExpressionAttributeValues: { ":b": u.cashbackBalance },
+        }));
+      } catch {}
     }
+    return u.cashbackBalance;
+  },
+
+  /**
+   * issueVoucher — creates a redeemable voucher for user and persists it.
+   */
+  issueVoucher: async (userId: string, discountAmount: number, title: string): Promise<WalletVoucher> => {
+    await db.initUser(userId);
+    const voucher: WalletVoucher = {
+      id: `VCH-${Math.floor(10000 + Math.random() * 90000)}`,
+      title,
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      issuedAt: new Date().toISOString(),
+      status: "active",
+    };
+    globalState.users[userId].vouchers = [...(globalState.users[userId].vouchers ?? []), voucher];
+    if (useAWS && ddbDocClient) {
+      try {
+        await ddbDocClient.send(new UpdateCommand({
+          TableName: "Users",
+          Key: { userId },
+          UpdateExpression: "SET vouchers = :v",
+          ExpressionAttributeValues: { ":v": globalState.users[userId].vouchers },
+        }));
+      } catch {}
+    }
+    return voucher;
+  },
+
+  /**
+   * redeemVoucher — marks a voucher as redeemed and deducts its value.
+   * Returns the discount amount applied, or 0 if voucher not found/already redeemed.
+   */
+  redeemVoucher: async (userId: string, voucherId: string): Promise<number> => {
+    await db.initUser(userId);
+    const u = globalState.users[userId];
+    const voucher = (u.vouchers ?? []).find((v) => v.id === voucherId && v.status === "active");
+    if (!voucher) return 0;
+    voucher.status = "redeemed";
+    if (useAWS && ddbDocClient) {
+      try {
+        await ddbDocClient.send(new UpdateCommand({
+          TableName: "Users",
+          Key: { userId },
+          UpdateExpression: "SET vouchers = :v",
+          ExpressionAttributeValues: { ":v": u.vouchers },
+        }));
+      } catch {}
+    }
+    return voucher.discountAmount;
+  },
+
+  /**
+   * spendCashback — deducts amount from cashbackBalance. Returns new balance.
+   */
+  spendCashback: async (userId: string, amount: number): Promise<number> => {
+    await db.initUser(userId);
+    const u = globalState.users[userId];
+    u.cashbackBalance = parseFloat(Math.max(0, (u.cashbackBalance ?? 0) - amount).toFixed(2));
+    if (useAWS && ddbDocClient) {
+      try {
+        await ddbDocClient.send(new UpdateCommand({
+          TableName: "Users",
+          Key: { userId },
+          UpdateExpression: "SET cashbackBalance = :b",
+          ExpressionAttributeValues: { ":b": u.cashbackBalance },
+        }));
+      } catch {}
+    }
+    return u.cashbackBalance;
   },
 
   // ── Sessions (L1 size bracketing) ─────────────────────────

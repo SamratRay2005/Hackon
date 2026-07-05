@@ -38,7 +38,8 @@ import L2Fraud from "./layers/L2Fraud";
 import L3Deflection from "./layers/L3Deflection";
 import L4Grading from "./layers/L4Grading";
 import L5Logistics from "./layers/L5Logistics";
-import L6Wallet from "./layers/L6Wallet";
+import L6Orders from "./layers/L6Orders";
+import L7Cart from "./layers/L7Cart";
 import LMarketplace from "./layers/LMarketplace";
 
 export default function Home() {
@@ -105,10 +106,29 @@ export default function Home() {
 
   // L6 Wallet
   const [walletInfo, setWalletInfo] = useState<{
-    credits: number;
-    sustainabilityScore: number;
+    cashbackBalance: number;
+    vouchers: Array<{ id: string; title: string; discountAmount: number; status: string; issuedAt: string }>;
     orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string; returnWindowDays?: number }>;
-  }>({ credits: 1000, sustainabilityScore: 0, orders: [] });
+  }>({ cashbackBalance: 0, vouchers: [], orders: [] });
+
+  // Hydrate wallet from localStorage on mount (since serverless memory resets on hot-reload)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("reloop_wallet");
+      if (saved) {
+        setWalletInfo(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
+
+  // Save wallet to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("reloop_wallet", JSON.stringify(walletInfo));
+      setMetrics((prev: any) => ({ ...prev, walletCredits: Math.round((walletInfo.cashbackBalance ?? 0) * 100) }));
+    } catch {}
+  }, [walletInfo]);
+
   const [refundBaseAmount, setRefundBaseAmount] = useState(120.00);
 
   // Marketplace / Shopping bag
@@ -201,14 +221,17 @@ export default function Home() {
 
   // ── API CALLS ──
   const fetchWalletInfo = async () => {
+    // Skip fetching from server since serverless memory drops it on reload.
+    // We strictly use localStorage + checkout sync for Hackathon demo purposes.
+    /*
     try {
-      const res = await fetch(`/api/wallet?userId=${profileUserId}`);
+      const res = await fetch(`/api/wallet?userId=${profileUserId}&t=${Date.now()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        setWalletInfo(data);
-        setMetrics(prev => ({ ...prev, walletCredits: data.credits, co2Saved: data.sustainabilityScore }));
+        // setWalletInfo(data);
       }
     } catch { }
+    */
   };
 
   const fetchLedgerRecords = async () => {
@@ -320,8 +343,9 @@ export default function Home() {
     { id: "deflection", icon: MessageSquare, label: "Get Help", subtitle: "Chat before you return" },
     { id: "grading", icon: Camera, label: "Inspect Item", subtitle: "Grade condition" },
     { id: "logistics", icon: Truck, label: "Arrange Shipping", subtitle: "Eco-route optimizer" },
-    { id: "wallet", icon: Wallet, label: "My Wallet", subtitle: "Credits & refunds" },
-    { id: "marketplace", icon: ShoppingBag, label: "Shop Pre-Loved", subtitle: "Buy near you" },
+    { id: "orders", icon: ShoppingBag, label: "My Orders", subtitle: "Purchase history" },
+    { id: "cart", icon: Wallet, label: "My Cart & Rewards", subtitle: "Bag, cashback & vouchers" },
+    { id: "marketplace", icon: Map, label: "Shop Pre-Loved", subtitle: "Buy near you" },
   ];
 
   // ── CONTEXT VALUE ──
@@ -454,10 +478,10 @@ export default function Home() {
             <div className="navbar-actions flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-full border border-emerald-100 shadow-sm cursor-help">
-                  <Leaf className="w-3.5 h-3.5 text-emerald-500" /><span>{walletInfo.sustainabilityScore} kg CO₂</span>
+                  <Wallet className="w-3.5 h-3.5 text-emerald-500" /><span>{Math.round((walletInfo.cashbackBalance ?? 0) * 100)} Green Credits</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-full border border-indigo-100 shadow-sm cursor-help">
-                  <Award className="w-3.5 h-3.5 text-indigo-500" /><span>{walletInfo.credits} Credits</span>
+                  <Award className="w-3.5 h-3.5 text-indigo-500" /><span>{(walletInfo.vouchers ?? []).filter((v: any) => v.status === "active").length} Vouchers</span>
                 </div>
               </div>
 
@@ -732,7 +756,8 @@ export default function Home() {
               {activeTab === "deflection" && <L3Deflection />}
               {activeTab === "grading" && <L4Grading />}
               {activeTab === "logistics" && <L5Logistics />}
-              {activeTab === "wallet" && <L6Wallet />}
+              {activeTab === "orders" && <L6Orders />}
+              {activeTab === "cart" && <L7Cart />}
               {activeTab === "marketplace" && <LMarketplace />}
 
             </main>

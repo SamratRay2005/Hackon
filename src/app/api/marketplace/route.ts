@@ -31,18 +31,14 @@ export async function GET(req: NextRequest) {
       if (sellerTrust > 98) sellerTrust = 98;
       if (sellerTrust < 30) sellerTrust = 25 + Math.floor(pseudoRandom(seedBase + i * 3) * 10); // Floor at ~25-35
 
-      // Assign a simulated condition grade
+      // Assign a simulated condition grade (only A or B allowed for resale)
       const randGrade = pseudoRandom(seedBase + i * 4);
       let grade = "A";
-      if (randGrade > 0.4) grade = "B";
-      if (randGrade > 0.7) grade = "C";
-      if (randGrade > 0.9) grade = "D";
+      if (randGrade > 0.5) grade = "B";
 
       // Discount price based on grade
-      let priceMult = 0.8;
+      let priceMult = 0.8; // Grade A
       if (grade === "B") priceMult = 0.65;
-      if (grade === "C") priceMult = 0.5;
-      if (grade === "D") priceMult = 0.3;
 
       const discountedPrice = Number((product.price * priceMult).toFixed(2));
 

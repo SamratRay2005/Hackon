@@ -67,18 +67,16 @@ export async function POST(req: NextRequest) {
         functionalScore: 10.0
       });
 
-      // 5. Update user green credits wallet balance with verified quantities
-      const newBalance = await db.updateWallet(
-        userId,
-        reward.credits, 
-        reward.co2
-      );
+      // 5. Award cashback for self-repair deflection (replaces old green-credits system)
+      // Deflection reward: same percentage as Grade B (5%) of product price, capped at $10
+      const cashbackReward = parseFloat(Math.min(10, price * 0.05).toFixed(2));
+      const newBalance = await db.addCashback(userId, cashbackReward);
 
       return NextResponse.json({
         success: true,
         report,
-        wallet: newBalance,
-        message: `Chat deflection logged under ${userId}. Added ${reward.credits} verified credits to wallet!`
+        wallet: { cashbackBalance: newBalance },
+        message: `Chat deflection logged under ${userId}. Added $${cashbackReward.toFixed(2)} cashback to wallet for self-repair!`
       });
     }
 

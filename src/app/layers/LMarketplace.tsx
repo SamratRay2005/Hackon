@@ -137,26 +137,17 @@ export default function LMarketplace() {
                       <span className="text-emerald-600 font-extrabold text-lg font-mono">${item.price.toFixed(2)}</span>
                       <span className="text-slate-400 text-[10px] line-through ml-2">${item.originalPrice.toFixed(2)}</span>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Seller Trust</div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${item.trust}%`,
-                              background: item.trust > 70 ? "linear-gradient(90deg,#059669,#10b981)" : item.trust > 40 ? "linear-gradient(90deg,#d97706,#f59e0b)" : "linear-gradient(90deg,#dc2626,#ef4444)"
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-600">{item.trust}%</span>
+                    {item.trust >= 90 && (
+                      <div className="flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200 shadow-sm">
+                        <CheckCircle className="w-3 h-3 text-emerald-500" />
+                        <span className="font-bold uppercase tracking-wider">Verified Trusted Seller</span>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="text-[10px] text-emerald-700 font-medium mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-start gap-1.5 mt-auto">
                     <Award className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
-                    <span><strong>Earn {Math.round(item.price * 0.3)} Green Credits</strong> instantly by choosing this circular item.</span>
+                    <span><strong>Earn ${(item.price * (item.grade === "A" ? 0.03 : 0.05)).toFixed(2)} Cashback (Green Credits)</strong> instantly by choosing this circular item.</span>
                   </div>
 
                   <div className="flex gap-2 mt-auto">
