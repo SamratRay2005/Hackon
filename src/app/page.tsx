@@ -116,6 +116,13 @@ export default function Home() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<"bag" | "summary" | "confirmed">("bag");
 
+  // Dark Store Resale Pipeline
+  const [resaleListings, setResaleListings] = useState<any[]>([]);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+
+  // Fraud Claim Type
+  const [fraudClaimType, setFraudClaimType] = useState<"damaged_product" | "different_product">("damaged_product");
+
   // ── SEARCH CLICK-OUTSIDE ──
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -361,6 +368,9 @@ export default function Home() {
     searchContainerRef,
     fraudImage, setFraudImage,
     fraudImageType, setFraudImageType,
+    fraudClaimType, setFraudClaimType,
+    resaleListings, setResaleListings,
+    isAdminMode, setIsAdminMode,
     // extra fields consumed by L3 via any-cast
     chatInput: "",
   };

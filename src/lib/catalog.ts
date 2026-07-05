@@ -44,6 +44,7 @@ export interface Product {
   isBulk: boolean;               // true → freight logic in L5
   darkStoreEligible: boolean;    // vibe-mismatch returns go here
   sellerId: string;              // "system" for catalog; real userId for resell
+  nonReturnable: boolean;        // hygiene/consumable = true, no returns accepted
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -249,6 +250,14 @@ const DARK_STORE_INELIGIBLE_SKUS = new Set([
 ]);
 
 // ─────────────────────────────────────────────────────────────
+// nonReturnable — hygiene, cosmetics, or personalised items
+// Policy: once opened/used, no returns accepted.
+// ─────────────────────────────────────────────────────────────
+const NON_RETURNABLE_SKUS = new Set([
+  "YRDLY-GNTLMN-001", // Personal hygiene / cosmetics
+]);
+
+// ─────────────────────────────────────────────────────────────
 // Dynamically augment raw catalog into full Product schema
 // ─────────────────────────────────────────────────────────────
 export const PRODUCT_CATALOG: Product[] = RAW_PRODUCT_CATALOG.map((raw) => {
@@ -381,5 +390,6 @@ export const PRODUCT_CATALOG: Product[] = RAW_PRODUCT_CATALOG.map((raw) => {
     isBulk,
     darkStoreEligible,
     sellerId: "system",
+    nonReturnable: NON_RETURNABLE_SKUS.has(raw.sku),
   };
 });

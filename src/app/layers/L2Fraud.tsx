@@ -35,13 +35,14 @@ export default function L2Fraud() {
     profileIp,
     profilePriorReturns,
     setMetrics,
-  } = useApp();
+    fraudClaimType: claimType,
+    setFraudClaimType: setClaimType,
+  } = useApp() as any;
 
   const [fraudLoading, setFraudLoading] = React.useState(false);
   const [fraudResult, setFraudResult] = React.useState<any>(null);
   const [fraudImageName, setFraudImageName] = React.useState("uploaded_claim_evidence.jpg");
   const [fraudDemoCycle, setFraudDemoCycle] = React.useState(0);
-  const [claimType, setClaimType] = React.useState<"damaged_product" | "different_product">("damaged_product");
   const [isDamageVisible, setIsDamageVisible] = React.useState<boolean | null>(null);
   const [nonVisibleCategory, setNonVisibleCategory] = React.useState<"electronics" | "apparel" | "other">("electronics");
   const [answers, setAnswers] = React.useState<Record<string, string>>({});

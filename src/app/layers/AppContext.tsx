@@ -573,11 +573,24 @@ export interface AppContextType {
   setShowSuggestions: (v: boolean) => void;
   searchContainerRef: React.RefObject<HTMLDivElement>;
 
+  // Dark Store Resale (L4 → Marketplace pipeline)
+  resaleListings: Array<{
+    sku: string; name: string; price: number; brand: string; grade: string;
+    co2Saved: number; distance: string; trust: number; originalPrice: number;
+    addedToStoreAt: number; // Unix ms timestamp when graded
+    isReturnedProduct: boolean; // false for Grade A initially
+  }>;
+  setResaleListings: (fn: any) => void;
+  isAdminMode: boolean;
+  setIsAdminMode: (v: boolean) => void;
+
   // Fraud image (shared with product card capture)
   fraudImage: string | null;
   setFraudImage: (v: string | null) => void;
   fraudImageType: string;
   setFraudImageType: (v: string) => void;
+  fraudClaimType: "damaged_product" | "different_product";
+  setFraudClaimType: (v: "damaged_product" | "different_product") => void;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);
