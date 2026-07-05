@@ -582,7 +582,7 @@ export default function Home() {
                   {navItems
                     .filter((item) => {
                       if (globalMode === "user") {
-                        return ["dashboard", "size-assist", "fraud-mitigation", "deflection", "logistics", "wallet", "marketplace"].includes(item.id);
+                        return ["dashboard", "size-assist", "fraud-mitigation", "deflection", "logistics", "orders", "cart", "marketplace"].includes(item.id);
                       } else {
                         // Admin mode
                         return ["grading", "fraud-mitigation"].includes(item.id);
