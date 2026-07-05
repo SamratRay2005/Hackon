@@ -405,52 +405,74 @@ export default function Home() {
   // ── AUTH OVERLAY ──
   if (!isLoggedIn) {
     return (
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg">
-                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                </svg>
-              </div>
-            </div>
-            <h2 className="auth-title">ReLoop Portal</h2>
-            <p className="auth-subtitle">
-              {authMode === "signin" ? "Sign in to access your circular returns dashboard" : "Register to initialize your green credits ledger"}
-            </p>
+      <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',background:'#FFFFFF'}}>
+        {/* Top nav bar */}
+        <div style={{width:'100%',background:'#131921',padding:'10px 0',display:'flex',justifyContent:'center'}}>
+          <div style={{fontSize:'1.8rem',fontWeight:900,color:'#FFFFFF',letterSpacing:'-0.05em'}}>
+            Re<span style={{color:'#FF9900'}}>Loop</span>
+          </div>
+        </div>
+        <div style={{width:'100%',height:'1px',background:'#DDD'}} />
+
+        <div style={{width:'100%',maxWidth:'350px',margin:'20px auto 0',padding:'0 16px'}}>
+          {/* Main card */}
+          <div style={{border:'1px solid #D5D9D9',borderRadius:'4px',padding:'24px',background:'#fff',marginBottom:'16px'}}>
+            <h1 style={{fontSize:'1.5rem',fontWeight:400,color:'#0F1111',marginBottom:'16px'}}>{authMode === "signin" ? "Sign in" : "Create account"}</h1>
+
+            {authError && <div style={{background:'#FEF0EF',border:'1px solid #F5B5AD',borderRadius:'3px',padding:'8px 12px',fontSize:'0.8rem',color:'#B12704',marginBottom:'12px'}}>{authError}</div>}
+
+            {authMode === "signin" ? (
+              <form onSubmit={handleSignIn} style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                <div>
+                  <label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111',display:'block',marginBottom:'4px'}}>Email or mobile phone number</label>
+                  <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="name@example.com" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} />
+                </div>
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+                    <label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111'}}>Password</label>
+                  </div>
+                  <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="At least 6 characters" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} />
+                </div>
+                <button type="submit" style={{width:'100%',padding:'8px',background:'linear-gradient(to bottom,#f0c14b,#c89411)',color:'#111',border:'1px solid #a88734',borderRadius:'3px',fontSize:'0.875rem',cursor:'pointer',fontWeight:400}}>Sign in</button>
+                <p style={{fontSize:'0.72rem',color:'#565959'}}>By continuing, you agree to ReLoop's <span style={{color:'#0066C0',cursor:'pointer'}}>Conditions of Use</span> and <span style={{color:'#0066C0',cursor:'pointer'}}>Privacy Notice.</span></p>
+              </form>
+            ) : (
+              <form onSubmit={handleSignUp} style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                <div><label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111',display:'block',marginBottom:'4px'}}>Your name</label><input type="text" required value={authUserId} onChange={e => setAuthUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))} placeholder="e.g. user_samrat" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} /></div>
+                <div><label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111',display:'block',marginBottom:'4px'}}>Email address</label><input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="name@example.com" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} /></div>
+                <div><label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111',display:'block',marginBottom:'4px'}}>Password</label><input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="At least 6 characters" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} /></div>
+                <div style={{display:'flex',gap:'10px'}}>
+                  <div style={{flex:1}}><label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111',display:'block',marginBottom:'4px'}}>Home ZIP</label><input type="text" required value={authZip} onChange={e => setAuthZip(e.target.value)} placeholder="98101" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} /></div>
+                  <div style={{flex:1}}><label style={{fontSize:'0.82rem',fontWeight:700,color:'#0F1111',display:'block',marginBottom:'4px'}}>Prior Returns</label><input type="number" required value={authPriorReturns} onChange={e => setAuthPriorReturns(parseInt(e.target.value) || 0)} placeholder="2" style={{width:'100%',padding:'6px 8px',border:'1px solid #a0a0a0',borderRadius:'3px',fontSize:'0.875rem',outline:'none'}} /></div>
+                </div>
+                <button type="submit" style={{width:'100%',padding:'8px',background:'linear-gradient(to bottom,#f0c14b,#c89411)',color:'#111',border:'1px solid #a88734',borderRadius:'3px',fontSize:'0.875rem',cursor:'pointer'}}>Create your ReLoop account</button>
+                <p style={{fontSize:'0.72rem',color:'#565959'}}>By creating an account, you agree to ReLoop's <span style={{color:'#0066C0',cursor:'pointer'}}>Conditions of Use</span>.</p>
+              </form>
+            )}
           </div>
 
-          {authError && <div className="auth-error mb-4">{authError}</div>}
-
-          <div className="flex gap-1 mb-5 bg-slate-100 p-1 rounded-xl">
-            <button onClick={() => { setAuthMode("signin"); setAuthError(null); }} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${authMode === "signin" ? "bg-white shadow text-indigo-600" : "text-slate-500"}`}>Sign In</button>
-            <button onClick={() => { setAuthMode("signup"); setAuthError(null); }} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${authMode === "signup" ? "bg-white shadow text-indigo-600" : "text-slate-500"}`}>Register</button>
+          {/* Toggle */}
+          <div style={{display:'flex',alignItems:'center',gap:'8px',margin:'0 0 12px',color:'#767676',fontSize:'0.8rem'}}>
+            <div style={{flex:1,height:'1px',background:'#DDD'}} />
+            <span>{authMode === "signin" ? "New to ReLoop?" : "Already have an account?"}</span>
+            <div style={{flex:1,height:'1px',background:'#DDD'}} />
           </div>
+          <button onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setAuthError(null); }}
+            style={{width:'100%',padding:'7px',fontSize:'0.82rem',background:'linear-gradient(to bottom,#f7f8fa,#e7e9ec)',border:'1px solid #ADB1B8',borderRadius:'3px',cursor:'pointer',color:'#0F1111'}}>
+            {authMode === "signin" ? "Create your ReLoop account" : "Sign in to your account"}
+          </button>
+          <p style={{fontSize:'0.7rem',color:'#aaa',textAlign:'center',marginTop:'16px'}}>Demo: use any email + password to sign in instantly</p>
+        </div>
 
-          {authMode === "signin" ? (
-            <form onSubmit={handleSignIn} className="auth-form">
-              <div className="auth-field"><label>Email Address</label><input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="name@example.com" /></div>
-              <div className="auth-field"><label>Password</label><input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" /></div>
-              <button type="submit" className="btn btn-primary w-full py-2.5 mt-1">Sign In to Dashboard</button>
-            </form>
-          ) : (
-            <form onSubmit={handleSignUp} className="auth-form">
-              <div className="auth-field"><label>Username</label><input type="text" required value={authUserId} onChange={e => setAuthUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))} placeholder="e.g. user_samrat" /></div>
-              <div className="auth-field"><label>Email Address</label><input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="name@example.com" /></div>
-              <div className="auth-field"><label>Password</label><input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" /></div>
-              <div className="flex gap-3">
-                <div className="auth-field flex-1"><label>Home ZIP</label><input type="text" required value={authZip} onChange={e => setAuthZip(e.target.value)} placeholder="98101" /></div>
-                <div className="auth-field flex-1"><label>Prior Returns</label><input type="number" required value={authPriorReturns} onChange={e => setAuthPriorReturns(parseInt(e.target.value) || 0)} placeholder="2" /></div>
-              </div>
-              <button type="submit" className="btn btn-success w-full py-2.5 mt-1">Create Circular Account</button>
-            </form>
-          )}
-
-          <div className="auth-footer">
-            <p className="text-[10px] text-slate-400 mt-3">Demo: Use any email + password to sign in instantly</p>
+        {/* Footer */}
+        <div style={{width:'100%',marginTop:'auto',paddingTop:'24px'}}>
+          <div style={{height:'1px',background:'linear-gradient(to right,transparent,#DDD,transparent)',marginBottom:'10px'}} />
+          <div style={{display:'flex',justifyContent:'center',gap:'20px',fontSize:'0.75rem',color:'#007185',marginBottom:'8px'}}>
+            <span style={{cursor:'pointer'}}>Conditions of Use</span>
+            <span style={{cursor:'pointer'}}>Privacy Notice</span>
+            <span style={{cursor:'pointer'}}>Help</span>
           </div>
+          <p style={{textAlign:'center',fontSize:'0.72rem',color:'#767676',paddingBottom:'12px'}}>© 2024-2025 ReLoop.ai</p>
         </div>
       </div>
     );
@@ -462,56 +484,85 @@ export default function Home() {
       <>
         <div className="min-h-screen">
 
-          {/* ── NAVBAR ── */}
-          <nav className="navbar">
-            <a href="#" className="navbar-logo">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
-                </svg>
-              </div>
-              ReLoop
+          {/* ── AMAZON NAVBAR (row 1: dark navy) ── */}
+          <nav className="navbar" style={{gap:'0.5rem'}}>
+            {/* Logo */}
+            <a href="#" className="navbar-logo" style={{fontSize:'1.4rem',letterSpacing:'-0.05em'}}>
+              Re<span>Loop</span>
+              <svg width="20" height="12" viewBox="0 0 100 50" style={{display:'block',marginLeft:'2px'}}>
+                <path d="M5 40 Q50 60 95 40" stroke="#FF9900" strokeWidth="8" fill="none" strokeLinecap="round"/>
+                <polygon points="88,28 100,44 76,44" fill="#FF9900"/>
+              </svg>
             </a>
 
-            <div className="hidden md:flex items-center gap-3">
-              <button onClick={() => setShowXRayModal(true)} className="flex items-center gap-2 text-[11px] font-extrabold text-amber-800 bg-amber-100 px-4 py-2 rounded-full border border-amber-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-amber-200 transition-all active:scale-95">
-                <Zap className="w-4 h-4 text-amber-600" /> Architecture X-Ray
-              </button>
-              <button onClick={() => setActiveTab("marketplace")} className="flex items-center gap-2 text-[11px] font-extrabold text-indigo-800 bg-indigo-100 px-4 py-2 rounded-full border border-indigo-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-indigo-200 transition-all active:scale-95">
-                <ShoppingBag className="w-4 h-4 text-indigo-600" /> Shop Re-Commerce
-              </button>
-              <button onClick={() => alert("Collections feature coming soon!")} className="flex items-center gap-2 text-[11px] font-extrabold text-teal-800 bg-teal-100 px-4 py-2 rounded-full border border-teal-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-teal-200 transition-all active:scale-95">
-                <Layers className="w-4 h-4 text-teal-600" /> Collections
-              </button>
-              <button onClick={() => alert("ReLoop is a circular retail engine. We intercept returns and route them directly to new buyers to save CO2 and logistics costs.")} className="flex items-center gap-2 text-[11px] font-extrabold text-rose-800 bg-rose-100 px-4 py-2 rounded-full border border-rose-300 shadow hover:shadow-md hover:-translate-y-0.5 hover:bg-rose-200 transition-all active:scale-95">
-                <Heart className="w-4 h-4 text-rose-600" /> Our Mission
+            {/* Deliver to */}
+            <div className="hidden md:flex flex-col text-white cursor-pointer px-2 py-1 rounded border-2 border-transparent hover:border-white" style={{lineHeight:'1.1'}}>
+              <span style={{fontSize:'0.65rem',color:'#ccc'}}>Deliver to</span>
+              <span style={{fontSize:'0.78rem',fontWeight:700}}>📍 {profileZip}</span>
+            </div>
+
+            {/* Search bar */}
+            <div className="amz-search hidden md:flex flex-1">
+              <div className="amz-search-category">
+                All <ChevronDown className="w-3 h-3" />
+              </div>
+              <input
+                type="text"
+                className="amz-search-input"
+                placeholder="Search Amazon"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{width:'auto',padding:'0 10px',border:'none',outline:'none',fontSize:'0.9rem'}}
+              />
+              <button className="amz-search-btn">
+                <Search className="w-5 h-5" style={{color:'#0F1111'}} />
               </button>
             </div>
 
-            <div className="navbar-actions flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-full border border-emerald-100 shadow-sm cursor-help">
-                  <Wallet className="w-3.5 h-3.5 text-emerald-500" /><span>{Math.round((walletInfo.cashbackBalance ?? 0) * 100)} Green Credits</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-full border border-indigo-100 shadow-sm cursor-help">
-                  <Award className="w-3.5 h-3.5 text-indigo-500" /><span>{(walletInfo.vouchers ?? []).filter((v: any) => v.status === "active").length} Vouchers</span>
-                </div>
+            {/* Right controls */}
+            <div className="flex items-center gap-1">
+              {/* Architecture X-Ray */}
+              <button
+                onClick={() => setShowXRayModal(true)}
+                className="navbar-link hidden lg:flex items-center gap-1"
+                style={{flexDirection:'column',lineHeight:'1.1',padding:'4px 8px'}}
+              >
+                <span style={{fontSize:'0.65rem',color:'#ccc'}}>Explore</span>
+                <span style={{fontSize:'0.78rem',fontWeight:700}}>Architecture</span>
+              </button>
+
+              {/* Green Credits */}
+              <div className="navbar-link hidden sm:flex flex-col" style={{lineHeight:'1.1',padding:'4px 8px',cursor:'default'}}>
+                <span style={{fontSize:'0.65rem',color:'#ccc'}}>🌿 Credits</span>
+                <span style={{fontSize:'0.78rem',fontWeight:700,color:'#FF9900'}}>{Math.round((walletInfo.cashbackBalance ?? 0) * 100)}</span>
               </div>
 
-              <div className="relative ml-1">
-                <button onClick={() => setShowLogoutDropdown(!showLogoutDropdown)} className="flex flex-row items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex flex-row items-center justify-center text-white text-[9px] uppercase">{profileUserId.charAt(0)}</div>
-                  <span className="hidden sm:inline-block">{profileUserId}</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
+              {/* Returns & Orders */}
+              <div className="navbar-link hidden sm:flex flex-col" style={{lineHeight:'1.1',padding:'4px 8px',cursor:'default'}}>
+                <span style={{fontSize:'0.65rem',color:'#ccc'}}>Returns</span>
+                <span style={{fontSize:'0.78rem',fontWeight:700}}>& Orders</span>
+              </div>
+
+              {/* Account + mode toggle */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLogoutDropdown(!showLogoutDropdown)}
+                  className="navbar-link flex flex-col"
+                  style={{lineHeight:'1.1',padding:'4px 8px'}}
+                >
+                  <span style={{fontSize:'0.65rem',color:'#ccc'}}>Hello, {profileUserId}</span>
+                  <span style={{fontSize:'0.78rem',fontWeight:700}}>Account & Lists <ChevronDown style={{display:'inline',width:'10px',height:'10px'}} /></span>
                 </button>
 
                 {showLogoutDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Signed in as</div>
-                      <div className="text-[11px] font-bold text-slate-800 truncate mt-0.5">{profileEmail}</div>
+                  <div className="absolute right-0 mt-1 w-52 bg-white shadow-xl border border-gray-200 py-2 z-50" style={{borderRadius:'4px',minWidth:'200px'}}>
+                    <div style={{padding:'8px 14px',borderBottom:'1px solid #eee'}}>
+                      <div style={{fontSize:'0.7rem',color:'#565959',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em'}}>Signed in as</div>
+                      <div style={{fontSize:'0.78rem',fontWeight:700,color:'#0F1111',marginTop:'2px'}}>{profileEmail}</div>
+                    </div>
+                    <div style={{padding:'6px 14px'}}>
                       <button
-                        className="mt-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                        style={{display:'block',width:'100%',textAlign:'left',padding:'6px 0',fontSize:'0.82rem',color:'#0066C0',background:'none',border:'none',cursor:'pointer',fontWeight:600}}
                         onClick={() => {
                           const newMode = globalMode === "user" ? "admin" : "user";
                           setGlobalMode(newMode);
@@ -519,43 +570,88 @@ export default function Home() {
                           setShowLogoutDropdown(false);
                         }}
                       >
-                        Switch to {globalMode === "user" ? "Admin" : "User"} Mode
+                        {globalMode === "user" ? "🔧 Switch to Admin Mode" : "🛍️ Switch to User Mode"}
                       </button>
-                    </div>
-                    <div className="p-2 flex flex-col gap-1.5">
-                      <button onClick={() => { setShowLogoutDropdown(false); setActiveTab("dashboard"); }} className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg shadow-sm hover:bg-white hover:border-indigo-300 hover:shadow transition-all flex items-center gap-2 group">
-                        <UserCheck className="w-3.5 h-3.5 text-indigo-500 group-hover:scale-110 transition-transform" /> Dashboard Profile
+                      <button
+                        style={{display:'block',width:'100%',textAlign:'left',padding:'6px 0',fontSize:'0.82rem',color:'#0F1111',background:'none',border:'none',cursor:'pointer'}}
+                        onClick={() => { setShowLogoutDropdown(false); setActiveTab("dashboard"); }}
+                      >
+                        Your Account
                       </button>
-                      <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg shadow-sm hover:bg-white hover:border-rose-300 hover:shadow transition-all flex items-center gap-2 group">
-                        <ChevronRight className="w-3.5 h-3.5 text-rose-500 group-hover:translate-x-1 transition-transform" /> Secure Logout
+                      <button
+                        onClick={handleLogout}
+                        style={{display:'block',width:'100%',textAlign:'left',padding:'6px 0',fontSize:'0.82rem',color:'#B12704',background:'none',border:'none',cursor:'pointer',fontWeight:600}}
+                      >
+                        Sign Out
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+
+              {/* Cart */}
+              <button
+                onClick={() => setActiveTab("cart")}
+                className="navbar-link flex items-end gap-0.5"
+                style={{padding:'4px 8px',position:'relative'}}
+              >
+                <ShoppingBag className="w-7 h-7" style={{color:'#FFFFFF'}} />
+                {cart.length > 0 && (
+                  <span style={{position:'absolute',top:'2px',left:'18px',background:'#FF9900',color:'#0F1111',borderRadius:'50%',width:'18px',height:'18px',fontSize:'0.65rem',fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    {cart.length}
+                  </span>
+                )}
+                <span style={{fontSize:'0.78rem',fontWeight:700}}>Cart</span>
+              </button>
             </div>
           </nav>
 
-          <div className="dashboard-container">
-
-            {/* ── LEFT SIDEBAR ── */}
-            <aside className="sidebar-container lg:sticky lg:top-20 h-fit">
-              <div className="glass-card flex flex-col gap-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
-                    <UserCheck className="w-4 h-4 text-indigo-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 truncate">{profileUserId}</div>
-                    <div className="text-[10px] text-slate-400 font-medium">ZIP: {profileZip}</div>
-                  </div>
-                </div>
-                <button onClick={() => setShowProfileConfig(!showProfileConfig)} className="w-full py-1.5 text-[11px] font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all flex items-center justify-center gap-1.5">
-                  {showProfileConfig ? "Close Config" : "Inspect Session"}
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showProfileConfig ? "rotate-180" : ""}`} />
+          {/* ── AMAZON SUB-NAV (row 2: dark gray) ── */}
+          <div className="amz-subnav">
+            <div className="amz-subnav-item" style={{gap:'6px',fontWeight:700}}>
+              ☰ All
+            </div>
+            {/* Mode badge */}
+            <div style={{display:'flex',alignItems:'center',marginLeft:'4px',marginRight:'8px'}}>
+              <span style={{background: globalMode==='admin'?'#FF9900':'#007600',color:'#0F1111',fontSize:'0.65rem',fontWeight:900,padding:'2px 8px',borderRadius:'3px',textTransform:'uppercase',letterSpacing:'0.05em'}}>
+                {globalMode === 'admin' ? '🔧 Admin Mode' : '🛍️ Customer Mode'}
+              </span>
+            </div>
+            {navItems
+              .filter(item => globalMode === 'user'
+                ? ['dashboard','fraud-mitigation','orders','cart'].includes(item.id)
+                : ['grading'].includes(item.id)
+              )
+              .map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`amz-subnav-item ${activeTab === item.id ? 'active' : ''}`}
+                >
+                  {item.label}
                 </button>
-                {showProfileConfig && (
-                  <div className="flex flex-col gap-2 border-t border-slate-100 pt-2.5 text-[11px]">
+              ))
+            }
+            <div style={{position:'relative', marginLeft:'8px'}}>
+              <button
+                onClick={() => setShowProfileConfig(!showProfileConfig)}
+                className="amz-subnav-item"
+                style={{gap:'4px'}}
+              >
+                ⚙️ Config <ChevronDown style={{width:'12px',height:'12px',transform:showProfileConfig?'rotate(180deg)':'none',transition:'transform 0.2s'}} />
+              </button>
+              {showProfileConfig && (
+                <div style={{position:'absolute', top:'100%', left:0, background:'#FFF', color:'#0F1111', padding:'16px', borderRadius:'4px', border:'1px solid #DDD', boxShadow:'0 4px 12px rgba(0,0,0,0.15)', minWidth:'250px', zIndex:100}}>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px', borderBottom:'1px solid #DDD', paddingBottom:'8px'}}>
+                    <div style={{width:'36px',height:'36px',borderRadius:'50%',background:'#232F3E',display:'flex',alignItems:'center',justifyContent:'center',color:'#FF9900',fontSize:'1rem',fontWeight:900,flexShrink:0}}>
+                      {profileUserId.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{fontSize:'0.85rem',fontWeight:700}}>{profileUserId}</div>
+                      <div style={{fontSize:'0.75rem',color:'#565959'}}>📍 ZIP {profileZip}</div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                     {[
                       { label: "User ID", value: profileUserId, setter: setProfileUserId, type: "text" },
                       { label: "Email", value: profileEmail, setter: setProfileEmail, type: "email" },
@@ -564,66 +660,23 @@ export default function Home() {
                       { label: "Prior Returns", value: String(profilePriorReturns), setter: (v: string) => setProfilePriorReturns(parseInt(v) || 0), type: "number" },
                     ].map(field => (
                       <div key={field.label}>
-                        <label className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">{field.label}</label>
-                        <input type={field.type} value={field.value} onChange={e => field.setter(e.target.value)} className="py-1 px-2 text-[11px] border border-slate-200 rounded-lg w-full mt-0.5" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="glass-card flex flex-col gap-2">
-                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100">
-                  {globalMode === "user" ? "Customer Flow" : "Admin Backoffice"}
-                </div>
-                <nav className="sidebar-nav-list">
-                  {navItems
-                    .filter((item) => {
-                      if (globalMode === "user") {
-                        return ["dashboard", "fraud-mitigation", "orders", "cart"].includes(item.id);
-                      } else {
-                        // Admin mode
-                        return ["grading"].includes(item.id);
-                      }
-                    })
-                    .map(item => {
-                    const Icon = item.icon;
-                    return (
-                      <button key={item.id} onClick={() => setActiveTab(item.id)} className={`layer-sidebar-btn ${activeTab === item.id ? "active" : ""}`}>
-                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="truncate flex flex-col text-left leading-none">
-                          <span>{item.label}</span>
-                          <span className="text-[9px] font-normal opacity-60 mt-0.5">{item.subtitle}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </nav>
-                <div className="text-[10px] font-bold text-slate-400 pt-2 border-t border-slate-100 text-center">
-                  Match Score: <span className="text-indigo-600 font-extrabold">94%</span>
-                </div>
-              </div>
-
-              {cart.length > 0 && globalMode === "user" && (
-                <div className="glass-card flex flex-col gap-2">
-                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1.5 flex items-center justify-between">
-                    <span>Size Cart</span>
-                    <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-[9px]">{cart.length}</span>
-                  </div>
-                  <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex justify-between items-center text-[10px]">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-[9px] flex-shrink-0">Size: {item.size}</span>
-                          <span className="text-slate-600 truncate">{item.name.split(" ").slice(0, 2).join(" ")}</span>
-                        </div>
-                        <button onClick={() => handleRemoveFromCart(item.id)} className="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0 ml-1"><X className="w-3 h-3" /></button>
+                        <label style={{fontSize:'0.75rem',fontWeight:700,color:'#565959',display:'block',marginBottom:'2px'}}>{field.label}</label>
+                        <input type={field.type} value={field.value} onChange={e => field.setter(e.target.value)} style={{padding:'4px 8px',fontSize:'0.85rem',border:'1px solid #a0a0a0',borderRadius:'3px',width:'100%'}} />
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </aside>
+            </div>
+            
+            <div className="amz-subnav-item" onClick={() => setShowXRayModal(true)} style={{marginLeft:'auto',cursor:'pointer',color:'#FF9900'}}>
+              ⚡ Architecture X-Ray
+            </div>
+          </div>
+
+          <div className="dashboard-container">
+
+
 
             {/* ── MAIN CONTENT ── */}
             <main className="flex flex-col gap-5 min-w-0 min-h-[85vh]">
@@ -676,8 +729,8 @@ export default function Home() {
                   <div key={label} className="metric-strip-card">
                     <div className={`metric-strip-icon-box ${color}`}><Icon className="w-5 h-5" /></div>
                     <div>
-                      <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{label}</div>
-                      <div className="text-base font-extrabold text-slate-800">{value}</div>
+                      <div style={{fontSize:'0.68rem',color:'#565959',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
+                      <div style={{fontSize:'1rem',fontWeight:800,color:'#0F1111'}}>{value}</div>
                     </div>
                   </div>
                 ))}

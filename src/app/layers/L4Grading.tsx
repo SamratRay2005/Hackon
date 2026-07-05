@@ -141,10 +141,10 @@ export default function L4Grading() {
 
         {/* ── LEFT COLUMN: INSPECT QUEUE ── */}
         <div className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-3">
-          <div className="glass-card flex flex-col gap-2 h-full">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100 flex items-center justify-between">
+          <div style={{display:"flex", flexDirection:"column", gap:"8px", height:"100%", background:"#FFF", padding:"16px", border:"1px solid #DDD", borderRadius:"4px"}}>
+            <div style={{fontSize:"11px", fontWeight:700, color:"#565959", textTransform:"uppercase", borderBottom:"1px solid #DDD", paddingBottom:"8px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
               <span>Inspect Queue</span>
-              <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-[9px]">{inspectQueue?.length || 0}</span>
+              <span style={{background:"#F0F8FA", color:"#007185", padding:"2px 6px", borderRadius:"12px", fontSize:"10px", border:"1px solid #007185"}}>{inspectQueue?.length || 0}</span>
             </div>
             <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px] pr-1">
               {inspectQueue && inspectQueue.length > 0 ? inspectQueue.map((item: any) => (
@@ -187,10 +187,10 @@ export default function L4Grading() {
         </div>
 
         {/* ── RIGHT COLUMN: GRADING STATION ── */}
-        <div className="glass-card flex flex-col gap-5 flex-1 min-w-0">
-          <div className="section-title-bar">
-            <h2>Inspect Item — Condition Grader</h2>
-            <span className="section-badge badge-layer-4">AI Grade</span>
+        <div style={{display:"flex", flexDirection:"column", gap:"20px", flex:1, minWidth:0, background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
+          <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+            <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Inspect Item — Condition Grader</h2>
+            <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>AI Grade</span>
           </div>
 
           <div className="warning-callout">

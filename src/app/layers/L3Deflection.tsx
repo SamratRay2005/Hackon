@@ -129,10 +129,10 @@ export default function L3Deflection() {
   };
 
   return (
-    <div className="glass-card flex flex-col gap-4">
-      <div className="section-title-bar">
-        <h2>Get Help — Chat Before You Return</h2>
-        <span className="section-badge badge-layer-3">AI Support</span>
+    <div style={{display:"flex", flexDirection:"column", gap:"20px", background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
+      <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Get Help — Chat Before You Return</h2>
+        <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>AI Support</span>
       </div>
 
       {/* Selected Product Context */}

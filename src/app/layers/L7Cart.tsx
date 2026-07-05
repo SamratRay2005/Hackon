@@ -200,61 +200,64 @@ export default function L7Cart() {
 
   // ── Rewards Panel (always visible at top) ─────────────────────
   const RewardsPanel = () => (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       {/* Cashback balance */}
       <div
-        className={`border rounded-2xl p-4 flex flex-col gap-1 cursor-pointer transition-all ${
-          useCashback && cashbackBalance > 0
-            ? "border-emerald-400 bg-emerald-50 ring-1 ring-emerald-200"
-            : "border-emerald-100 bg-emerald-50/50 hover:border-emerald-300"
-        }`}
+        className="glass-card flex flex-col gap-2 cursor-pointer transition-all"
+        style={{
+          border: useCashback && cashbackBalance > 0 ? "2px solid #007185" : "1px solid #D5D9D9",
+          padding: "16px",
+          background: useCashback && cashbackBalance > 0 ? "#F0F8FA" : "#FFFFFF",
+        }}
         onClick={toggleCashback}
         title={cashbackBalance > 0 ? "Click to toggle cashback redemption" : "No cashback balance yet"}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-            <Wallet className="w-3.5 h-3.5" /> Green Credits
+          <div className="flex items-center gap-2 text-sm font-bold text-[#0F1111]">
+            <Wallet className="w-4 h-4 text-[#FF9900]" /> Green Credits
           </div>
           {cashbackBalance > 0 && (
             <span
-              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${
-                useCashback
-                  ? "bg-emerald-600 text-white border-emerald-600"
-                  : "bg-white text-emerald-600 border-emerald-300"
-              }`}
+              className="text-xs font-bold px-2 py-1 rounded"
+              style={{
+                background: useCashback ? "#007185" : "transparent",
+                color: useCashback ? "#FFFFFF" : "#007185",
+                border: useCashback ? "none" : "1px solid #007185"
+              }}
             >
               {useCashback ? "Applied ✓" : "Tap to use"}
             </span>
           )}
         </div>
-        <div className="text-2xl font-extrabold text-emerald-800 font-mono">
+        <div className="text-2xl font-normal text-[#B12704]">
           {Math.round(cashbackBalance * 100)}
         </div>
-        <div className="text-[10px] text-emerald-500">
+        <div className="text-xs text-[#565959]">
           {cashbackBalance > 0 ? "Tap to apply at checkout" : "Buy pre-loved to earn credits"}
         </div>
       </div>
 
       {/* Vouchers */}
       <div 
-        className="border border-indigo-100 bg-indigo-50/50 rounded-2xl p-4 flex flex-col gap-1 cursor-pointer hover:border-indigo-300 transition-all"
+        className="glass-card flex flex-col gap-2 cursor-pointer transition-all"
+        style={{ padding: "16px", border: "1px solid #D5D9D9", background: "#FFFFFF" }}
         onClick={() => activeVouchers.length > 0 && setShowVoucherList((v) => !v)}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
-            <Tag className="w-3.5 h-3.5" /> Vouchers
+          <div className="flex items-center gap-2 text-sm font-bold text-[#0F1111]">
+            <Tag className="w-4 h-4 text-[#FF9900]" /> Vouchers
           </div>
           {activeVouchers.length > 0 && (
-            <div className="text-[9px] font-bold text-indigo-500 flex items-center gap-0.5">
-              {showVoucherList ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            <div className="text-xs font-bold text-[#007185] flex items-center gap-1">
               {showVoucherList ? "Hide" : "Show"}
+              {showVoucherList ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </div>
           )}
         </div>
-        <div className="text-2xl font-extrabold text-indigo-800">
+        <div className="text-2xl font-normal text-[#B12704]">
           {activeVouchers.length}
         </div>
-        <div className="text-[10px] text-indigo-400">
+        <div className="text-xs text-[#565959]">
           {activeVouchers.length === 0
             ? "Buy Grade A/B items ≥$50 to earn"
             : selectedVoucherId
@@ -323,164 +326,127 @@ export default function L7Cart() {
 
       {/* ── BAG STEP ── */}
       {checkoutStep === "bag" && (
-        <>
-          {/* Voucher picker directly on bag step */}
-          <VoucherPicker />
+        <div className="flex flex-col md:flex-row gap-6 items-start">
+          
+          {/* LEFT COL: Cart items */}
+          <div className="flex-1 w-full glass-card" style={{padding: "20px"}}>
+            <h1 style={{fontSize: "28px", fontWeight: 400, color: "#0F1111", marginBottom: "4px"}}>Shopping Cart</h1>
+            <p className="amz-free-link" style={{textAlign:"right", marginBottom:"8px"}}>Deselect all items</p>
+            <div className="amz-divider" />
 
-          {/* Cart items */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-indigo-500" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Items in Bag
-                </span>
-              </div>
-              <span className="text-[9px] text-slate-400">
-                {shoppingBag.length} item{shoppingBag.length !== 1 ? "s" : ""}
-              </span>
-            </div>
+            <VoucherPicker />
 
             {shoppingBag.length === 0 ? (
-              <div className="empty-state-card">
-                <ShoppingBag className="icon" />
-                <div className="text">
-                  Your bag is empty. Browse <strong>Shop Pre-Loved</strong> to add items.
+              <div style={{padding:"20px", display:"flex", gap:"20px"}}>
+                <div style={{flex:1}}>
+                  <h2 style={{fontSize:"1.2rem", fontWeight:700, marginBottom:"8px"}}>Your Amazon Cart is empty.</h2>
+                  <p style={{fontSize:"0.9rem", color:"#565959"}}>Browse <strong>Shop Pre-Loved</strong> to add items to your cart.</p>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col">
                 {shoppingBag.map((item: any) => {
                   const grade = (item.grade ?? "B").toUpperCase();
                   const rate = GRADE_CASHBACK[grade] ?? 5;
                   const rewardAmt = (item.price * rate / 100).toFixed(2);
                   const isVoucher = item.price >= VOUCHER_THRESHOLD;
                   return (
-                    <div
-                      key={item.sku}
-                      className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3"
-                    >
+                    <div key={item.sku} style={{display:"flex", gap:"20px", padding:"16px 0", borderBottom:"1px solid #DDD"}}>
                       <img
                         src={getSKUReferenceImage(item.sku)}
-                        className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-slate-100"
                         alt={item.name}
+                        style={{width:"120px", height:"120px", objectFit:"contain"}}
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-800 truncate">{item.name}</div>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="flex-1 flex flex-col gap-1">
+                        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
+                          <div style={{fontSize:"18px", fontWeight:400, color:"#0F1111"}}>{item.name}</div>
+                          <div style={{fontSize:"18px", fontWeight:700, color:"#0F1111"}}>${item.price.toFixed(2)}</div>
+                        </div>
+                        <div className="amz-instock">In Stock</div>
+                        <div style={{fontSize:"12px", color:"#565959", display:"flex", alignItems:"center", gap:"8px", flexWrap:"wrap"}}>
                           {item.isPreloved && (
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                                GRADE_STYLE[grade] ?? GRADE_STYLE["B"]
-                              }`}
-                            >
-                              Grade {grade}
-                            </span>
+                            <span className="amz-bestseller">Pre-Loved Grade {grade}</span>
                           )}
                           {item.size && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200">
-                              Size: {item.size}
-                            </span>
+                            <span style={{fontWeight:700}}>Size: {item.size}</span>
                           )}
-                          <span className="text-emerald-600 font-bold text-xs font-mono">
-                            ${item.price.toFixed(2)}
-                          </span>
                         </div>
+                        <div className="amz-free-link" style={{fontSize:"12px", marginTop:"4px"}}>FREE Returns</div>
+                        
                         {item.isPreloved && (
-                          <div
-                            className={`text-[10px] mt-1 flex items-center gap-1 ${
-                              isVoucher ? "text-indigo-600" : "text-emerald-600"
-                            }`}
-                          >
-                            {isVoucher ? (
-                              <Tag className="w-2.5 h-2.5" />
-                            ) : (
-                              <BadgePercent className="w-2.5 h-2.5" />
-                            )}
+                          <div style={{fontSize:"12px", color:"#007185", marginTop:"4px", display:"flex", alignItems:"center", gap:"4px"}}>
+                            {isVoucher ? <Tag className="w-3 h-3" /> : <BadgePercent className="w-3 h-3" />}
                             {isVoucher
                               ? `Earns $${rewardAmt} voucher (Grade ${grade}, ≥$50)`
                               : `Earns $${rewardAmt} cashback (${rate}%)`}
                           </div>
                         )}
+                        <div style={{marginTop:"8px", display:"flex", gap:"12px", fontSize:"12px"}}>
+                          <button onClick={() => removeFromBag(item.sku)} className="amz-free-link" style={{border:"none", background:"none", padding:0}}>Delete</button>
+                          <span style={{color:"#DDD"}}>|</span>
+                          <button className="amz-free-link" style={{border:"none", background:"none", padding:0}}>Save for later</button>
+                          <span style={{color:"#DDD"}}>|</span>
+                          <button className="amz-free-link" style={{border:"none", background:"none", padding:0}}>Share</button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => removeFromBag(item.sku)}
-                        className="text-slate-200 hover:text-rose-400 transition-colors flex-shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </div>
                   );
                 })}
               </div>
             )}
+            
+            {shoppingBag.length > 0 && (
+              <div style={{textAlign:"right", paddingTop:"12px", fontSize:"18px", color:"#0F1111"}}>
+                Subtotal ({shoppingBag.length} item{shoppingBag.length !== 1 ? "s" : ""}): <span style={{fontWeight:700}}>${subtotal.toFixed(2)}</span>
+              </div>
+            )}
           </div>
 
-          {/* Discount & total summary */}
+          {/* RIGHT COL: Checkout Sidebar */}
           {shoppingBag.length > 0 && (
-            <div className="border border-slate-100 rounded-2xl p-4 flex flex-col gap-2 bg-slate-50/40">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Subtotal</span>
-                <span className="font-bold text-slate-700 font-mono">${subtotal.toFixed(2)}</span>
+            <div className="w-full md:w-[300px] glass-card" style={{padding: "20px", display:"flex", flexDirection:"column", gap:"12px"}}>
+              <div style={{fontSize:"14px", color:"#007600", display:"flex", alignItems:"center", gap:"4px"}}>
+                <CheckCircle className="w-4 h-4" /> Your order qualifies for FREE Shipping.
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Tax (8%)</span>
-                <span className="font-bold text-slate-700 font-mono">${tax.toFixed(2)}</span>
+              <div style={{fontSize:"18px", color:"#0F1111", lineHeight:"1.3"}}>
+                Subtotal ({shoppingBag.length} item{shoppingBag.length !== 1 ? "s" : ""}): <span style={{fontWeight:700}}>${subtotal.toFixed(2)}</span>
               </div>
-              {voucherDiscount > 0 && (
-                <div className="flex justify-between text-xs text-indigo-600">
-                  <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> Voucher</span>
-                  <span className="font-bold">-${voucherDiscount.toFixed(2)}</span>
+              
+              <div style={{fontSize:"14px", display:"flex", flexDirection:"column", gap:"4px"}}>
+                <div style={{display:"flex", justifyContent:"space-between", color:"#565959"}}>
+                  <span>Tax (8%)</span>
+                  <span>${tax.toFixed(2)}</span>
                 </div>
-              )}
-              {useCashback && cashbackDiscount > 0 && (
-                <div className="flex justify-between text-xs text-emerald-600 font-bold">
-                  <span>Applied {Math.round(cashbackDiscount * 100)} Green Credits</span>
-                  <span>-${cashbackDiscount.toFixed(2)}</span>
+                {voucherDiscount > 0 && (
+                  <div style={{display:"flex", justifyContent:"space-between", color:"#B12704"}}>
+                    <span>Voucher Discount</span>
+                    <span>-${voucherDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                {useCashback && cashbackDiscount > 0 && (
+                  <div style={{display:"flex", justifyContent:"space-between", color:"#007600"}}>
+                    <span>Credits Applied</span>
+                    <span>-${cashbackDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="amz-divider" style={{margin:"8px 0"}} />
+                <div style={{display:"flex", justifyContent:"space-between", fontSize:"18px", fontWeight:700, color:"#B12704"}}>
+                  <span>Order Total</span>
+                  <span>${orderTotal.toFixed(2)}</span>
                 </div>
-              )}
-              <div className="flex justify-between text-sm pt-2 border-t border-slate-100 mt-1">
-                <span className="font-extrabold text-slate-800">Total</span>
-                <span className="font-extrabold text-indigo-600 font-mono text-base">
-                  ${orderTotal.toFixed(2)}
-                </span>
               </div>
 
-              {/* Projected earn preview */}
-              {projectedRewards.length > 0 && (
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-2.5 mt-1 flex flex-col gap-1">
-                  <div className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
-                    <Leaf className="w-3 h-3" /> You Will Earn After Purchase
-                  </div>
-                  {projectedRewards.map((r: any, i: number) => (
-                    <div key={i} className="flex justify-between text-[10px]">
-                      <span className="text-emerald-700 truncate max-w-[180px]">
-                        {r.name} — Grade {r.grade} ({r.rate}%)
-                      </span>
-                      <span className="font-bold text-emerald-800 font-mono">
-                        {r.isVoucher ? `$${r.amount.toFixed(2)} voucher` : `${Math.round(r.amount * 100)} Green Credits`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <button
+                className="btn btn-primary"
+                style={{width:"100%", padding:"10px", fontSize:"14px", fontWeight:400, marginTop:"8px"}}
+                onClick={handleConfirmPurchase}
+                disabled={checkoutLoading}
+              >
+                {checkoutLoading ? <span className="spinner" /> : "Proceed to checkout"}
+              </button>
             </div>
           )}
-
-          {shoppingBag.length > 0 && (
-            <button
-              className="btn btn-success w-full py-3 font-bold text-sm"
-              onClick={handleConfirmPurchase}
-              disabled={checkoutLoading}
-            >
-              {checkoutLoading ? (
-                <><span className="spinner" /> Processing...</>
-              ) : (
-                <><CheckCircle className="w-4 h-4" /> Confirm Purchase — ${orderTotal.toFixed(2)}</>
-              )}
-            </button>
-          )}
-        </>
+        </div>
       )}
 
       {/* ── CONFIRMED STEP ── */}

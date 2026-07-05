@@ -109,17 +109,17 @@ export default function L2Fraud() {
   };
 
   return (
-    <div className="glass-card flex flex-col gap-5">
-      <div className="section-title-bar">
-        <h2>Verify Return — Authenticity Scanner</h2>
-        <span className="section-badge badge-layer-2">AI Scan</span>
+    <div style={{display:"flex", flexDirection:"column", gap:"20px", background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
+      <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Verify Return — Authenticity Scanner</h2>
+        <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>AI Scan</span>
       </div>
 
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700 p-3.5 rounded-xl flex items-start gap-2.5 shadow-md">
-        <Shield className="w-5 h-5 text-sky-400 mt-0.5 flex-shrink-0" />
+      <div style={{background:"#F0F8FA", border:"1px solid #007185", padding:"16px", borderRadius:"4px", display:"flex", alignItems:"start", gap:"12px"}}>
+        <Shield className="w-5 h-5 text-[#007185] mt-0.5 flex-shrink-0" />
         <div>
-          <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">Back-Office Returns Security Console</div>
-          <div className="text-xs text-slate-300 font-medium leading-relaxed">
+          <div style={{fontSize:"12px", fontWeight:700, color:"#0F1111", textTransform:"uppercase", marginBottom:"4px"}}>Back-Office Returns Security Console</div>
+          <div style={{fontSize:"13px", color:"#0F1111", lineHeight:"1.4"}}>
             AI vision models scan claim photos against product catalog for staging artifacts, shadow inconsistencies, and IP reputation. Risk decisions in under 2 seconds.
           </div>
         </div>

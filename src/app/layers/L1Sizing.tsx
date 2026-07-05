@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Search,
   Shirt,
+  X,
 } from "lucide-react";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 import {
@@ -50,6 +51,14 @@ export default function L1Sizing() {
   const [acceptedSize, setAcceptedSize] = React.useState<string | null>(null);
   const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
   const isApparelOrFootwear = !!(selectedProduct && (selectedProduct.category === "Apparel" || selectedProduct.category === "Footwear"));
+
+  const handleAddSizeToCart = (size: string) => {
+    if (!selectedProduct) return;
+    const isActuallyBracketing = cart.some(item => item.sku === selectedProduct.sku && item.size !== size);
+    setCart((prev: any[]) => [...prev, { id: Math.random().toString(36).slice(2), sku: selectedProduct.sku, name: selectedProduct.name, size, price: selectedProduct.price }]);
+    if (isActuallyBracketing) setShowBracketingModal(true);
+  };
+  const handleRemoveFromCart = (id: string) => setCart((prev: any[]) => prev.filter((item: any) => item.id !== id));
 
   const triggerSizeAssist = async () => {
     if (!sizingImage) return;
@@ -116,10 +125,10 @@ export default function L1Sizing() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="glass-card flex flex-col gap-4">
-        <div className="section-title-bar">
-          <h2>Find My Size — AI Fit Recommender</h2>
-          <span className="section-badge badge-layer-1">Size AI</span>
+      <div style={{display:"flex", flexDirection:"column", gap:"20px", background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
+        <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+          <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Find My Size — AI Fit Recommender</h2>
+          <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>Size AI</span>
         </div>
 
         {/* Selected Product Context */}
@@ -135,6 +144,44 @@ export default function L1Sizing() {
               </div>
               <h3 className="text-sm font-bold text-slate-800">{selectedProduct.name}</h3>
               <div className="text-emerald-600 font-extrabold font-mono">${selectedProduct.price.toFixed(2)}</div>
+              
+              {isApparelOrFootwear && (
+                <div className="mt-2">
+                  <div className="text-[10px] font-bold text-slate-500 mb-1">ADD SIZES TO TRY:</div>
+                  <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+                    {(selectedProduct.sizes || ["S", "M", "L", "XL"]).map((size: string) => (
+                      <button
+                        key={size}
+                        onClick={() => handleAddSizeToCart(size)}
+                        className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all shadow-sm"
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Sizing Cart (formerly in sidebar) */}
+        {cart.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col gap-2 mb-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center text-xs font-bold text-amber-900 border-b border-amber-200/50 pb-2">
+              <span>Your Size Try-On Cart</span>
+              <span className="bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]">{cart.length}</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {cart.map((item: any) => (
+                <div key={item.id} className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-amber-200 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">Sz {item.size}</span>
+                    <span className="text-amber-900 font-medium">{item.name.split(" ").slice(0,3).join(" ")}</span>
+                  </div>
+                  <button onClick={() => handleRemoveFromCart(item.id)} className="text-amber-400 hover:text-amber-600 transition-colors"><X className="w-4 h-4" /></button>
+                </div>
+              ))}
             </div>
           </div>
         )}

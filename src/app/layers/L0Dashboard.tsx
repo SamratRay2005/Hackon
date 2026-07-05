@@ -132,33 +132,33 @@ export default function L0Dashboard() {
       }} />
 
       {/* Tabs */}
-      <div className="flex bg-slate-100 p-1 rounded-2xl">
+      <div style={{display:"flex", gap:"16px", borderBottom:"1px solid #DDD", paddingBottom:"0px", marginBottom:"8px", overflowX:"auto"}}>
         <button
           onClick={() => setShopTab("catalog")}
-          className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${shopTab === "catalog" ? "bg-white shadow text-indigo-700" : "text-slate-500 hover:text-slate-700"}`}
+          style={{padding:"8px 12px", fontSize:"14px", fontWeight: shopTab === "catalog" ? 700 : 400, color: shopTab === "catalog" ? "#0F1111" : "#007185", borderBottom: shopTab === "catalog" ? "2px solid #E47911" : "2px solid transparent", whiteSpace:"nowrap", cursor:"pointer", background:"none"}}
         >
-          <ShoppingBag className="w-4 h-4" /> Amazon Catalog (New)
+          Amazon Catalog (New)
         </button>
         <button
           onClick={() => setShopTab("preloved")}
-          className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${shopTab === "preloved" ? "bg-emerald-50 shadow text-emerald-700 border border-emerald-200" : "text-slate-500 hover:text-emerald-600"}`}
+          style={{padding:"8px 12px", fontSize:"14px", fontWeight: shopTab === "preloved" ? 700 : 400, color: shopTab === "preloved" ? "#0F1111" : "#007185", borderBottom: shopTab === "preloved" ? "2px solid #E47911" : "2px solid transparent", whiteSpace:"nowrap", cursor:"pointer", background:"none"}}
         >
-          <Leaf className="w-4 h-4" /> Shop Pre-Loved
+          Shop Pre-Loved
         </button>
       </div>
 
       {shopTab === "catalog" && (
         <div className="glass-card flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="section-title-bar">
-            <h2>Amazon Catalog</h2>
-            <span className="section-badge badge-catalog">Brand New</span>
+          <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px"}}>
+            <h2 style={{fontSize:"20px", fontWeight:700, color:"#0F1111"}}>Amazon Catalog</h2>
+            <span style={{fontSize:"12px", background:"#007185", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>Brand New</span>
           </div>
           
           <div className="relative mb-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pl-10 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 font-semibold"
+              style={{width:"100%", background:"#FFF", border:"1px solid #888C8C", borderRadius:"4px", padding:"8px 10px 8px 32px", fontSize:"14px", color:"#0F1111", outline:"none"}}
               placeholder="Search 150+ products..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -167,28 +167,24 @@ export default function L0Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredCatalog.map((p) => (
-              <div key={p.sku} className="marketplace-item-card group relative flex flex-col">
-                <div className="marketplace-item-image">
-                  <img src={getSKUReferenceImage(p.sku)} className="w-full h-full object-cover" alt={p.name} />
+              <div key={p.sku} className="marketplace-item-card group relative flex flex-col" style={{border:"1px solid #DDD", borderRadius:"4px", overflow:"hidden"}}>
+                <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
+                  <img src={getSKUReferenceImage(p.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={p.name} />
                 </div>
-                <div className="p-4 flex flex-col flex-1 pt-4">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{p.brand}</div>
-                  <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{p.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                     <span className="text-[10px] text-indigo-500 font-mono">SKU: {p.sku}</span>
+                <div className="p-3 flex flex-col flex-1 bg-white">
+                  <div style={{fontSize:"11px", color:"#565959", textTransform:"uppercase", fontWeight:700, marginBottom:"4px"}}>{p.brand}</div>
+                  <h3 className="amz-free-link" style={{fontSize:"16px", fontWeight:400, color:"#0F1111", lineHeight:"1.4", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", cursor:"pointer"}}>{p.name}</h3>
+                  <div style={{display:"flex", alignItems:"center", gap:"4px", marginTop:"4px"}}>
+                     <span style={{color:"#DE7921", fontSize:"16px"}}>★★★★☆</span> <span className="amz-free-link" style={{fontSize:"14px", color:"#007185"}}>{(Math.random() * 5 + 1).toFixed(1)}k</span>
                   </div>
-                  <div className="mt-3 mb-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                     <span className="text-slate-800 font-extrabold text-lg font-mono">${p.price.toFixed(2)}</span>
-                     {p.baseTrustScore >= 90 && (
-                       <div className="flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200 shadow-sm">
-                         <CheckCircle className="w-3 h-3 text-emerald-500" />
-                         <span className="font-bold uppercase tracking-wider">Verified</span>
-                       </div>
-                     )}
+                  <div className="mt-1 mb-2 flex flex-col">
+                     <span style={{color:"#0F1111", fontWeight:400, fontSize:"28px", display:"flex", alignItems:"flex-start"}}><sup style={{fontSize:"14px", marginTop:"4px"}}>$</sup>{Math.floor(p.price)}<sup style={{fontSize:"14px", marginTop:"4px"}}>{(p.price % 1).toFixed(2).substring(2)}</sup></span>
+                     <div className="amz-instock" style={{fontSize:"12px", marginTop:"2px", color:"#007600"}}>In Stock</div>
                   </div>
                   
                   <button
-                    className="btn btn-primary w-full py-2.5 text-xs font-bold mt-auto shadow-sm"
+                    className="btn btn-primary w-full shadow-sm mt-auto"
+                    style={{padding:"8px 10px", fontSize:"14px", fontWeight:400, borderRadius:"100px", background:"linear-gradient(to bottom,#f8e3ad,#eebc51)", border:"1px solid #a88734", color:"#111"}}
                     onClick={() => openProductDetails(p, false)}
                   >
                     View Details
@@ -202,15 +198,13 @@ export default function L0Dashboard() {
 
       {shopTab === "preloved" && (
         <div className="glass-card flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="section-title-bar">
-            <h2>Shop Pre-Loved — Buy Near You</h2>
-            <div className="flex items-center gap-2">
-              <span className="section-badge badge-layer-5">Local Feed</span>
-            </div>
+          <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px"}}>
+            <h2 style={{fontSize:"20px", fontWeight:700, color:"#0F1111"}}>Shop Pre-Loved — Buy Near You</h2>
+            <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>Local Feed</span>
           </div>
           
-          <div className="info-callout mb-2">
-            <ShoppingBag className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div style={{border:"1px solid #007185", background:"#F0F8FA", padding:"12px", borderRadius:"4px", fontSize:"13px", color:"#0F1111", display:"flex", alignItems:"start", gap:"8px", marginBottom:"8px"}}>
+            <ShoppingBag className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#007185]" />
             <span>Items shown below have been returned by users within a 100km radius. By purchasing locally, you earn Green Credits and save shipping emissions.</span>
           </div>
 
@@ -220,9 +214,9 @@ export default function L0Dashboard() {
               placeholder="Search Pre-Loved items..."
               value={marketSearch}
               onChange={(e) => setMarketSearch(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+              style={{width:"100%", background:"#FFF", border:"1px solid #888C8C", borderRadius:"4px", padding:"8px 10px 8px 32px", fontSize:"14px", color:"#0F1111", outline:"none"}}
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           </div>
 
           {/* Dark Store Resale Section */}
@@ -276,35 +270,36 @@ export default function L0Dashboard() {
                   const ageMs = now - item.addedToStoreAt;
                   const isReturnedProduct = item.isReturnedProduct || ageMs >= TWO_DAYS_MS;
                   return (
-                    <div key={item.sku + i} className="marketplace-item-card group relative border-2 border-emerald-200 flex flex-col">
+                    <div key={item.sku + i} className="marketplace-item-card group relative flex flex-col" style={{border:"2px solid #E47911", borderRadius:"4px", overflow:"hidden"}}>
                       <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-                        <span className={`mini-badge ${item.grade === "A" ? "success" : item.grade === "B" ? "warning" : "danger"}`}>Grade {item.grade}</span>
+                        <span style={{background:"#CC0C39", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px"}}>Grade {item.grade}</span>
                         {isReturnedProduct && (
-                          <span className="flex items-center gap-1 text-[9px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow">
-                            <RotateCcw className="w-2.5 h-2.5" /> Returned Product
+                          <span style={{background:"#007185", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px", display:"flex", alignItems:"center", gap:"2px"}}>
+                            <RotateCcw className="w-2.5 h-2.5" /> Returned
                           </span>
                         )}
                       </div>
-                      <div className="marketplace-item-image">
-                        <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover" alt={item.name} />
+                      <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
+                        <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
                       </div>
-                      <div className="p-4 flex flex-col flex-1 pt-8">
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{item.brand}</div>
-                        <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{item.name}</h3>
-                        <div className="flex items-end justify-between mt-3 mb-3 border-t border-slate-100 pt-3">
-                          <div>
-                            <span className="text-emerald-600 font-extrabold text-lg font-mono">${item.price.toFixed(2)}</span>
-                            <span className="text-slate-400 text-[10px] line-through ml-2">${item.originalPrice.toFixed(2)}</span>
-                          </div>
+                      <div className="p-3 flex flex-col flex-1 bg-white">
+                        <div style={{fontSize:"11px", color:"#565959", textTransform:"uppercase", fontWeight:700, marginBottom:"4px"}}>{item.brand}</div>
+                        <h3 className="amz-free-link" style={{fontSize:"16px", fontWeight:400, color:"#0F1111", lineHeight:"1.4", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", cursor:"pointer"}}>{item.name}</h3>
+                        <div style={{display:"flex", alignItems:"center", gap:"4px", marginTop:"4px"}}>
+                           <span style={{color:"#DE7921", fontSize:"16px"}}>★★★★☆</span> <span className="amz-free-link" style={{fontSize:"14px", color:"#007185"}}>{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                        </div>
+                        <div className="mt-1 mb-1 flex items-baseline gap-2">
+                           <span style={{color:"#B12704", fontWeight:400, fontSize:"28px", display:"flex", alignItems:"flex-start"}}><sup style={{fontSize:"14px", marginTop:"4px"}}>$</sup>{Math.floor(item.price)}<sup style={{fontSize:"14px", marginTop:"4px"}}>{(item.price % 1).toFixed(2).substring(2)}</sup></span>
+                           <span style={{color:"#565959", fontSize:"14px", textDecoration:"line-through"}}>${item.originalPrice.toFixed(2)}</span>
                         </div>
                         {isReturnedProduct && (
-                          <div className="text-[10px] text-indigo-700 font-medium mb-3 bg-indigo-50 p-2 rounded-lg border border-indigo-100 flex items-start gap-1.5">
-                            <Award className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                            <span>Buying returned products earns you <strong>Green Credits</strong>.</span>
+                          <div style={{fontSize:"14px", color:"#007600", marginBottom:"12px", display:"flex", alignItems:"center", gap:"4px"}}>
+                            <Award className="w-4 h-4" /> Earn ${(item.price * 0.05).toFixed(2)} Cashback
                           </div>
                         )}
                         <button
-                          className="btn btn-primary w-full py-2.5 text-xs font-bold mt-auto shadow-sm"
+                          className="btn btn-primary w-full shadow-sm mt-auto"
+                          style={{padding:"8px 10px", fontSize:"14px", fontWeight:400, borderRadius:"100px", background:"linear-gradient(to bottom,#f8e3ad,#eebc51)", border:"1px solid #a88734", color:"#111"}}
                           onClick={() => openProductDetails(item, true)}
                         >
                           View Details
@@ -326,42 +321,45 @@ export default function L0Dashboard() {
               </div>
             ) : (
               marketplaceFeed.map((item, i) => (
-                <div key={i} className="marketplace-item-card group relative flex flex-col">
+                <div key={i} className="marketplace-item-card group relative flex flex-col" style={{border:"1px solid #DDD", borderRadius:"4px", overflow:"hidden"}}>
                   {item.trust < 40 && (
-                    <div className="absolute top-2 right-2 bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-rose-200 z-10 shadow-sm flex items-center gap-1">
+                    <div className="absolute top-2 right-2 bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 border border-rose-200 z-10 shadow-sm flex items-center gap-1" style={{borderRadius:"2px"}}>
                       <AlertTriangle className="w-3 h-3" /> High Risk Seller
                     </div>
                   )}
-                  <div className="marketplace-item-image">
-                    <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover" alt={item.name} />
-                    <div className="absolute top-3 left-3 flex gap-1.5">
-                      <span className={`mini-badge ${item.grade.startsWith("A") ? "success" : "warning"}`}>Grade {item.grade}</span>
+                  <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
+                    <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
+                    <div className="absolute top-2 left-2 flex gap-1">
+                      <span style={{background:item.grade.startsWith("A") ? "#007600" : "#E47911", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px"}}>Grade {item.grade}</span>
                     </div>
                   </div>
 
-                  <div className="p-4 flex flex-col flex-1">
-                    <div className="flex gap-1.5 mb-2 flex-wrap">
-                      <span className="mini-badge bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1"><Leaf className="w-2.5 h-2.5" /> -{item.co2Saved}kg CO₂</span>
-                      <span className="mini-badge bg-slate-50 text-slate-600 border border-slate-200 flex items-center gap-1"><Map className="w-2.5 h-2.5" /> {item.distance} away</span>
+                  <div className="p-3 flex flex-col flex-1 bg-white">
+                    <div className="flex gap-1 mb-1 flex-wrap">
+                      <span style={{fontSize:"12px", color:"#007185", display:"flex", alignItems:"center", gap:"2px"}}><Leaf className="w-3 h-3" /> -{item.co2Saved}kg CO₂</span>
+                      <span style={{fontSize:"12px", color:"#565959", display:"flex", alignItems:"center", gap:"2px"}}><Map className="w-3 h-3" /> {item.distance}</span>
                     </div>
 
-                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{item.brand}</div>
-                    <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{item.name}</h3>
+                    <div style={{fontSize:"11px", color:"#565959", textTransform:"uppercase", fontWeight:700, marginBottom:"4px"}}>{item.brand}</div>
+                    <h3 className="amz-free-link" style={{fontSize:"16px", fontWeight:400, color:"#0F1111", lineHeight:"1.4", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", cursor:"pointer"}}>{item.name}</h3>
 
-                    <div className="flex items-end justify-between mt-3 mb-4 border-t border-slate-100 pt-3">
-                      <div>
-                        <span className="text-emerald-600 font-extrabold text-lg font-mono">${item.price.toFixed(2)}</span>
-                        <span className="text-slate-400 text-[10px] line-through ml-2">${item.originalPrice.toFixed(2)}</span>
-                      </div>
+                    <div style={{display:"flex", alignItems:"center", gap:"4px", marginTop:"4px"}}>
+                       <span style={{color:"#DE7921", fontSize:"16px"}}>★★★★☆</span> <span className="amz-free-link" style={{fontSize:"14px", color:"#007185"}}>{(Math.random() * 5 + 1).toFixed(1)}k</span>
                     </div>
 
-                    <div className="text-[10px] text-emerald-700 font-medium mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-start gap-1.5 mt-auto">
-                      <Award className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
+                    <div className="mt-1 mb-1 flex items-baseline gap-2">
+                       <span style={{color:"#B12704", fontWeight:400, fontSize:"28px", display:"flex", alignItems:"flex-start"}}><sup style={{fontSize:"14px", marginTop:"4px"}}>$</sup>{Math.floor(item.price)}<sup style={{fontSize:"14px", marginTop:"4px"}}>{(item.price % 1).toFixed(2).substring(2)}</sup></span>
+                       <span style={{color:"#565959", fontSize:"14px", textDecoration:"line-through"}}>${item.originalPrice.toFixed(2)}</span>
+                    </div>
+
+                    <div style={{fontSize:"14px", color:"#007600", marginBottom:"12px", display:"flex", alignItems:"start", gap:"4px"}}>
+                      <Award className="w-4 h-4 flex-shrink-0" />
                       <span><strong>Earn ${(item.price * (item.grade === "A" ? 0.03 : 0.05)).toFixed(2)} Cashback</strong> instantly.</span>
                     </div>
 
                     <button
-                      className="btn btn-primary w-full py-2.5 text-xs font-bold mt-auto shadow-sm"
+                      className="btn btn-primary w-full shadow-sm mt-auto"
+                      style={{padding:"8px 10px", fontSize:"14px", fontWeight:400, borderRadius:"100px", background:"linear-gradient(to bottom,#f8e3ad,#eebc51)", border:"1px solid #a88734", color:"#111"}}
                       onClick={() => openProductDetails(item, true)}
                     >
                       View Details

@@ -16,8 +16,9 @@ import {
   Wrench,
   X,
   CheckCircle,
+  ChevronDown,
 } from "lucide-react";
-import { useApp } from "./AppContext";
+import { useApp, getSKUReferenceImage } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 // ── Get Help (DIM) confirmation modal ──────────────────────────
@@ -299,32 +300,20 @@ export default function L6Orders() {
   };
 
   return (
-    <div className="glass-card flex flex-col gap-5">
-      <div className="section-title-bar">
-        <h2>My Orders</h2>
-        <span className="section-badge badge-layer-6">Purchase History</span>
+    <div style={{display:"flex", flexDirection:"column", gap:"20px"}}>
+      <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Your Orders</h2>
       </div>
 
-      <div className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Package className="w-4 h-4 text-indigo-500" />
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Shopping History
-            </span>
-          </div>
-          <span className="text-[9px] text-slate-400 font-medium">
-            {orders.length} order{orders.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-
+      <div className="flex flex-col gap-4">
         {orders.length === 0 ? (
-          <div className="empty-state-card">
-            <Package className="icon" />
-            <div className="text">No orders found for your account.</div>
+          <div style={{padding:"20px", display:"flex", gap:"20px", background:"#FFF", border:"1px solid #DDD", borderRadius:"4px"}}>
+            <div style={{flex:1}}>
+              <h2 style={{fontSize:"1.2rem", fontWeight:700, marginBottom:"8px"}}>You have no orders.</h2>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             {orders.map((order: any) => {
               const daysLeft = getDaysRemaining(order);
               const isExpired = daysLeft <= 0;
@@ -333,113 +322,90 @@ export default function L6Orders() {
               return (
                 <div
                   key={order.sku}
-                  className={`border rounded-2xl p-4 flex flex-col gap-4 transition-all ${
-                    isExpired
-                      ? "bg-slate-50 border-slate-200 opacity-80"
-                      : "bg-white border-slate-200 hover:border-indigo-200 hover:shadow-md"
-                  }`}
+                  style={{border:"1px solid #D5D9D9", borderRadius:"8px", overflow:"hidden", background:"#FFF"}}
                 >
                   {/* Card Header */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                        Order Placed
-                      </span>
-                      <span className="text-xs text-slate-600 font-medium">
-                        {order.purchaseDate}
-                      </span>
+                  <div style={{background:"#F0F2F2", padding:"14px 18px", borderBottom:"1px solid #D5D9D9", display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#565959"}}>
+                    <div style={{display:"flex", gap:"32px"}}>
+                      <div className="flex flex-col">
+                        <span style={{textTransform:"uppercase"}}>Order Placed</span>
+                        <span style={{color:"#0F1111"}}>{order.purchaseDate}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span style={{textTransform:"uppercase"}}>Total</span>
+                        <span style={{color:"#0F1111"}}>${order.price?.toFixed(2)}</span>
+                      </div>
+                      <div className="flex flex-col hidden sm:flex">
+                        <span style={{textTransform:"uppercase"}}>Ship To</span>
+                        <span className="amz-free-link" style={{color:"#007185"}}>Samrat Ray <ChevronDown className="w-3 h-3 inline" /></span>
+                      </div>
                     </div>
-                    {isExpired ? (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">
-                        <AlertCircle className="w-3 h-3" />
-                        Window closed
-                      </span>
-                    ) : (
-                      <span
-                        className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                          daysLeft <= 3
-                            ? "text-rose-700 bg-rose-50 border-rose-200"
-                            : daysLeft <= 7
-                            ? "text-amber-700 bg-amber-50 border-amber-200"
-                            : "text-emerald-700 bg-emerald-50 border-emerald-200"
-                        }`}
-                      >
-                        <Clock className="w-3 h-3" />
-                        {daysLeft}d left
-                      </span>
-                    )}
+                    <div className="flex flex-col text-right">
+                      <span style={{textTransform:"uppercase"}}>Order # {order.orderId}</span>
+                      <span className="amz-free-link" style={{color:"#007185"}}>View order details</span>
+                    </div>
                   </div>
 
                   {/* Card Body */}
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-indigo-400" />
+                  <div style={{padding:"18px", display:"flex", gap:"16px", flexWrap:"wrap"}}>
+                    <div style={{flexShrink:0}}>
+                      <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{width:"90px", height:"90px", objectFit:"contain"}} />
                     </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="text-sm font-bold text-slate-800 leading-tight">
+                    
+                    <div className="flex flex-col flex-1 min-w-0" style={{minWidth:"200px"}}>
+                      <div className="amz-free-link" style={{fontSize:"14px", fontWeight:700, color:"#007185", lineHeight:"1.4"}}>
                         {order.name}
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-1">
-                        SKU: {order.sku}
+                      <div style={{fontSize:"12px", color:"#565959", marginTop:"4px"}}>
+                        Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
                       </div>
-                      <div className="text-xs font-bold text-emerald-700 font-mono mt-2">
-                        ${order.price?.toFixed(2)}
-                      </div>
+                      
+                      {isReturned && (
+                        <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#C7511F"}}>
+                          Return in progress
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Card Footer (Actions) */}
-                  <div className="pt-2 mt-auto">
-                    {isReturned ? (
-                      <div className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2.5 rounded-xl">
-                        <CheckCircle className="w-4 h-4" />
-                        Return Initiated
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2">
-                        {hasManual(order.sku) ? (
+                    {/* Card Footer (Actions) */}
+                    <div className="flex flex-col gap-2" style={{width:"220px", flexShrink:0}}>
+                      <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Track package</button>
+                      
+                      {!isReturned && (
+                        hasManual(order.sku) ? (
                           <>
                             <button
                               onClick={() => handleDIM(order)}
                               disabled={isExpired}
-                              className={`flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all ${
-                                isExpired
-                                  ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
-                                  : "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 hover:border-indigo-300 shadow-sm"
-                              }`}
+                              className="btn btn-secondary"
+                              style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
                             >
-                              <Wrench className="w-3.5 h-3.5" />
-                              Support
+                              Get product support
                             </button>
                             <button
                               onClick={() => setReasonOrder(order)}
                               disabled={isExpired}
-                              className={`flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all ${
-                                isExpired
-                                  ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
-                                  : "text-rose-700 bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-300 shadow-sm"
-                              }`}
+                              className="btn btn-secondary"
+                              style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
                             >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              Return
+                              Return or replace items
                             </button>
                           </>
                         ) : (
                           <button
                             onClick={() => setReasonOrder(order)}
                             disabled={isExpired}
-                            className={`col-span-2 flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all ${
-                              isExpired
-                                ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
-                                : "text-slate-700 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 shadow-sm"
-                            }`}
+                            className="btn btn-secondary"
+                            style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
                           >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            Return Item
+                            Return or replace items
                           </button>
-                        )}
-                      </div>
-                    )}
+                        )
+                      )}
+                      
+                      <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Leave seller feedback</button>
+                      <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Write a product review</button>
+                    </div>
                   </div>
                 </div>
               );
