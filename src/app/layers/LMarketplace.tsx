@@ -46,6 +46,8 @@ export default function LMarketplace() {
     setResaleListings,
     isAdminMode,
     setIsAdminMode,
+    setActiveTab,
+    setLogisticsSku,
   } = useApp() as any;
 
   const [marketplaceFeed, setMarketplaceFeed] = React.useState<any[]>([]);
@@ -436,16 +438,28 @@ export default function LMarketplace() {
                   <h4 className="font-extrabold text-slate-800 text-base">Order Placed!</h4>
                   <p className="text-xs text-slate-400 mt-1">Your circular items are on their way.</p>
                 </div>
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700 text-center w-full">
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700 text-center w-full mb-1">
                   <strong>+{Math.round(bagSubtotal * 0.3)} Green Credits</strong> added to your wallet!
                 </div>
-                <button className="btn btn-secondary w-full py-2.5 text-xs font-bold" onClick={() => {
-                  setShowCheckoutModal(false);
-                  setCheckoutStep("bag");
-                  setShoppingBag([]);
-                }}>
-                  Done — Continue Shopping
-                </button>
+                
+                <div className="w-full flex flex-col gap-2">
+                  <button className="btn btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2" onClick={() => {
+                    if (shoppingBag.length > 0) setLogisticsSku(shoppingBag[0].sku);
+                    setActiveTab("logistics");
+                    setShowCheckoutModal(false);
+                    setCheckoutStep("bag");
+                    setShoppingBag([]);
+                  }}>
+                    <Map className="w-4 h-4" /> Track Eco-Shipping (P2P Route)
+                  </button>
+                  <button className="btn btn-secondary w-full py-2.5 text-xs font-bold" onClick={() => {
+                    setShowCheckoutModal(false);
+                    setCheckoutStep("bag");
+                    setShoppingBag([]);
+                  }}>
+                    Done — Continue Shopping
+                  </button>
+                </div>
               </div>
             )}
           </div>
