@@ -37,6 +37,7 @@ export default function L2Fraud() {
     setMetrics,
     fraudClaimType: claimType,
     setFraudClaimType: setClaimType,
+    setActiveTab,
   } = useApp() as any;
 
   const [fraudLoading, setFraudLoading] = React.useState(false);
@@ -570,6 +571,16 @@ export default function L2Fraud() {
                         "{fraudResult.reasoning}"
                       </div>
                     </div>
+                  )}
+
+                  {/* Admin Shortcut for Jury Demo */}
+                  {fraudResult.riskScore <= 70 && (
+                    <button
+                      className="btn btn-secondary w-full py-2.5 mt-2 text-[11px] font-bold border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm"
+                      onClick={() => setActiveTab("inspect")}
+                    >
+                      Admin: Process in Warehouse ➡
+                    </button>
                   )}
                 </div>
               )}

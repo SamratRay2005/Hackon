@@ -685,6 +685,15 @@ export default function L6Wallet() {
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center text-slate-500 text-[11px] leading-relaxed italic mt-1">
                   {refundResult.message}
                 </div>
+
+                {refundResult.refundType === "Drop Off Required" && (
+                  <button
+                    className="btn btn-secondary w-full py-2.5 mt-2 text-[11px] font-bold border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm"
+                    onClick={() => setActiveTab("inspect")}
+                  >
+                    Admin: Inspect Item at Dark Store ➡
+                  </button>
+                )}
               </div>
             ) : (
               <div className="empty-state-card flex-1 mt-2">
