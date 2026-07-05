@@ -140,11 +140,11 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
 export const getSKUReferenceImage = (sku: string) => {
   if (SKU_REFERENCE_IMAGES[sku]) return SKU_REFERENCE_IMAGES[sku];
   const p = PRODUCT_CATALOG.find(x => x.sku === sku);
-  
+
   if (p) {
     const n = p.name.toLowerCase();
     const c = p.category;
-    
+
     if (c === "Apparel") {
       if (n.includes("jacket") || n.includes("coat") || n.includes("parka") || n.includes("windbreaker") || n.includes("blazer")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
       if (n.includes("hoodie") || n.includes("pullover") || n.includes("sweater") || n.includes("cardigan")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
@@ -154,14 +154,14 @@ export const getSKUReferenceImage = (sku: string) => {
       // Fallback for apparel (shirts, tees, polos, etc.)
       return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
     }
-    
+
     if (c === "Footwear") {
       if (n.includes("boot")) return "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500";
       if (n.includes("sandal") || n.includes("slipper") || n.includes("loafer") || n.includes("oxford") || n.includes("espadril")) return "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500";
       // Fallback for footwear (sneakers, trainers, running shoes)
       return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
     }
-    
+
     if (c === "Electronics") {
       if (n.includes("monitor") || n.includes("display") || n.includes("screen")) return "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500";
       if (n.includes("speaker") || n.includes("audio") || n.includes("sound")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
@@ -172,7 +172,7 @@ export const getSKUReferenceImage = (sku: string) => {
       if (n.includes("tablet") || n.includes("reader")) return "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500";
       return "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500";
     }
-    
+
     if (c === "Home & Kitchen") {
       if (n.includes("knife") || n.includes("cutlery")) return "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500";
       if (n.includes("coffee") || n.includes("espresso") || n.includes("kettle") || n.includes("grinder") || n.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
@@ -182,7 +182,7 @@ export const getSKUReferenceImage = (sku: string) => {
       if (n.includes("towel") || n.includes("sheet") || n.includes("duvet") || n.includes("pillow")) return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
       return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
     }
-    
+
     if (c === "Recreation & Lifestyle") {
       if (n.includes("backpack") || n.includes("bag") || n.includes("duffel") || n.includes("luggage")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
       if (n.includes("tent") || n.includes("camp") || n.includes("mat") || n.includes("sleep")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
@@ -191,7 +191,7 @@ export const getSKUReferenceImage = (sku: string) => {
       return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
     }
   }
-  
+
   return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
 };
 
@@ -201,6 +201,20 @@ export function getDynamicSizeChart(sku: string) {
   const isApparel = p.sizes.some(s => ["S", "M", "L", "XL", "XXL", "XS"].includes(s));
   const isFootwear = p.sizes.some(s => ["7", "8", "9", "10", "11", "12"].includes(s));
   if (isApparel) {
+    const isJeans = p.name.toLowerCase().includes("jean") || p.name.toLowerCase().includes("pant") || p.name.toLowerCase().includes("trouser") || p.name.toLowerCase().includes("overall");
+    if (isJeans) {
+      return {
+        name: p.name, brand: "UrbanEco",
+        chart: [
+          { size: "XS", waist: "26-28 in", inseam: "29.5 in" },
+          { size: "S", waist: "28-30 in", inseam: "30 in" },
+          { size: "M", waist: "32-34 in", inseam: "31.5 in" },
+          { size: "L", waist: "36-38 in", inseam: "32 in" },
+          { size: "XL", waist: "40-42 in", inseam: "32.5 in" },
+          { size: "XXL", waist: "44-46 in", inseam: "33.5 in" },
+        ]
+      };
+    }
     return {
       name: p.name, brand: "UrbanEco",
       chart: [

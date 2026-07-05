@@ -12,20 +12,47 @@ function getDynamicSizeChart(sku: string) {
   const isFootwear = p.sizes.includes("7") || p.sizes.includes("8") || p.sizes.includes("9") || p.sizes.includes("10") || p.sizes.includes("11") || p.sizes.includes("12");
 
   if (isApparel) {
+    const isJeans = p.name.toLowerCase().includes("jean") || p.name.toLowerCase().includes("pant") || p.name.toLowerCase().includes("trouser") || p.name.toLowerCase().includes("overall");
+    if (isJeans) {
+      return {
+        name: p.name,
+        brand: "UrbanEco",
+        chart: [
+          { size: "XS", waist: "26-28 in", inseam: "29.5 in" },
+          { size: "S", waist: "28-30 in", inseam: "30 in" },
+          { size: "M", waist: "32-34 in", inseam: "31.5 in" },
+          { size: "L", waist: "36-38 in", inseam: "32 in" },
+          { size: "XL", waist: "40-42 in", inseam: "32.5 in" },
+          { size: "XXL", waist: "44-46 in", inseam: "33.5 in" }
+        ],
+        dimensions: [
+          { size: "XS", waist: 27.0, inseam: 29.5 },
+          { size: "S", waist: 29.0, inseam: 30.0 },
+          { size: "M", waist: 33.0, inseam: 31.5 },
+          { size: "L", waist: 37.0, inseam: 32.0 },
+          { size: "XL", waist: 41.0, inseam: 32.5 },
+          { size: "XXL", waist: 45.0, inseam: 33.5 }
+        ]
+      };
+    }
     return {
       name: p.name,
       brand: "UrbanEco",
       chart: [
+        { size: "XS", chest: "32-34 in", shoulders: "15.5 in", sleeves: "31.5 in" },
         { size: "S", chest: "34-36 in", shoulders: "16.5 in", sleeves: "32.5 in" },
         { size: "M", chest: "38-40 in", shoulders: "17.5 in", sleeves: "33.5 in" },
         { size: "L", chest: "42-44 in", shoulders: "18.5 in", sleeves: "34.5 in" },
-        { size: "XL", chest: "46-48 in", shoulders: "19.5 in", sleeves: "35.5 in" }
+        { size: "XL", chest: "46-48 in", shoulders: "19.5 in", sleeves: "35.5 in" },
+        { size: "XXL", chest: "50-52 in", shoulders: "20.5 in", sleeves: "36.5 in" }
       ],
       dimensions: [
+        { size: "XS", chest: 33.0, shoulders: 15.5 },
         { size: "S", chest: 35.0, shoulders: 16.5 },
         { size: "M", chest: 39.0, shoulders: 17.5 },
         { size: "L", chest: 43.0, shoulders: 18.5 },
-        { size: "XL", chest: 47.0, shoulders: 19.5 }
+        { size: "XL", chest: 47.0, shoulders: 19.5 },
+        { size: "XXL", chest: 51.0, shoulders: 20.5 }
       ]
     };
   } else if (isFootwear) {
@@ -95,23 +122,42 @@ CRITICAL INSTRUCTION: You are strictly FORBIDDEN from using <think> blocks or ch
 You MUST output ONLY a raw JSON object string. Do not wrap the JSON object in markdown code blocks, do not use triple backticks (\`\`\`), and do not include any preamble or extra text. Your output must start with '{' and end with '}'.`;
 
     const isFootwear = attributes.includes("length");
+    const isJeans = attributes.includes("waist") && attributes.includes("inseam");
 
-    const methodSection = isFootwear ? `Method:
+    let methodSection = "";
+    let edgeCasesSection = "";
+
+    if (isFootwear) {
+      methodSection = `Method:
 1. Locate these landmarks if visible: heel, longest toe, ankle joint.
 2. Estimate the foot length (heel to longest toe) as a proportion of the reference height, or using standard anthropometric ratios if only the foot is visible.
-3. Convert the proportion to inches.` : `Method:
+3. Convert the proportion to inches.`;
+      edgeCasesSection = `Edge cases and definitions:
+- "length" means foot length (from the back of the heel to the tip of the longest toe).
+- The visibility edge-case rule applies only to the specific attributes requested. If the foot is visible, estimate foot length normally — do not zero it out just because the rest of the body isn't in frame.
+- If the foot is only partly measurable due to pose/occlusion, still estimate it but lower the confidence.`;
+    } else if (isJeans) {
+      methodSection = `Method:
+1. Locate these landmarks if visible: top of head, chin, waist (narrowest part of torso or top of pelvic bone), crotch (for inseam start), and ankle/floor.
+2. Express each landmark's vertical position as a fraction of total height (head-to-floor = 100%).
+3. Estimate each attribute (waist, inseam) as a proportion of the reference height, adjusted for what you actually see rather than generic averages alone.
+4. Convert each proportion to inches using the reference height.`;
+      edgeCasesSection = `Edge cases and definitions:
+- "waist" means the circumference around the waist (estimate diameter from 2D image and multiply by Pi, or use standard body proportions).
+- "inseam" means the length from the uppermost inner thigh to the bottom of the ankle.
+- The visibility edge-case rule applies only to the specific attributes requested. If legs are not fully visible, estimate based on visible torso-to-leg proportions but lower confidence.
+- If an attribute is only partly measurable due to pose/occlusion, still estimate it but lower that attribute's own confidence.`;
+    } else {
+      methodSection = `Method:
 1. Locate these landmarks if visible: top of head, chin, shoulder points, widest point of the ribcage/chest, waist, wrists, ankles.
 2. Express each landmark's vertical position as a fraction of total height (head-to-floor = 100%).
 3. Estimate each attribute as a proportion of the reference height, adjusted for what you actually see (torso length, shoulder slope, build) rather than generic averages alone.
 4. Convert each proportion to inches using the reference height.`;
-
-    const edgeCasesSection = isFootwear ? `Edge cases and definitions:
-- "length" means foot length (from the back of the heel to the tip of the longest toe).
-- The visibility edge-case rule applies only to the specific attributes requested. If the foot is visible, estimate foot length normally — do not zero it out just because the rest of the body isn't in frame.
-- If the foot is only partly measurable due to pose/occlusion, still estimate it but lower the confidence.` : `Edge cases and definitions:
+      edgeCasesSection = `Edge cases and definitions:
 - "shoulders" means bi-acromial breadth (the straight-line distance between the two shoulder points), a body measurement — not a garment seam-to-seam width.
 - The visibility edge-case rule applies only to the specific attributes requested, not the whole body. If chest and shoulders are visible from a chest-up photo, estimate them normally — do not zero them out just because legs aren't in frame.
 - If an attribute is only partly measurable due to pose/occlusion, still estimate it but lower that attribute's own confidence.`;
+    }
 
     // Define Gemini Native JSON Response Schema
     const schemaProperties: Record<string, any> = {
