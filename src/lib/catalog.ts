@@ -25,6 +25,7 @@ export interface Product {
     | "Electronics"
     | "Home & Kitchen"
     | "Recreation & Lifestyle"
+    | "Cosmetics"
     | "Other";
   brand: string;
   description: string;
@@ -49,6 +50,9 @@ export interface Product {
 // RAW CATALOG  (150 products)
 // ─────────────────────────────────────────────────────────────
 const RAW_PRODUCT_CATALOG = [
+  // --- COSMETICS ---
+  { sku: "YRDLY-GNTLMN-001",  name: "Yardley Gentleman Classic Perfume",           price: 45.00,  sizes: ["Standard"] },
+
   // --- APPAREL ---
   { sku: "DENIM-JKT-001",   name: "Classic Denim Jacket",                              price: 120.00, sizes: ["S","M","L","XL"] },
   { sku: "SLIM-FIT-TEE",    name: "Eco-Cotton Tee",                                    price: 40.00,  sizes: ["S","M","L","XL"] },

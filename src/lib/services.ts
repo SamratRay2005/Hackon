@@ -554,6 +554,7 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
   "SLIM-FIT-TEE":  "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500",
   "CF-Mkr-99":     "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
   "SPK-AIR-12":    "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500",
+  "YRDLY-GNTLMN-001": "/yardley-gentleman.webp",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -633,6 +634,8 @@ export const db = {
         if (n.includes("yoga") || n.includes("fitness") || n.includes("roller")) return "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500";
         return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
       }
+      
+      if (n.includes("perfume") || n.includes("cologne") || n.includes("fragrance")) return "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500";
     }
     return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
   },
