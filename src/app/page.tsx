@@ -397,6 +397,7 @@ export default function Home() {
     resaleListings, setResaleListings,
     isAdminMode, setIsAdminMode,
     inspectQueue, setInspectQueue,
+    globalMode, setGlobalMode,
     // extra fields consumed by L3 via any-cast
     chatInput: "",
   };
@@ -579,10 +580,10 @@ export default function Home() {
                   {navItems
                     .filter((item) => {
                       if (globalMode === "user") {
-                        return ["dashboard", "fraud-mitigation", "logistics", "orders", "cart"].includes(item.id);
+                        return ["dashboard", "fraud-mitigation", "orders", "cart"].includes(item.id);
                       } else {
                         // Admin mode
-                        return ["grading", "fraud-mitigation"].includes(item.id);
+                        return ["grading"].includes(item.id);
                       }
                     })
                     .map(item => {

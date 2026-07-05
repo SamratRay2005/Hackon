@@ -25,6 +25,7 @@ import {
   BadgePercent,
   ChevronDown,
   ChevronUp,
+  Truck,
 } from "lucide-react";
 import { useApp, getSKUReferenceImage } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -564,9 +565,8 @@ export default function L7Cart() {
               </div>
             </div>
           </div>
-
           <button
-            className="btn btn-secondary w-full py-2.5 text-xs font-bold"
+            className="btn btn-secondary w-full py-2.5 text-xs font-bold mt-4"
             onClick={handleDone}
           >
             Done — Continue Shopping
