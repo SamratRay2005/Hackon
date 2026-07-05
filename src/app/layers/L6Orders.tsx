@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Wrench,
   X,
+  CheckCircle,
 } from "lucide-react";
 import { useApp } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -221,6 +222,8 @@ export default function L6Orders() {
 
   const [getHelpOrder, setGetHelpOrder] = React.useState<any>(null);
   const [reasonOrder, setReasonOrder] = React.useState<any>(null);
+  const [returnReason, setReturnReason] = React.useState("");
+  const [returnSuccess, setReturnSuccess] = React.useState(false);
 
   const orders: any[] = walletInfo?.orders ?? [];
 
@@ -277,8 +280,13 @@ export default function L6Orders() {
         timestamp: new Date().toISOString()
       }];
     });
-    // In our actual app, the wallet would handle the refund, but here we'll just redirect to the dashboard or show an alert
-    alert("Return Approved! Please drop off your item at the nearest Dark Store for inspection.");
+    
+    // Instead of alert, show our nice modal
+    setReturnSuccess(true);
+  };
+
+  const closeReturnSuccess = () => {
+    setReturnSuccess(false);
     setActiveTab("dashboard");
   };
 
@@ -320,6 +328,7 @@ export default function L6Orders() {
             {orders.map((order: any) => {
               const daysLeft = getDaysRemaining(order);
               const isExpired = daysLeft <= 0;
+              const isReturned = inspectQueue?.some((i: any) => i.orderId === order.orderId);
 
               return (
                 <div
@@ -379,19 +388,26 @@ export default function L6Orders() {
                       </span>
                     )}
 
-                    <button
-                      onClick={() => handleReturnClick(order)}
-                      disabled={isExpired}
-                      className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl border transition-all ${
-                        isExpired
-                          ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
-                          : "text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200 hover:border-rose-300"
-                      }`}
-                      title={isExpired ? "Return window has closed" : "Start return process"}
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      Return
-                    </button>
+                    {isReturned ? (
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Return Initiated
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleReturnClick(order)}
+                        disabled={isExpired}
+                        className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl border transition-all ${
+                          isExpired
+                            ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
+                            : "text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200 hover:border-rose-300"
+                        }`}
+                        title={isExpired ? "Return window has closed" : "Start return process"}
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Return item
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -426,6 +442,27 @@ export default function L6Orders() {
             }
           }}
         />
+      )}
+
+      {/* Return Success Modal */}
+      {returnSuccess && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 shadow-2xl">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-extrabold text-slate-800">Return Initiated!</h3>
+            <p className="text-sm text-slate-600">
+              Your return has been approved. Please drop off your item at the nearest <strong>Dark Store</strong> for inspection.
+            </p>
+            <button
+              className="btn btn-primary w-full py-3 mt-2 text-sm font-bold"
+              onClick={closeReturnSuccess}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

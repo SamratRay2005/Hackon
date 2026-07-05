@@ -36,14 +36,18 @@ export default function L1Sizing() {
     setShowBracketingModal,
     setMetrics,
     walletInfo,
+    setWalletInfo,
+    setActiveTab,
     searchQuery,
     setSearchQuery,
     showSuggestions,
     setShowSuggestions,
+    setShoppingBag,
   } = useApp();
 
   const [sizingLoading, setSizingLoading] = React.useState(false);
   const [heightInches, setHeightInches] = React.useState<number | "">("");
+  const [acceptedSize, setAcceptedSize] = React.useState<string | null>(null);
   const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
   const isApparelOrFootwear = !!(selectedProduct && (selectedProduct.category === "Apparel" || selectedProduct.category === "Footwear"));
 
@@ -72,15 +76,36 @@ export default function L1Sizing() {
   };
 
   const applySizeRecommendation = (recommendedSize: string) => {
+    setAcceptedSize(recommendedSize);
+  };
+
+  const handleAddToCart = () => {
+    if (!acceptedSize) return;
     const skuCounts: Record<string, number> = {};
     cart.forEach(item => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
     const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
     const bracketedProd = PRODUCT_CATALOG.find(p => p.sku === bracketedSku) || PRODUCT_CATALOG[0];
-    setCart([...cart.filter(item => item.sku !== bracketedSku), { id: "rec-size", sku: bracketedSku, name: bracketedProd.name, size: recommendedSize, price: bracketedProd.price }]);
+    
+    // Add to Shopping Bag instead of instantly purchasing
+    setShoppingBag((prev: any) => [
+      ...prev,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        sku: bracketedProd.sku,
+        name: bracketedProd.name,
+        price: bracketedProd.price,
+        grade: "A", // New catalog items are pristine Grade A
+        originalPrice: bracketedProd.price,
+        size: acceptedSize,
+        isPreloved: false
+      }
+    ]);
+
     setShowBracketingModal(false);
     setSizingResult(null);
     setSizingImage(null);
-    setMetrics(prev => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
+    setAcceptedSize(null);
+    setMetrics((prev: any) => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
     try {
       const confetti = (window as any).confetti;
       if (confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
@@ -96,6 +121,23 @@ export default function L1Sizing() {
           <h2>Find My Size — AI Fit Recommender</h2>
           <span className="section-badge badge-layer-1">Size AI</span>
         </div>
+
+        {/* Selected Product Context */}
+        {selectedProduct && (
+          <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm mb-2">
+            <div className="w-24 h-24 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0">
+              <img src={getSKUReferenceImage(selectedProductSku)} className="w-full h-full object-contain" alt={selectedProduct.name} />
+            </div>
+            <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Target Product</span>
+                <span className="mini-badge info text-[9px] font-mono font-bold">SKU: {selectedProductSku}</span>
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">{selectedProduct.name}</h3>
+              <div className="text-emerald-600 font-extrabold font-mono">${selectedProduct.price.toFixed(2)}</div>
+            </div>
+          </div>
+        )}
 
         {!isApparelOrFootwear ? (
           <div className="flex flex-col gap-3">
@@ -298,9 +340,15 @@ export default function L1Sizing() {
           </div>
         )}
 
-        {sizingResult && (
+        {sizingResult && !acceptedSize && (
           <button className="btn btn-success w-full py-2.5 text-xs font-bold" onClick={() => applySizeRecommendation(sizingResult.recommendedSize)}>
             <CheckCircle className="w-4 h-4" /> Accept AI Recommendation
+          </button>
+        )}
+        
+        {acceptedSize && (
+          <button className="btn btn-primary w-full py-2.5 text-xs font-bold" onClick={handleAddToCart}>
+            Add Size {acceptedSize} to Cart
           </button>
         )}
 

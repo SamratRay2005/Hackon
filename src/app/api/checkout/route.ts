@@ -72,6 +72,8 @@ export async function POST(req: NextRequest) {
     let totalCashbackAdded = 0;
 
     for (const item of items) {
+      if (!item.isPreloved) continue;
+      
       const grade = (item.grade ?? "B").toUpperCase();
       const rate = CASHBACK_RATE[grade] ?? CASHBACK_RATE["B"];
       const rewardAmount = parseFloat((item.price * rate).toFixed(2));
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
         const voucher = await db.issueVoucher(
           userId,
           rewardAmount,
-          `Grade ${grade} Pre-Loved Reward`
+          `Amazon Pay Gift Card`
         );
         cashbackEarned.push({ itemName: item.name, grade, rate: `${(rate * 100).toFixed(0)}%`, reward: "voucher", amount: rewardAmount });
         vouchersIssued.push({ id: voucher.id, title: voucher.title, discountAmount: voucher.discountAmount });

@@ -16,6 +16,7 @@ import {
 import {
   useApp,
   renderMarkdown,
+  getSKUReferenceImage,
 } from "./AppContext";
 import { db } from "@/lib/services";
 
@@ -133,6 +134,22 @@ export default function L3Deflection() {
         <h2>Get Help — Chat Before You Return</h2>
         <span className="section-badge badge-layer-3">AI Support</span>
       </div>
+
+      {/* Selected Product Context */}
+      {deflectProduct && deflectSku && (
+        <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm">
+          <div className="w-24 h-24 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0">
+            <img src={getSKUReferenceImage(deflectSku)} className="w-full h-full object-contain" alt={deflectProduct} />
+          </div>
+          <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Troubleshooting Product</span>
+              <span className="mini-badge info text-[9px] font-mono font-bold">SKU: {deflectSku}</span>
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">{deflectProduct}</h3>
+          </div>
+        </div>
+      )}
 
       {/* Warranty void warning banner */}
       {warrantyVoidWarning && (

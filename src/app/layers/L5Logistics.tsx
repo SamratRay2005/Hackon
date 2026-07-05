@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Map,
 } from "lucide-react";
-import { useApp } from "./AppContext";
+import { useApp, getSKUReferenceImage } from "./AppContext";
+import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 export default function L5Logistics() {
   const {
@@ -23,6 +24,9 @@ export default function L5Logistics() {
     profileUserId,
     setMetrics,
   } = useApp();
+
+  const product = PRODUCT_CATALOG.find(p => p.sku === logisticsSku);
+  const productName = product?.name || logisticsSku;
 
   const [buyerZip, setBuyerZip] = React.useState("98004");
   const [logisticsLoading, setLogisticsLoading] = React.useState(false);
@@ -76,6 +80,22 @@ export default function L5Logistics() {
         <h2>Arrange Shipping — Eco Route Optimizer</h2>
         <span className="section-badge badge-layer-5">P2P Ship</span>
       </div>
+
+      {/* Selected Product Context */}
+      {logisticsSku && (
+        <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm mb-2">
+          <div className="w-24 h-24 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0">
+            <img src={getSKUReferenceImage(logisticsSku)} className="w-full h-full object-contain" alt={productName} />
+          </div>
+          <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Logistics Target</span>
+              <span className="mini-badge info text-[9px] font-mono font-bold">SKU: {logisticsSku}</span>
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">{productName}</h3>
+          </div>
+        </div>
+      )}
 
       <div className="success-callout">
         <Truck className="w-4 h-4 flex-shrink-0 mt-0.5" />

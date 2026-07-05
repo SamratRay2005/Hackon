@@ -13,17 +13,33 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get("userId") || "guest";
     const zipCode = searchParams.get("zipCode") || "98101";
 
+    const query = searchParams.get("query")?.toLowerCase() || "";
+
     // Use the zipCode and current date to seed the marketplace feed
     // so it rotates daily but stays consistent for the same area
     const seedBase = parseInt(zipCode) + new Date().getDate();
 
-    // Select 12 items pseudo-randomly from the full catalog of 150 items
     const feedItems = [];
-    const numItems = 12;
+    
+    // Filter the catalog if a query is provided
+    const itemsToProcess = query 
+      ? PRODUCT_CATALOG.filter(p => 
+          p.name.toLowerCase().includes(query) || 
+          p.category.toLowerCase().includes(query) || 
+          p.brand.toLowerCase().includes(query) ||
+          p.sku.toLowerCase().includes(query)
+        )
+      : PRODUCT_CATALOG;
+
+    // Show up to 30 items for variety (or all matched items if searching)
+    const numItems = query ? itemsToProcess.length : Math.min(30, itemsToProcess.length);
 
     for (let i = 0; i < numItems; i++) {
-      const pIndex = Math.floor(pseudoRandom(seedBase + i) * PRODUCT_CATALOG.length);
-      const product = PRODUCT_CATALOG[pIndex];
+      // If we are searching, just iterate through the matches. 
+      // If we are showing the default feed, pick pseudo-randomly.
+      const pIndex = query ? i : Math.floor(pseudoRandom(seedBase + i) * itemsToProcess.length);
+      const product = itemsToProcess[pIndex];
+      if (!product) continue;
 
       // Simulate a seller returning the item
       const sellerScoreNoise = (pseudoRandom(seedBase + i * 2) * 40) - 20; // -20 to +20

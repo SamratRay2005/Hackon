@@ -27,6 +27,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useApp, getSKUReferenceImage } from "./AppContext";
+import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 // ── Constants ────────────────────────────────────────────────────
 const GRADE_CASHBACK: Record<string, number> = { A: 3, B: 5 };
@@ -85,14 +86,16 @@ export default function L7Cart() {
   const cashbackDiscount = useCashback ? Math.min(cashbackBalance, maxCashback) : 0;
   const orderTotal = Math.max(0, subtotal + tax - voucherDiscount - cashbackDiscount);
 
-  // Projected rewards for each item in bag
-  const projectedRewards = shoppingBag.map((item: any) => {
-    const grade = (item.grade ?? "B").toUpperCase();
-    const rate = GRADE_CASHBACK[grade] ?? 5;
-    const amount = parseFloat((item.price * rate / 100).toFixed(2));
-    const isVoucher = item.price >= VOUCHER_THRESHOLD;
-    return { name: item.name, grade, rate, amount, isVoucher };
-  });
+  // Projected rewards for each item in bag (pre-loved only)
+  const projectedRewards = shoppingBag
+    .filter((item: any) => item.isPreloved)
+    .map((item: any) => {
+      const grade = (item.grade ?? "B").toUpperCase();
+      const rate = GRADE_CASHBACK[grade] ?? 5;
+      const amount = parseFloat((item.price * rate / 100).toFixed(2));
+      const isVoucher = item.price >= VOUCHER_THRESHOLD;
+      return { name: item.name, grade, rate, amount, isVoucher };
+    });
 
   // ── Toggle voucher selection ───────────────────────────────────
   const toggleVoucher = (id: string) => {
@@ -127,6 +130,7 @@ export default function L7Cart() {
             name: i.name,
             price: i.price,
             grade: i.grade ?? "B",
+            isPreloved: !!i.isPreloved
           })),
           applyVoucher: selectedVoucherId ?? null,
           applyCashback: useCashback,
@@ -142,10 +146,26 @@ export default function L7Cart() {
         // Do NOT call fetchWalletInfo() — Next.js serverless instances have
         // separate in-memory state, so a fresh GET /api/wallet returns stale data.
         if (data.wallet) {
+          // Push new orders to wallet directly so they appear in Orders tab
+          const newOrders = shoppingBag.map((item: any) => {
+            const catItem = PRODUCT_CATALOG.find(p => p.sku === item.sku);
+            return {
+              orderId: `ord-${Math.random().toString(36).substr(2, 9)}`,
+              sku: item.sku,
+              name: item.name,
+              price: item.price,
+              purchaseDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+              status: "Delivered",
+              category: catItem?.category || "Apparel",
+              returnWindowDays: 30
+            };
+          });
+
           setWalletInfo((prev: any) => ({
             ...prev,
             cashbackBalance: data.wallet.cashbackBalance,
             vouchers: data.wallet.activeVouchers,
+            orders: [...newOrders, ...(prev.orders || [])]
           }));
         }
 
@@ -347,31 +367,40 @@ export default function L7Cart() {
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-bold text-slate-800 truncate">{item.name}</div>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                              GRADE_STYLE[grade] ?? GRADE_STYLE["B"]
-                            }`}
-                          >
-                            Grade {grade}
-                          </span>
+                          {item.isPreloved && (
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                GRADE_STYLE[grade] ?? GRADE_STYLE["B"]
+                              }`}
+                            >
+                              Grade {grade}
+                            </span>
+                          )}
+                          {item.size && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200">
+                              Size: {item.size}
+                            </span>
+                          )}
                           <span className="text-emerald-600 font-bold text-xs font-mono">
                             ${item.price.toFixed(2)}
                           </span>
                         </div>
-                        <div
-                          className={`text-[10px] mt-1 flex items-center gap-1 ${
-                            isVoucher ? "text-indigo-600" : "text-emerald-600"
-                          }`}
-                        >
-                          {isVoucher ? (
-                            <Tag className="w-2.5 h-2.5" />
-                          ) : (
-                            <BadgePercent className="w-2.5 h-2.5" />
-                          )}
-                          {isVoucher
-                            ? `Earns $${rewardAmt} voucher (Grade ${grade}, ≥$50)`
-                            : `Earns $${rewardAmt} cashback (${rate}%)`}
-                        </div>
+                        {item.isPreloved && (
+                          <div
+                            className={`text-[10px] mt-1 flex items-center gap-1 ${
+                              isVoucher ? "text-indigo-600" : "text-emerald-600"
+                            }`}
+                          >
+                            {isVoucher ? (
+                              <Tag className="w-2.5 h-2.5" />
+                            ) : (
+                              <BadgePercent className="w-2.5 h-2.5" />
+                            )}
+                            {isVoucher
+                              ? `Earns $${rewardAmt} voucher (Grade ${grade}, ≥$50)`
+                              : `Earns $${rewardAmt} cashback (${rate}%)`}
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={() => removeFromBag(item.sku)}
