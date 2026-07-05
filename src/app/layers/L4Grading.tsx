@@ -25,6 +25,7 @@ export default function L4Grading() {
     profileUserId,
     setActiveTab,
     setLedgerRecords,
+    setMetrics,
     setResaleListings,
     setLogisticsSku,
     inspectQueue,
@@ -276,6 +277,7 @@ export default function L4Grading() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
