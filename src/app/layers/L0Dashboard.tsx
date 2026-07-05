@@ -409,6 +409,40 @@ export default function L0Dashboard() {
               <div className="text-sm text-slate-600 leading-relaxed mb-6">
                 {selectedProductDetails.description || "Experience the perfect blend of style and sustainability. This item has been verified for quality and authenticity."}
               </div>
+
+              {/* AI Certificate for Pre-loved Items */}
+              {selectedProductDetails.isPreloved && (
+                <div className="mb-6 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                  
+                  <div className="flex items-center gap-2 mb-4 relative z-10">
+                    <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    <h3 className="font-extrabold text-emerald-900 text-sm">
+                      Amazon AI Certified: Grade {selectedProductDetails.grade || "B"}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2.5 text-xs text-slate-700 relative z-10 bg-white/60 p-3 rounded-xl border border-emerald-100/50">
+                    <div className="flex items-start gap-2">
+                      <span className="font-bold text-slate-900 w-24 flex-shrink-0">Screen:</span>
+                      <span>No scratches detected by AI.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="font-bold text-slate-900 w-24 flex-shrink-0">Body:</span>
+                      <span>Minor scuff on the back left corner.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="font-bold text-slate-900 w-24 flex-shrink-0">Functionality:</span>
+                      <span>Passed all diagnostic tests.</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex items-center gap-2 relative z-10">
+                    <Award className="w-4 h-4 text-emerald-600" />
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Backed by Amazon's 30-Day Money-Back Guarantee</span>
+                  </div>
+                </div>
+              )}
               
               {/* Sizing Logic */}
               {(selectedProductDetails.category === "Apparel" || selectedProductDetails.category === "Footwear") && (

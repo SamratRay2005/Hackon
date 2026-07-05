@@ -324,7 +324,7 @@ export default function L6Orders() {
             <div className="text">No orders found for your account.</div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {orders.map((order: any) => {
               const daysLeft = getDaysRemaining(order);
               const isExpired = daysLeft <= 0;
@@ -333,41 +333,22 @@ export default function L6Orders() {
               return (
                 <div
                   key={order.sku}
-                  className={`border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 transition-all ${
+                  className={`border rounded-2xl p-4 flex flex-col gap-4 transition-all ${
                     isExpired
                       ? "bg-slate-50 border-slate-200 opacity-80"
-                      : "bg-white border-slate-200 hover:border-indigo-200 hover:shadow-sm"
+                      : "bg-white border-slate-200 hover:border-indigo-200 hover:shadow-md"
                   }`}
                 >
-                  {/* Product info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Package className="w-4 h-4 text-indigo-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-800 truncate">
-                          {order.name}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {order.sku}
-                          </span>
-                          <span className="text-[10px] text-slate-300">•</span>
-                          <span className="text-[10px] font-bold text-emerald-700 font-mono">
-                            ${order.price?.toFixed(2)}
-                          </span>
-                          <span className="text-[10px] text-slate-300">•</span>
-                          <span className="text-[10px] text-slate-400">
-                            {order.purchaseDate}
-                          </span>
-                        </div>
-                      </div>
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Order Placed
+                      </span>
+                      <span className="text-xs text-slate-600 font-medium">
+                        {order.purchaseDate}
+                      </span>
                     </div>
-                  </div>
-
-                  {/* Return window badge + actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
                     {isExpired ? (
                       <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">
                         <AlertCircle className="w-3 h-3" />
@@ -387,26 +368,77 @@ export default function L6Orders() {
                         {daysLeft}d left
                       </span>
                     )}
+                  </div>
 
+                  {/* Card Body */}
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="text-sm font-bold text-slate-800 leading-tight">
+                        {order.name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-1">
+                        SKU: {order.sku}
+                      </div>
+                      <div className="text-xs font-bold text-emerald-700 font-mono mt-2">
+                        ${order.price?.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer (Actions) */}
+                  <div className="pt-2 mt-auto">
                     {isReturned ? (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-                        <CheckCircle className="w-3.5 h-3.5" />
+                      <div className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2.5 rounded-xl">
+                        <CheckCircle className="w-4 h-4" />
                         Return Initiated
-                      </span>
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => handleReturnClick(order)}
-                        disabled={isExpired}
-                        className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl border transition-all ${
-                          isExpired
-                            ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
-                            : "text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200 hover:border-rose-300"
-                        }`}
-                        title={isExpired ? "Return window has closed" : "Start return process"}
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                        Return item
-                      </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        {hasManual(order.sku) ? (
+                          <>
+                            <button
+                              onClick={() => handleDIM(order)}
+                              disabled={isExpired}
+                              className={`flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all ${
+                                isExpired
+                                  ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
+                                  : "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 hover:border-indigo-300 shadow-sm"
+                              }`}
+                            >
+                              <Wrench className="w-3.5 h-3.5" />
+                              Support
+                            </button>
+                            <button
+                              onClick={() => setReasonOrder(order)}
+                              disabled={isExpired}
+                              className={`flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all ${
+                                isExpired
+                                  ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
+                                  : "text-rose-700 bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-300 shadow-sm"
+                              }`}
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              Return
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setReasonOrder(order)}
+                            disabled={isExpired}
+                            className={`col-span-2 flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all ${
+                              isExpired
+                                ? "text-slate-300 bg-slate-50 border-slate-200 cursor-not-allowed"
+                                : "text-slate-700 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 shadow-sm"
+                            }`}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Return Item
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

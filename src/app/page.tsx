@@ -579,7 +579,7 @@ export default function Home() {
                   {navItems
                     .filter((item) => {
                       if (globalMode === "user") {
-                        return ["dashboard", "fraud-mitigation", "deflection", "logistics", "orders", "cart"].includes(item.id);
+                        return ["dashboard", "fraud-mitigation", "logistics", "orders", "cart"].includes(item.id);
                       } else {
                         // Admin mode
                         return ["grading", "fraud-mitigation"].includes(item.id);
@@ -625,7 +625,7 @@ export default function Home() {
             </aside>
 
             {/* ── MAIN CONTENT ── */}
-            <main className="flex flex-col gap-5 min-w-0">
+            <main className="flex flex-col gap-5 min-w-0 min-h-[85vh]">
 
               {/* ── PRODUCT CARD HAS BEEN MOVED TO INDIVIDUAL LAYERS ── */}
 
