@@ -18,6 +18,11 @@ import {
   CheckCircle,
   ArrowRight,
   X,
+  Zap,
+  ShieldCheck,
+  RotateCcw,
+  Clock,
+  Settings,
 } from "lucide-react";
 import {
   useApp,
@@ -37,7 +42,11 @@ export default function LMarketplace() {
     setShowCheckoutModal,
     checkoutStep,
     setCheckoutStep,
-  } = useApp();
+    resaleListings,
+    setResaleListings,
+    isAdminMode,
+    setIsAdminMode,
+  } = useApp() as any;
 
   const [marketplaceFeed, setMarketplaceFeed] = React.useState<any[]>([]);
   const [marketplaceLoading, setMarketplaceLoading] = React.useState(false);
@@ -101,6 +110,131 @@ export default function LMarketplace() {
           <ShoppingBag className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>Items shown below have been returned by users within a 100km radius. By purchasing locally, you earn Green Credits and save shipping emissions.</span>
         </div>
+
+        {/* ── DARK STORE RESALE SECTION ── */}
+        {resaleListings.length > 0 && (() => {
+          const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+          const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+          const now = Date.now();
+          const activeResale = resaleListings.filter((r: any) => (now - r.addedToStoreAt) < SEVEN_DAYS_MS);
+          if (activeResale.length === 0) return null;
+          return (
+            <div className="flex flex-col gap-4 mb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">⚡ Dark Store — Available Now</span>
+                </div>
+                {/* Admin Mode toggle */}
+                <button
+                  onClick={() => setIsAdminMode((v: boolean) => !v)}
+                  className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border transition-all ${
+                    isAdminMode
+                      ? "bg-violet-600 text-white border-violet-600 shadow"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-violet-300"
+                  }`}
+                >
+                  <Settings className="w-3 h-3" />
+                  {isAdminMode ? "Admin Mode ON" : "Admin Mode"}
+                </button>
+              </div>
+
+              {/* Admin time simulator */}
+              {isAdminMode && (
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-3 flex flex-col gap-2">
+                  <div className="text-[10px] font-bold text-violet-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" /> Admin — Dark Store Time Simulator
+                  </div>
+                  <p className="text-[10px] text-violet-600">Simulate time passing to see how product tags and routing evolve automatically.</p>
+                  <div className="flex gap-2">
+                    <button
+                      className="flex-1 text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-300 rounded-lg py-2 hover:bg-violet-200 transition-all flex items-center justify-center gap-1.5"
+                      onClick={() => {
+                        // Simulate 2 days: Grade A items become "Returned Product"
+                        setResaleListings((prev: any[]) =>
+                          prev.map((r: any) =>
+                            r.grade === "A" && !r.isReturnedProduct
+                              ? { ...r, isReturnedProduct: true }
+                              : r
+                          )
+                        );
+                      }}
+                    >
+                      <RotateCcw className="w-3 h-3" /> Simulate +2 Days (Grade A Downgrade)
+                    </button>
+                    <button
+                      className="flex-1 text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 rounded-lg py-2 hover:bg-rose-200 transition-all flex items-center justify-center gap-1.5"
+                      onClick={() => {
+                        // Simulate 7 days: All items go to warehouse (removed from listing)
+                        setResaleListings([]);
+                      }}
+                    >
+                      <Zap className="w-3 h-3" /> Simulate +7 Days (Flush to Warehouse)
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {activeResale.map((item: any, i: number) => {
+                  const ageMs = now - item.addedToStoreAt;
+                  const isReturnedProduct = item.isReturnedProduct || ageMs >= TWO_DAYS_MS;
+                  return (
+                    <div key={item.sku + i} className="marketplace-item-card group relative border-2 border-emerald-200">
+                      {/* Tags overlay */}
+                      <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                        <span className={`mini-badge ${item.grade === "A" ? "success" : item.grade === "B" ? "warning" : "danger"}`}>Grade {item.grade}</span>
+                        <span className="flex items-center gap-1 text-[9px] font-bold bg-violet-600 text-white px-2 py-0.5 rounded-full shadow">
+                          <Zap className="w-2.5 h-2.5" /> Get it in 2 hours
+                        </span>
+                        {isReturnedProduct && (
+                          <>
+                            <span className="flex items-center gap-1 text-[9px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow">
+                              <RotateCcw className="w-2.5 h-2.5" /> Returned Product
+                            </span>
+                            <span className="flex items-center gap-1 text-[9px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full shadow">
+                              <ShieldCheck className="w-2.5 h-2.5" /> Verified Quality
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="marketplace-item-image">
+                        <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-cover" alt={item.name} />
+                      </div>
+                      <div className="p-4 flex flex-col flex-1 pt-8">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{item.brand}</div>
+                        <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{item.name}</h3>
+                        <div className="flex items-end justify-between mt-3 mb-3 border-t border-slate-100 pt-3">
+                          <div>
+                            <span className="text-emerald-600 font-extrabold text-lg font-mono">${item.price.toFixed(2)}</span>
+                            <span className="text-slate-400 text-[10px] line-through ml-2">${item.originalPrice.toFixed(2)}</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500">{item.distance} away</span>
+                        </div>
+                        {isReturnedProduct && (
+                          <div className="text-[10px] text-indigo-700 font-medium mb-3 bg-indigo-50 p-2 rounded-lg border border-indigo-100 flex items-start gap-1.5">
+                            <Award className="w-3 h-3 flex-shrink-0 mt-0.5 text-indigo-500" />
+                            <span>Buying returned products earns you <strong>Green Credits</strong> from Shravani's Rewards system.</span>
+                          </div>
+                        )}
+                        <button
+                          className="btn btn-primary w-full py-2 text-xs font-bold mt-auto"
+                          onClick={() => addToBag(item)}
+                          disabled={shoppingBag.some((b: any) => b.sku === item.sku)}
+                        >
+                          {shoppingBag.some((b: any) => b.sku === item.sku)
+                            ? <><CheckCircle className="w-3.5 h-3.5" /> Added to Bag</>
+                            : <><ShoppingBag className="w-3.5 h-3.5" /> Add to Bag</>}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <hr className="border-slate-200" />
+            </div>
+          );
+        })()}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {marketplaceLoading ? (

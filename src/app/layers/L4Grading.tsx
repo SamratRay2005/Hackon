@@ -62,6 +62,13 @@ export default function L4Grading() {
       }
     } catch { } finally { setGradingLoading(false); }
   };
+  const getProductImage = (sku: string) => {
+    if (sku === "CF-Mkr-99") return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
+    if (sku === "DENIM-JKT-001") return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
+    if (sku === "SPK-AIR-12") return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
+    if (sku === "YRDLY-GNTLMN-001") return "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500";
+    return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-5">
@@ -75,16 +82,9 @@ export default function L4Grading() {
           </div>
           <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px] pr-1">
             {inspectQueue && inspectQueue.length > 0 ? inspectQueue.map((item: any) => (
-              <button 
+              <div 
                 key={item.id} 
                 className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
-                onClick={() => {
-                  setGradingSku(item.sku);
-                  setGradingItemName(item.itemName);
-                  setGradingResult(null);
-                  setGradingVideoUrl("");
-                  setGradingVideoBase64("");
-                }}
               >
                 <div className="font-bold text-slate-800 truncate w-full">{item.itemName}</div>
                 <div className="flex items-center justify-between mt-1">
@@ -93,7 +93,23 @@ export default function L4Grading() {
                     {item.source === "fraud" ? "Damaged" : "Vibe"}
                   </span>
                 </div>
-              </button>
+                <button
+                  onClick={() => {
+                    setGradingSku(item.sku);
+                    setGradingItemName(item.itemName);
+                    setGradingResult(null);
+                    setGradingVideoUrl("");
+                    setGradingVideoBase64("");
+                  }}
+                  className={`mt-2 w-full py-1.5 rounded text-[10px] font-bold uppercase transition-all ${
+                    gradingSku === item.sku 
+                      ? "bg-indigo-600 text-white shadow-sm" 
+                      : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
+                  }`}
+                >
+                  {gradingSku === item.sku ? "Selected" : "Add to Checker"}
+                </button>
+              </div>
             )) : (
               <div className="text-[10px] text-slate-400 text-center py-6 italic">Queue is empty</div>
             )}
@@ -152,20 +168,28 @@ export default function L4Grading() {
             </div>
           )}
 
-          <div className="border-t border-slate-200 pt-3">
-            <div className="font-bold text-slate-600 mb-2 text-[10px] uppercase tracking-wider">Product Context</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
-                <span className="text-xs font-mono text-slate-800 font-medium">{gradingSku}</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
-                <span className="text-xs text-slate-800 font-medium">{profileUserId}</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col col-span-2">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Product</span>
-                <span className="text-xs text-slate-800 font-medium truncate" title={gradingItemName}>{gradingItemName}</span>
+          <div className="border-t border-slate-200 pt-3 flex gap-3">
+            <div className="w-16 h-16 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+              {gradingSku ? (
+                <img src={getProductImage(gradingSku)} alt={gradingItemName} className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-6 h-6 text-slate-300" />
+              )}
+            </div>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="font-bold text-slate-600 text-[10px] uppercase tracking-wider mb-1">Product Context</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
+                  <span className="text-[10px] font-mono text-slate-800 font-medium truncate">{gradingSku || "None"}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
+                  <span className="text-[10px] text-slate-800 font-medium truncate">{profileUserId || "None"}</span>
+                </div>
+                <div className="col-span-2 text-xs font-medium text-slate-700 truncate" title={gradingItemName}>
+                  {gradingItemName}
+                </div>
               </div>
             </div>
           </div>
