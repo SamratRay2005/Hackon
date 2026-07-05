@@ -480,6 +480,36 @@ function ensureEmbedded(manual: Manual) {
 // ─────────────────────────────────────────────────────────────
 
 function getSeededOrders(userId: string): Order[] {
+  const now = new Date();
+
+  // ── 4 PINNED DEMO ORDERS — always first, always visible to jury ──
+  // Each product demonstrates a different return route:
+  //  1. CF-Mkr-99      → DIY Repair (has manual, L3 Chat)
+  //  2. YRDLY-GNTLMN-001 → Non-Returnable (hygiene policy gate)
+  //  3. SPK-AIR-12     → Defective route (L2 Verify Return)
+  //  4. DENIM-JKT-001  → Vibe Mismatch route (L5 Dark Store)
+  const DEMO_SKUS = ["CF-Mkr-99", "YRDLY-GNTLMN-001", "SPK-AIR-12", "DENIM-JKT-001"];
+  const demoProducts = DEMO_SKUS.map(sku => PRODUCT_CATALOG.find(p => p.sku === sku)).filter(Boolean) as typeof PRODUCT_CATALOG;
+
+  const demoOrders: Order[] = demoProducts.map((p, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (i * 7 + 3)); // Each bought a week apart
+    return {
+      orderId: `ORD-DEMO-${p.sku}`,
+      userId,
+      sku: p.sku,
+      name: p.name,
+      price: p.price,
+      category: p.category,
+      brand: p.brand,
+      returnWindowDays: p.returnWindowDays,
+      purchaseDate: d.toISOString().split("T")[0],
+      status: "active" as const,
+      createdAt: d.toISOString(),
+    };
+  });
+
+  // Fill up to 5 total with random products that aren't already pinned
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     hash = (hash << 5) - hash + userId.charCodeAt(i);
@@ -489,22 +519,13 @@ function getSeededOrders(userId: string): Order[] {
     const x = Math.sin(hash++) * 10000;
     return x - Math.floor(x);
   };
-  const shuffled = [...PRODUCT_CATALOG];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+  const remaining = PRODUCT_CATALOG.filter(p => !DEMO_SKUS.includes(p.sku));
+  for (let i = remaining.length - 1; i > 0; i--) {
     const j = Math.floor(seedRandom() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
   }
-  
-  // Ensure at least one product with a manual is in the first 5 so the DIM flow can be tested
-  const manualSku = "CF-Mkr-99"; // Coffee Maker has a manual
-  const manualIdx = shuffled.findIndex(p => p.sku === manualSku);
-  if (manualIdx > -1) {
-    [shuffled[0], shuffled[manualIdx]] = [shuffled[manualIdx], shuffled[0]];
-  }
-
-  const now = new Date();
-  return shuffled.slice(0, 5).map((p) => {
-    const daysAgo = Math.floor(seedRandom() * 60);
+  const extraOrders: Order[] = remaining.slice(0, 1).map((p) => {
+    const daysAgo = Math.floor(seedRandom() * 60) + 30;
     const d = new Date(now);
     d.setDate(d.getDate() - daysAgo);
     return {
@@ -521,7 +542,10 @@ function getSeededOrders(userId: string): Order[] {
       createdAt: d.toISOString(),
     };
   });
+
+  return [...demoOrders, ...extraOrders];
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // IN-MEMORY GLOBAL STATE (fallback when DynamoDB unavailable)

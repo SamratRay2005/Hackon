@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 
+export interface InspectQueueItem {
+  id: string;
+  orderId: string;
+  sku: string;
+  itemName: string;
+  source: "fraud" | "vibe";
+  timestamp: string;
+}
+
 // ─────────────────────────────────────────────
 // MOCK SVG ILLUSTRATIONS (shared)
 // ─────────────────────────────────────────────
@@ -573,11 +582,28 @@ export interface AppContextType {
   setShowSuggestions: (v: boolean) => void;
   searchContainerRef: React.RefObject<HTMLDivElement>;
 
+  // Dark Store Resale (L4 → Marketplace pipeline)
+  resaleListings: Array<{
+    sku: string; name: string; price: number; brand: string; grade: string;
+    co2Saved: number; distance: string; trust: number; originalPrice: number;
+    addedToStoreAt: number; // Unix ms timestamp when graded
+    isReturnedProduct: boolean; // false for Grade A initially
+  }>;
+  setResaleListings: (fn: any) => void;
+  isAdminMode: boolean;
+  setIsAdminMode: (v: boolean) => void;
+
   // Fraud image (shared with product card capture)
   fraudImage: string | null;
   setFraudImage: (v: string | null) => void;
   fraudImageType: string;
   setFraudImageType: (v: string) => void;
+  fraudClaimType: "damaged_product" | "different_product";
+  setFraudClaimType: (v: "damaged_product" | "different_product") => void;
+
+  // Admin Inspect Queue
+  inspectQueue: InspectQueueItem[];
+  setInspectQueue: React.Dispatch<React.SetStateAction<InspectQueueItem[]>>;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);

@@ -35,12 +35,19 @@ export default function L2Fraud() {
     profileIp,
     profilePriorReturns,
     setMetrics,
-  } = useApp();
+    fraudClaimType: claimType,
+    setFraudClaimType: setClaimType,
+    setActiveTab,
+    setInspectQueue,
+  } = useApp() as any;
 
   const [fraudLoading, setFraudLoading] = React.useState(false);
   const [fraudResult, setFraudResult] = React.useState<any>(null);
   const [fraudImageName, setFraudImageName] = React.useState("uploaded_claim_evidence.jpg");
   const [fraudDemoCycle, setFraudDemoCycle] = React.useState(0);
+  const [isDamageVisible, setIsDamageVisible] = React.useState<boolean | null>(null);
+  const [nonVisibleCategory, setNonVisibleCategory] = React.useState<"electronics" | "apparel" | "other">("electronics");
+  const [answers, setAnswers] = React.useState<Record<string, string>>({});
 
   const triggerFraudCheck = async () => {
     if (!fraudImage) return;
@@ -57,12 +64,32 @@ export default function L2Fraud() {
           ipAddress: profileIp,
           sku: fraudSku,
           itemName: fraudItemName,
-          priorReturns: profilePriorReturns
+          priorReturns: profilePriorReturns,
+          claimType,
+          isDamageVisible,
+          nonVisibleCategory,
+          questionnaireAnswers: answers
         })
       });
       if (res.ok) {
         const data = await res.json();
         setFraudResult(data);
+
+        // If it's not a retake and score is <= 70 (Approved or Moderate Risk), push to inspect queue
+        if (data && !data.shouldRetake && data.riskScore <= 70) {
+          setInspectQueue((prev: any[]) => {
+            if (prev.find(item => item.sku === fraudSku)) return prev;
+            return [...prev, {
+              id: Math.random().toString(36).substr(2, 9),
+              orderId: Math.random().toString(36).substr(2, 9),
+              sku: fraudSku,
+              itemName: fraudItemName,
+              source: "fraud",
+              timestamp: new Date().toISOString()
+            }];
+          });
+        }
+
         if (data.recommendedAction === "BLOCK") setMetrics((prev: any) => ({ ...prev, fraudAttemptsBlocked: prev.fraudAttemptsBlocked + 1 }));
       }
     } catch { } finally { setFraudLoading(false); }
@@ -98,6 +125,30 @@ export default function L2Fraud() {
         </div>
       </div>
 
+      {/* Claim Type Selector Toggle */}
+      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-[360px] shadow-sm">
+        <button
+          className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${
+            claimType === "damaged_product"
+              ? "bg-white text-slate-800 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+          onClick={() => { setClaimType("damaged_product"); setIsDamageVisible(null); setAnswers({}); setFraudResult(null); }}
+        >
+          Damaged Product Check
+        </button>
+        <button
+          className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${
+            claimType === "different_product"
+              ? "bg-white text-slate-800 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+          onClick={() => { setClaimType("different_product"); setIsDamageVisible(null); setAnswers({}); setFraudResult(null); }}
+        >
+          Different Product Check
+        </button>
+      </div>
+
       {/* Split Panel: Customer Claim vs Catalog Reference */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left: Claim Photo */}
@@ -113,35 +164,248 @@ export default function L2Fraud() {
             )}
           </div>
 
-          <div className="relative aspect-video w-full rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shadow-sm">
-            {fraudImage ? (
-              <img src={fraudImage} className="w-full h-full object-contain" alt="Customer evidence photo" />
-            ) : (
-              <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2">
-                <ImageIcon className="w-10 h-10 text-slate-300" />
-                <span className="text-xs font-semibold text-slate-500">No Claim Photo Loaded</span>
-                <span className="text-[10px] text-slate-400">Use camera, upload, or load a sample below</span>
+          {claimType === "damaged_product" && isDamageVisible === null ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-4 shadow-sm my-auto min-h-[220px] justify-center">
+              <div className="text-center">
+                <span className="text-xs font-bold text-slate-800 block mb-1">Is the product damage clearly visible?</span>
+                <span className="text-[10px] text-slate-400">Specify if the claim involves external physical damage or internal functional failure.</span>
               </div>
-            )}
-          </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  className="btn btn-secondary py-2.5 text-xs font-bold w-full border border-slate-300 hover:bg-slate-50 text-slate-700"
+                  onClick={() => { setIsDamageVisible(true); setFraudResult(null); }}
+                >
+                  Yes, clearly visible (cracks, tears, etc.)
+                </button>
+                <button
+                  className="btn btn-secondary py-2.5 text-xs font-bold w-full border border-slate-300 hover:bg-slate-50 text-slate-700"
+                  onClick={() => { setIsDamageVisible(false); setFraudResult(null); setAnswers({}); }}
+                >
+                  No, it's not visible (internal defect)
+                </button>
+              </div>
+            </div>
+          ) : claimType === "damaged_product" && isDamageVisible === false && !answers._completed ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-4 shadow-sm my-auto min-h-[220px] justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-800">Diagnostic Intake</span>
+                  <button
+                    className="text-[10px] text-indigo-600 font-bold hover:underline"
+                    onClick={() => { setIsDamageVisible(null); }}
+                  >
+                    ← Back
+                  </button>
+                </div>
 
-          <div className="mt-1">
-            <WebcamCapture
-              onCapture={(base64: string) => {
-                setFraudImage(base64);
-                setFraudImageName("uploaded_claim_evidence.jpg");
-                setFraudResult(null);
-              }}
-              overlayType="damage"
-            />
-          </div>
+                <div className="mt-3 flex flex-col gap-3">
+                  {/* Category Selector */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase">Product Category</label>
+                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                      {(["electronics", "apparel", "other"] as const).map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`flex-1 text-center py-1 text-[10px] font-bold capitalize rounded-md transition-all ${
+                            nonVisibleCategory === cat
+                              ? "bg-white text-slate-800 shadow-sm"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                          onClick={() => { setNonVisibleCategory(cat); setAnswers({}); }}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-          <button
-            className="btn btn-secondary w-full py-2 text-xs font-bold"
-            onClick={handleFraudDemoClick}
-          >
-            Load Sample Claim #{(fraudDemoCycle % 3) + 1}
-          </button>
+                  {/* Diagnostic Questions */}
+                  {nonVisibleCategory === "electronics" && (
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Does the device power on?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.powerOn === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, powerOn: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Are there warning codes/indicators?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.errorWarning === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, errorWarning: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Is there an internal loose rattle?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.internalNoise === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, internalNoise: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {nonVisibleCategory === "apparel" && (
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Is it a size/fit issue?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.sizingMismatch === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, sizingMismatch: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Are seams, zippers or tags defective?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.stitchingBroken === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, stitchingBroken: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {nonVisibleCategory === "other" && (
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Does it fail core functions?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.functionalFailure === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, functionalFailure: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-600">Are critical accessories missing?</span>
+                        <div className="flex gap-1.5">
+                          {(["Yes", "No"] as const).map(opt => (
+                            <button
+                              key={opt}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded border ${answers.missingAccessory === opt ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-600"}`}
+                              onClick={() => setAnswers(prev => ({ ...prev, missingAccessory: opt }))}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary py-2 text-xs font-bold w-full mt-4"
+                onClick={() => setAnswers(prev => ({ ...prev, _completed: "true" }))}
+              >
+                Proceed to Photo Verification
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Reset intake options back button */}
+              {claimType === "damaged_product" && (
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    Diagnostic Mode: {isDamageVisible ? "Visible Damage Scan" : `Non-Visible / Functional ${nonVisibleCategory} Scan`}
+                  </span>
+                  <button
+                    className="text-[10px] text-indigo-600 font-bold hover:underline"
+                    onClick={() => {
+                      setIsDamageVisible(null);
+                      setAnswers({});
+                      setFraudImage(null);
+                      setFraudResult(null);
+                    }}
+                  >
+                    Reset Diagnostic Questions
+                  </button>
+                </div>
+              )}
+
+              {isDamageVisible === false && (
+                <div className="bg-sky-50 border border-sky-100 rounded-xl p-2.5 text-[10px] text-sky-700 font-semibold leading-relaxed flex items-start gap-1.5">
+                  <span>💡</span>
+                  <span>
+                    Note: Since the defect is functional or internal, please upload a photo of the product showing the barcode, brand logo, or serial number label. We will verify that the correct item matches the catalog reference.
+                  </span>
+                </div>
+              )}
+
+              <div className="relative aspect-video w-full rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shadow-sm">
+                {fraudImage ? (
+                  <img src={fraudImage} className="w-full h-full object-contain" alt="Customer evidence photo" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2">
+                    <ImageIcon className="w-10 h-10 text-slate-300" />
+                    <span className="text-xs font-semibold text-slate-500">No Claim Photo Loaded</span>
+                    <span className="text-[10px] text-slate-400">Use camera, upload, or load a sample below</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-1">
+                <WebcamCapture
+                  onCapture={(base64: string) => {
+                    setFraudImage(base64);
+                    setFraudImageName("uploaded_claim_evidence.jpg");
+                    setFraudResult(null);
+                  }}
+                  overlayType="damage"
+                />
+              </div>
+
+              <button
+                className="btn btn-secondary w-full py-2 text-xs font-bold"
+                onClick={handleFraudDemoClick}
+              >
+                Load Sample Claim #{(fraudDemoCycle % 3) + 1}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Right: Catalog Reference */}
@@ -215,23 +479,23 @@ export default function L2Fraud() {
             </div>
           ) : fraudResult ? (
             <div className="flex flex-col gap-4 flex-1">
-              {fraudResult.isRelevant === false ? (
+              {fraudResult.shouldRetake === true ? (
                 <div className="flex flex-col gap-3 flex-1 justify-center">
                   <div className="bg-rose-50 border-2 border-rose-200 p-4 rounded-xl flex items-start gap-3 text-rose-700 shadow-sm">
                     <AlertTriangle className="w-6 h-6 flex-shrink-0 text-rose-600 mt-0.5" />
                     <div>
-                      <div className="font-extrabold text-sm text-rose-800">Claim Evidence Rejected</div>
+                      <div className="font-extrabold text-sm text-rose-800">Verification Failure — Photo Retake Required</div>
                       <div className="text-xs font-semibold leading-relaxed mt-1">
-                        ⚠️ Image Rejected: The submitted photo does not appear to contain the claimed return product. Manual escalation required.
+                        ⚠️ {fraudResult.retakeReason || "The submitted photo does not match the claim context. Please capture another image."}
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-2.5 mt-2">
+                    <button className="btn btn-primary flex-1 py-2 text-xs font-bold" onClick={() => { setFraudImage(null); setFraudResult(null); }}>
+                      Take Photo Again
+                    </button>
                     <button className="btn btn-danger flex-1 py-2 text-xs font-bold" onClick={() => { alert("Claim escalated to Tier 2."); setFraudResult(null); }}>
                       Escalate to Tier 2
-                    </button>
-                    <button className="btn btn-secondary flex-1 py-2 text-xs font-bold" onClick={() => { alert("Photo re-request sent to customer."); setFraudResult(null); }}>
-                      Request Correct Image
                     </button>
                   </div>
                 </div>
@@ -252,14 +516,30 @@ export default function L2Fraud() {
                         <span className="text-xs font-bold text-slate-700 font-mono">Range 0–100</span>
                       </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Analyst Verdict</span>
-                      {fraudResult.riskScore > 70 ? (
-                        <span className="inline-flex items-center gap-1 bg-rose-100 border border-rose-200 text-rose-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🔴 High Suspicion — Block &amp; Escalate</span>
-                      ) : fraudResult.riskScore > 40 ? (
-                        <span className="inline-flex items-center gap-1 bg-amber-100 border border-amber-200 text-amber-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🟡 Moderate Risk — Flag for Review</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🟢 Genuine Claim — Approve Return</span>
+                    
+                    <div className="flex flex-wrap gap-4 sm:gap-6">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Analyst Verdict</span>
+                        {fraudResult.riskScore > 70 ? (
+                          <span className="inline-flex items-center gap-1 bg-rose-100 border border-rose-200 text-rose-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🔴 High Suspicion — Block &amp; Escalate</span>
+                        ) : fraudResult.riskScore > 40 ? (
+                          <span className="inline-flex items-center gap-1 bg-amber-100 border border-amber-200 text-amber-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🟡 Moderate Risk — Flag for Review</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-extrabold px-3 py-1.5 rounded-full">🟢 Genuine Claim — Approve Return</span>
+                        )}
+                      </div>
+
+                      {claimType === "damaged_product" && (
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Damage Check</span>
+                          {fraudResult.isDamageVisible === false && fraudResult.isDamaged ? (
+                            <span className="inline-flex items-center gap-1 bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-extrabold px-3 py-1.5 rounded-full">⚙️ Functional Defect (Internal)</span>
+                          ) : fraudResult.isDamaged ? (
+                            <span className="inline-flex items-center gap-1 bg-rose-100 border border-rose-200 text-rose-800 text-xs font-extrabold px-3 py-1.5 rounded-full">💥 Damage Detected</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 bg-teal-100 border border-teal-200 text-teal-850 text-xs font-extrabold px-3 py-1.5 rounded-full">✨ No Damage Detected</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -295,6 +575,18 @@ export default function L2Fraud() {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {/* TODO: REMOVE THIS LATER - AI CoT REASONING BLOCK */}
+                  {fraudResult.reasoning && (
+                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl mt-2">
+                      <div className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                        🧠 Chain of Thought Reasoning
+                      </div>
+                      <div className="text-xs text-yellow-900 leading-relaxed italic">
+                        "{fraudResult.reasoning}"
+                      </div>
                     </div>
                   )}
                 </div>

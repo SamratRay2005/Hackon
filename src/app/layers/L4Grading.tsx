@@ -26,7 +26,13 @@ export default function L4Grading() {
     setActiveTab,
     setLedgerRecords,
     setMetrics,
-  } = useApp();
+    setResaleListings,
+    setLogisticsSku,
+    inspectQueue,
+    setInspectQueue,
+    setGradingSku,
+    setGradingItemName,
+  } = useApp() as any;
 
   const [gradingVideoUrl, setGradingVideoUrl] = React.useState("");
   const [gradingVideoBase64, setGradingVideoBase64] = React.useState("");
@@ -56,9 +62,63 @@ export default function L4Grading() {
       }
     } catch { } finally { setGradingLoading(false); }
   };
+  const getProductImage = (sku: string) => {
+    if (sku === "CF-Mkr-99") return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
+    if (sku === "DENIM-JKT-001") return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
+    if (sku === "SPK-AIR-12") return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
+    if (sku === "YRDLY-GNTLMN-001") return "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500";
+    return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
+  };
 
   return (
-    <div className="glass-card flex flex-col gap-5">
+    <div className="flex flex-col lg:flex-row gap-5">
+      
+      {/* ── LEFT COLUMN: INSPECT QUEUE ── */}
+      <div className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-3">
+        <div className="glass-card flex flex-col gap-2 h-full">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pb-1.5 border-b border-slate-100 flex items-center justify-between">
+            <span>Inspect Queue</span>
+            <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-[9px]">{inspectQueue?.length || 0}</span>
+          </div>
+          <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px] pr-1">
+            {inspectQueue && inspectQueue.length > 0 ? inspectQueue.map((item: any) => (
+              <div 
+                key={item.id} 
+                className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
+              >
+                <div className="font-bold text-slate-800 truncate w-full">{item.itemName}</div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="font-mono text-[9px] text-slate-500">SKU: {item.sku}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${item.source === "fraud" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                    {item.source === "fraud" ? "Damaged" : "Vibe"}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setGradingSku(item.sku);
+                    setGradingItemName(item.itemName);
+                    setGradingResult(null);
+                    setGradingVideoUrl("");
+                    setGradingVideoBase64("");
+                  }}
+                  className={`mt-2 w-full py-1.5 rounded text-[10px] font-bold uppercase transition-all ${
+                    gradingSku === item.sku 
+                      ? "bg-indigo-600 text-white shadow-sm" 
+                      : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
+                  }`}
+                >
+                  {gradingSku === item.sku ? "Selected" : "Add to Checker"}
+                </button>
+              </div>
+            )) : (
+              <div className="text-[10px] text-slate-400 text-center py-6 italic">Queue is empty</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN: GRADING STATION ── */}
+      <div className="glass-card flex flex-col gap-5 flex-1 min-w-0">
       <div className="section-title-bar">
         <h2>Inspect Item — Condition Grader</h2>
         <span className="section-badge badge-layer-4">AI Grade</span>
@@ -108,20 +168,28 @@ export default function L4Grading() {
             </div>
           )}
 
-          <div className="border-t border-slate-200 pt-3">
-            <div className="font-bold text-slate-600 mb-2 text-[10px] uppercase tracking-wider">Product Context</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
-                <span className="text-xs font-mono text-slate-800 font-medium">{gradingSku}</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
-                <span className="text-xs text-slate-800 font-medium">{profileUserId}</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col col-span-2">
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Product</span>
-                <span className="text-xs text-slate-800 font-medium truncate" title={gradingItemName}>{gradingItemName}</span>
+          <div className="border-t border-slate-200 pt-3 flex gap-3">
+            <div className="w-16 h-16 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+              {gradingSku ? (
+                <img src={getProductImage(gradingSku)} alt={gradingItemName} className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-6 h-6 text-slate-300" />
+              )}
+            </div>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="font-bold text-slate-600 text-[10px] uppercase tracking-wider mb-1">Product Context</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">SKU</span>
+                  <span className="text-[10px] font-mono text-slate-800 font-medium truncate">{gradingSku || "None"}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
+                  <span className="text-[10px] text-slate-800 font-medium truncate">{profileUserId || "None"}</span>
+                </div>
+                <div className="col-span-2 text-xs font-medium text-slate-700 truncate" title={gradingItemName}>
+                  {gradingItemName}
+                </div>
               </div>
             </div>
           </div>
@@ -169,8 +237,60 @@ export default function L4Grading() {
                 <div className="font-mono text-[9px] text-indigo-700 break-all leading-relaxed">{gradingResult.hash}</div>
               </div>
 
-              <button className="btn btn-success w-full py-2 text-xs font-bold" onClick={() => setActiveTab("logistics")}>
-                <Truck className="w-4 h-4" /> Route to L5 P2P Logistics
+              <button
+                className="btn btn-success w-full py-2 text-xs font-bold"
+                onClick={() => {
+                  const grade: string = gradingResult.grade ?? "D";
+                  const gradeUpper = grade.toUpperCase();
+
+                  if (gradeUpper === "D" || gradeUpper === "F") {
+                    // Grade D/F → Poor Quality Flag, remove from queue
+                    alert(`Flagged: Poor Quality Found for ${gradingItemName}. Item sent to deep warehouse.`);
+                    setInspectQueue((prev: any[]) => prev.filter(q => q.sku !== gradingSku));
+                    setGradingResult(null);
+                    setGradingVideoUrl("");
+                    setGradingVideoBase64("");
+                    return;
+                  }
+
+                  // Grade A, B, C → Add to Dark Store Resale Queue
+                  const isReturnedProduct = gradeUpper !== "A"; // Grade A starts as "new"
+                  setResaleListings((prev: any[]) => {
+                    // Avoid duplicates
+                    if (prev.some((r: any) => r.sku === gradingSku)) return prev;
+                    return [
+                      ...prev,
+                      {
+                        sku: gradingSku,
+                        name: gradingItemName,
+                        price: parseFloat((gradingResult.price ?? 29.99).toFixed(2)),
+                        originalPrice: parseFloat((gradingResult.price ?? 29.99).toFixed(2)),
+                        brand: gradingResult.brand ?? "Returned Item",
+                        grade: gradeUpper,
+                        co2Saved: gradeUpper === "A" ? 4 : gradeUpper === "B" ? 6 : 8,
+                        distance: "2.1 km",
+                        trust: gradeUpper === "A" ? 96 : gradeUpper === "B" ? 84 : 72,
+                        addedToStoreAt: Date.now(),
+                        isReturnedProduct,
+                      },
+                    ];
+                  });
+
+                  // Remove from inspect queue
+                  setInspectQueue((prev: any[]) => prev.filter(q => q.sku !== gradingSku));
+
+                  // Reset grader for next item
+                  setGradingResult(null);
+                  setGradingVideoUrl("");
+                  setGradingVideoBase64("");
+                  
+                  alert(`Successfully listed ${gradingItemName} to Resale Marketplace!`);
+                }}
+              >
+                <Zap className="w-4 h-4" />
+                {gradingResult.grade === "D" || gradingResult.grade === "F"
+                  ? "Flag: Poor Quality Found"
+                  : `List in Dark Store (Grade ${gradingResult.grade})`}
               </button>
             </div>
           ) : (
@@ -181,6 +301,7 @@ export default function L4Grading() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
