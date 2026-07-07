@@ -4,7 +4,7 @@ import { PRODUCT_CATALOG } from "@/lib/catalog";
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, imageName, userId, email, ipAddress, sku, itemName, priorReturns, claimType = "damaged_product", isDamageVisible, questionnaireAnswers, nonVisibleCategory } = await req.json();
+    const { image, imageName, userId, email, ipAddress, sku, itemName, priorReturns, claimType = "damaged_product", isDamageVisible, questionnaireAnswers, nonVisibleCategory, userDescription } = await req.json();
 
     if (!userId || !image || !sku) {
       return NextResponse.json({ error: "Missing required fields (userId, image, or SKU)" }, { status: 400 });
@@ -24,11 +24,11 @@ Verify if the returned product in the photo is a DIFFERENT product.
 First, execute a chain of thought reasoning process:
 - Describe the visual characteristics of the product in the customer-submitted photo (e.g., shape, color, apparent material, defining features).
 - Describe the visual characteristics of the product in the catalog reference image.
-- Compare the two descriptions. Do the core product type, model, and form factor match exactly?
+- Compare the two descriptions. Do the core product type, model, color, and form factor match exactly?
 - Conclude whether the customer photo shows a different product.
 
-Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a white manual ceramic pour-over kettle setup, or a deodorant spray can instead of a glass perfume bottle). They must match precisely in product type, model design, and style.
-Set "isRelevant" to true only if the product in the customer photo appears to be the correct product matching the visual model type and design of the catalog reference image.
+Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, COLOR, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a white manual ceramic pour-over kettle setup, or a GREEN backpack instead of a BLUE backpack). They must match precisely in product type, model design, style, AND COLOR.
+Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
 Set "isDamaged" to false.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
@@ -46,7 +46,7 @@ Provide your analysis in the following strict JSON format:
   "isDamaged": false,
   "productVerificationNotes": "Evidence confirming or disproving whether the item is a different product by comparing it to the catalog reference image (color, style, category mismatches).",
   "defectExplanation": "A concise explanation of whether the item is different from the catalog item and any staging/AI anomalies."
-}`
+}${userDescription ? `\n\nAdditional context provided by the customer: "${userDescription}"\nUse this description to aid your analysis, especially for issues that may not be visually apparent from the photo alone.` : ''}`
       : (isDamageVisible === false 
         ? `You are a retail return fraud image auditor.
 We are providing you with up to two images in this exact order:
@@ -62,11 +62,11 @@ User Diagnostic Details: ${JSON.stringify(questionnaireAnswers || {})}
 Perform a Product Check. First, execute a chain of thought reasoning process:
 - Describe the visual characteristics of the product in the customer-submitted photo (e.g., shape, color, apparent material, defining features).
 - Describe the visual characteristics of the product in the catalog reference image.
-- Compare the two descriptions. Do the core product type, model, and form factor match exactly?
+- Compare the two descriptions. Do the core product type, model, color, and form factor match exactly?
 - Conclude whether the customer photo shows the correct product.
 
-Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a glass cup of iced coffee beverage or a pour-over dripper setup). They must match precisely in product type, model design, and style.
-Set "isRelevant" to true only if the product in the customer photo appears to be the correct product matching the visual model type and design of the catalog reference image.
+Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, COLOR, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a glass cup of iced coffee beverage or a pour-over dripper setup). They must match precisely in product type, model design, style, AND COLOR.
+Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
 Since the defect is internal, do not search for physical cracks/tears. Mark "isDamaged" as true because of the reported functional issue.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
@@ -84,7 +84,7 @@ Provide your analysis in the following strict JSON format:
   "isDamaged": true,
   "productVerificationNotes": "Evidence verifying correct product identity against the catalog reference.",
   "defectExplanation": "A concise explanation confirming that the product identity matches (or doesn't match) the catalog reference and summarizing the user's reported functional defect."
-}`
+}${userDescription ? `\n\nAdditional context provided by the customer: "${userDescription}"\nUse this to supplement the diagnostic answers above and aid identification of the defect.` : ''}`
         : `You are a retail return fraud image auditor.
 We are providing you with up to two images in this exact order:
 1. Customer-submitted return photo.
@@ -98,15 +98,20 @@ Perform two main checks:
    First, execute a chain of thought reasoning process:
    - Describe the visual characteristics of the product in the customer-submitted photo (e.g., shape, color, apparent material, defining features).
    - Describe the visual characteristics of the product in the catalog reference image.
-   - Compare the two descriptions. Do the core product type, model, and form factor match exactly?
+   - Compare the two descriptions. Do the core product type, model, color, and form factor match exactly?
    - Conclude whether the customer photo shows the correct product.
-   Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a glass cup of iced coffee beverage or a pour-over dripper setup). They must match precisely in product type, model design, and style.
-   Set "isRelevant" to true only if the product in the customer photo appears to be the correct product matching the visual model type and design of the catalog reference image.
-2. Damage check: Assess if there is visible physical damage (like tears, cracks, dents, broken parts, scuffs, etc.) on the returned item. Set "isDamaged" to true if you see clear visual evidence of defect or damage. Set "isDamaged" to false if the product appears pristine, brand new, or shows no damage.
+
+   Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, COLOR, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a white manual ceramic pour-over kettle setup, or a GREEN backpack instead of a BLUE backpack). They must match precisely in product type, model design, style, AND COLOR.
+   Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
+
+2. Damage check (only if isRelevant is true):
+   Check if the product has visible physical damage (e.g., cracks, tears, significant dents, broken parts).
+   Set "isDamaged" to true if clear damage is visible.
+   Set "isDamaged" to false if the product appears pristine and undamaged in the photo.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
 1. aiGenerationScore: Probability that the photo contains AI-generated/modified elements or is entirely synthetic.
-2. damagePlausibility: How likely the defect was caused by shipping/wear (0) versus intentional physical damage like cuts or tears (10).
+2. damagePlausibility: If damage is claimed but looks highly suspicious or digitally added.
 3. photoStagingSigns: Evidence of staging, professional lighting, or multiple background artifacts.
 
 Provide your analysis in the following strict JSON format:
@@ -119,7 +124,7 @@ Provide your analysis in the following strict JSON format:
   "isDamaged": true/false,
   "productVerificationNotes": "Evidence verifying correct product identity against the catalog reference.",
   "defectExplanation": "A concise explanation of whether the product matches the catalog reference, whether clear damage is visible, and any staging/AI anomalies."
-}`);
+}${userDescription ? `\n\nAdditional context provided by the customer: "${userDescription}"\nUse this description to help identify the defect location or type that may not be fully visible in the photo.` : ''}`);
 
     // Define Gemini Response Schema
     const geminiResponseSchema = {

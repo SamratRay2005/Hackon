@@ -1573,6 +1573,25 @@ export async function queryGemini(params: {
                     data: base64Data.trim()
                   }
                 });
+              } else if (url.startsWith("http://") || url.startsWith("https://")) {
+                try {
+                  const res = await fetch(url);
+                  if (res.ok) {
+                    const arrayBuffer = await res.arrayBuffer();
+                    const base64Data = Buffer.from(arrayBuffer).toString("base64");
+                    const contentType = res.headers.get("content-type") || "image/jpeg";
+                    targetParts.push({
+                      inline_data: {
+                        mime_type: contentType,
+                        data: base64Data
+                      }
+                    });
+                  } else {
+                    console.error("Failed to fetch image url for Gemini:", url);
+                  }
+                } catch (e) {
+                  console.error("Error fetching image url for Gemini:", e);
+                }
               }
             }
           }

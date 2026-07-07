@@ -137,14 +137,17 @@ export default function Home() {
 
   // Dark Store Resale Pipeline
   const [resaleListings, setResaleListings] = useState<any[]>([]);
-  const [isAdminMode, setIsAdminMode] = useState(false);
 
   // Fraud Claim Type
   const [fraudClaimType, setFraudClaimType] = useState<"damaged_product" | "different_product">("damaged_product");
+  const [fraudResult, setFraudResult] = useState<any>(null);
+  const [userDescription, setUserDescription] = useState("");
 
   // Global Modes & Inspect Queue
   const [globalMode, setGlobalMode] = useState<"user" | "admin">("user");
+  const isAdminMode = globalMode === "admin";
   const [inspectQueue, setInspectQueue] = useState<any[]>([]);
+  const [manualReviewQueue, setManualReviewQueue] = useState<any[]>([]);
 
   // ── SEARCH CLICK-OUTSIDE ──
   useEffect(() => {
@@ -394,8 +397,11 @@ export default function Home() {
     fraudImage, setFraudImage,
     fraudImageType, setFraudImageType,
     fraudClaimType, setFraudClaimType,
+    fraudResult, setFraudResult,
+    userDescription, setUserDescription,
     resaleListings, setResaleListings,
-    isAdminMode, setIsAdminMode,
+    isAdminMode,
+    manualReviewQueue, setManualReviewQueue,
     inspectQueue, setInspectQueue,
     globalMode, setGlobalMode,
     // extra fields consumed by L3 via any-cast
@@ -566,7 +572,7 @@ export default function Home() {
                         onClick={() => {
                           const newMode = globalMode === "user" ? "admin" : "user";
                           setGlobalMode(newMode);
-                          setActiveTab(newMode === "user" ? "dashboard" : "grading");
+                          setActiveTab(newMode === "user" ? "dashboard" : "fraud-mitigation");
                           setShowLogoutDropdown(false);
                         }}
                       >
@@ -620,7 +626,7 @@ export default function Home() {
             {navItems
               .filter(item => globalMode === 'user'
                 ? ['dashboard','fraud-mitigation','orders','cart'].includes(item.id)
-                : ['grading'].includes(item.id)
+                : ['dashboard', 'fraud-mitigation', 'grading'].includes(item.id)
               )
               .map(item => (
                 <button

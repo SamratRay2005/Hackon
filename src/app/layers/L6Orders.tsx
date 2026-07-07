@@ -17,6 +17,7 @@ import {
   X,
   CheckCircle,
   ChevronDown,
+  ChevronLeft,
 } from "lucide-react";
 import { useApp, getSKUReferenceImage } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -91,14 +92,17 @@ interface ReturnReasonModalProps {
 }
 
 const COMMON_REASONS = [
-  { id: "damage", label: "Item arrived damaged or broken", route: "defective", claimType: "damaged_product" },
-  { id: "wrong", label: "Received completely wrong item", route: "defective", claimType: "different_product" },
-  { id: "fit", label: "Size or fit didn't work for me", route: "vibe_mismatch" },
-  { id: "mind", label: "Changed my mind / Didn't like it", route: "vibe_mismatch" },
-  { id: "other", label: "Other (Please specify)", route: "api" },
+  { id: "defective", label: "Defective / doesn't work properly", route: "defective", claimType: "damaged_product" },
+  { id: "not_described", label: "Item not as described", route: "defective", claimType: "different_product" },
+  { id: "mind", label: "Changed my mind", route: "vibe_mismatch" },
+  { id: "price", label: "Better price available", route: "vibe_mismatch" },
+  { id: "wrong", label: "Wrong item was sent", route: "defective", claimType: "different_product" },
+  { id: "damaged", label: "Arrived damaged", route: "defective", claimType: "damaged_product" },
+  { id: "unneeded", label: "No longer needed", route: "vibe_mismatch" },
+  { id: "other", label: "Other", route: "api" },
 ];
 
-function ReturnReasonModal({ order, onClose, onRouteDecision }: ReturnReasonModalProps) {
+function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBack: () => void, onRouteDecision: (r: string, c?: string) => void }) {
   const [selectedReasonId, setSelectedReasonId] = React.useState(COMMON_REASONS[0].id);
   const [reasonText, setReasonText] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -108,14 +112,12 @@ function ReturnReasonModal({ order, onClose, onRouteDecision }: ReturnReasonModa
     const choice = COMMON_REASONS.find(r => r.id === selectedReasonId);
     
     if (choice?.route !== "api") {
-      // Instant Routing for predefined choices
       onRouteDecision(choice!.route, choice!.claimType);
       return;
     }
 
-    // Fallback to LLM Triage for "Other"
-    if (reasonText.trim().length < 20) {
-      setError("Please provide a bit more detail (minimum 20 characters) so we can process this instantly.");
+    if (reasonText.trim().length < 10) {
+      setError("Please provide a bit more detail (minimum 10 characters).");
       return;
     }
     setError("");
@@ -136,27 +138,34 @@ function ReturnReasonModal({ order, onClose, onRouteDecision }: ReturnReasonModa
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 flex flex-col gap-4 relative" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors">
-          <X className="w-5 h-5" />
+    <div className="flex flex-col w-full max-w-2xl mx-auto mt-4">
+      <div className="flex flex-col mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#0F1111] text-white flex items-center justify-center font-bold text-lg leading-none">3</div>
+          <h2 className="text-xl font-bold text-[#0F1111]">Choose a Reason</h2>
+        </div>
+        <p className="text-[#0F1111] ml-11 mt-1 text-[15px]">User selects the reason for return from a list.</p>
+      </div>
+
+      <div className="border border-slate-200 rounded-[12px] bg-white p-6 shadow-sm flex flex-col gap-4 ml-11">
+        <button onClick={onBack} className="text-[14px] font-bold text-[#0F1111] flex items-center hover:underline self-start mb-2">
+          <ChevronLeft className="w-4 h-4 mr-1" /> Back
         </button>
-        <h3 className="text-base font-extrabold text-slate-800 pt-2">Why are you returning this?</h3>
         
-        <div className="flex flex-col gap-2 mt-2">
+        <h3 className="text-lg font-bold text-[#0F1111] mb-2">Why are you returning this?</h3>
+        
+        <div className="flex flex-col gap-4">
           {COMMON_REASONS.map((reason) => (
             <label
               key={reason.id}
-              className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
-                selectedReasonId === reason.id ? "border-indigo-600 bg-indigo-50 shadow-sm" : "border-slate-200 hover:border-indigo-300"
-              }`}
+              className="flex items-center gap-3 cursor-pointer group"
             >
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                selectedReasonId === reason.id ? "border-indigo-600 bg-indigo-600" : "border-slate-300"
+              <div className={`w-[20px] h-[20px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${
+                selectedReasonId === reason.id ? "border-[#007185]" : "border-slate-400 group-hover:border-[#007185]"
               }`}>
-                {selectedReasonId === reason.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                {selectedReasonId === reason.id && <div className="w-[10px] h-[10px] bg-[#007185] rounded-full" />}
               </div>
-              <span className={`text-sm font-medium ${selectedReasonId === reason.id ? "text-indigo-900" : "text-slate-600"}`}>
+              <span className="text-[15px] text-[#0F1111] font-[400]">
                 {reason.label}
               </span>
               <input
@@ -175,24 +184,24 @@ function ReturnReasonModal({ order, onClose, onRouteDecision }: ReturnReasonModa
         </div>
 
         {selectedReasonId === "other" && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
             <textarea
               value={reasonText}
               onChange={(e) => setReasonText(e.target.value)}
               placeholder="Please describe why you are returning this..."
-              className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[100px] resize-none"
+              className="w-full border border-slate-300 rounded-[8px] p-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007185] focus:border-transparent min-h-[80px] resize-none"
             />
           </div>
         )}
 
-        {error && <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-2 rounded-lg">{error}</div>}
+        {error && <div className="text-xs text-[#C7511F] font-semibold bg-rose-50 p-2 rounded-lg mt-2">{error}</div>}
         
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="btn btn-primary w-full py-3 text-sm font-bold flex items-center justify-center gap-2 mt-2"
+          className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] w-full py-[10px] rounded-[8px] text-[14px] font-[400] shadow-sm transition-colors mt-4"
         >
-          {loading ? <span className="spinner" /> : "Confirm Reason"}
+          {loading ? <span className="spinner border-slate-900 border-t-transparent w-4 h-4 mx-auto block" /> : "Continue"}
         </button>
       </div>
     </div>
@@ -305,83 +314,106 @@ export default function L6Orders() {
         <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Your Orders</h2>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {orders.length === 0 ? (
-          <div style={{padding:"20px", display:"flex", gap:"20px", background:"#FFF", border:"1px solid #DDD", borderRadius:"4px"}}>
-            <div style={{flex:1}}>
-              <h2 style={{fontSize:"1.2rem", fontWeight:700, marginBottom:"8px"}}>You have no orders.</h2>
+      {reasonOrder ? (
+        <ReturnReasonView
+          order={reasonOrder}
+          onBack={() => setReasonOrder(null)}
+          onRouteDecision={(classification, claimType) => {
+            if (classification === "vibe_mismatch") {
+              routeToL5DarkStore(reasonOrder);
+            } else {
+              routeToL2Fraud(reasonOrder, claimType as any);
+            }
+          }}
+        />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {orders.length === 0 ? (
+            <div style={{padding:"20px", display:"flex", gap:"20px", background:"#FFF", border:"1px solid #DDD", borderRadius:"4px"}}>
+              <div style={{flex:1}}>
+                <h2 style={{fontSize:"1.2rem", fontWeight:700, marginBottom:"8px"}}>You have no orders.</h2>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {orders.map((order: any) => {
-              const daysLeft = getDaysRemaining(order);
-              const isExpired = daysLeft <= 0;
-              const isReturned = inspectQueue?.some((i: any) => i.orderId === order.orderId);
+          ) : (
+            <div className="flex flex-col gap-4">
+              {orders.map((order: any) => {
+                const daysLeft = getDaysRemaining(order);
+                const isExpired = daysLeft <= 0;
+                const isReturned = inspectQueue?.some((i: any) => i.orderId === order.orderId);
 
-              return (
-                <div
-                  key={order.sku}
-                  style={{border:"1px solid #D5D9D9", borderRadius:"8px", overflow:"hidden", background:"#FFF"}}
-                >
-                  {/* Card Header */}
-                  <div style={{background:"#F0F2F2", padding:"14px 18px", borderBottom:"1px solid #D5D9D9", display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#565959"}}>
-                    <div style={{display:"flex", gap:"32px"}}>
-                      <div className="flex flex-col">
-                        <span style={{textTransform:"uppercase"}}>Order Placed</span>
-                        <span style={{color:"#0F1111"}}>{order.purchaseDate}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span style={{textTransform:"uppercase"}}>Total</span>
-                        <span style={{color:"#0F1111"}}>${order.price?.toFixed(2)}</span>
-                      </div>
-                      <div className="flex flex-col hidden sm:flex">
-                        <span style={{textTransform:"uppercase"}}>Ship To</span>
-                        <span className="amz-free-link" style={{color:"#007185"}}>Samrat Ray <ChevronDown className="w-3 h-3 inline" /></span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col text-right">
-                      <span style={{textTransform:"uppercase"}}>Order # {order.orderId}</span>
-                      <span className="amz-free-link" style={{color:"#007185"}}>View order details</span>
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div style={{padding:"18px", display:"flex", gap:"16px", flexWrap:"wrap"}}>
-                    <div style={{flexShrink:0}}>
-                      <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{width:"90px", height:"90px", objectFit:"contain"}} />
-                    </div>
-                    
-                    <div className="flex flex-col flex-1 min-w-0" style={{minWidth:"200px"}}>
-                      <div className="amz-free-link" style={{fontSize:"14px", fontWeight:700, color:"#007185", lineHeight:"1.4"}}>
-                        {order.name}
-                      </div>
-                      <div style={{fontSize:"12px", color:"#565959", marginTop:"4px"}}>
-                        Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
-                      </div>
-                      
-                      {isReturned && (
-                        <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#C7511F"}}>
-                          Return in progress
+                return (
+                  <div
+                    key={order.sku}
+                    style={{border:"1px solid #D5D9D9", borderRadius:"8px", overflow:"hidden", background:"#FFF"}}
+                  >
+                    {/* Card Header */}
+                    <div style={{background:"#F0F2F2", padding:"14px 18px", borderBottom:"1px solid #D5D9D9", display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#565959"}}>
+                      <div style={{display:"flex", gap:"32px"}}>
+                        <div className="flex flex-col">
+                          <span style={{textTransform:"uppercase"}}>Order Placed</span>
+                          <span style={{color:"#0F1111"}}>{order.purchaseDate}</span>
                         </div>
-                      )}
+                        <div className="flex flex-col">
+                          <span style={{textTransform:"uppercase"}}>Total</span>
+                          <span style={{color:"#0F1111"}}>${order.price?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex flex-col hidden sm:flex">
+                          <span style={{textTransform:"uppercase"}}>Ship To</span>
+                          <span className="amz-free-link" style={{color:"#007185"}}>Samrat Ray <ChevronDown className="w-3 h-3 inline" /></span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col text-right">
+                        <span style={{textTransform:"uppercase"}}>Order # {order.orderId}</span>
+                        <span className="amz-free-link" style={{color:"#007185"}}>View order details</span>
+                      </div>
                     </div>
 
-                    {/* Card Footer (Actions) */}
-                    <div className="flex flex-col gap-2" style={{width:"220px", flexShrink:0}}>
-                      <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Track package</button>
+                    {/* Card Body */}
+                    <div style={{padding:"18px", display:"flex", gap:"16px", flexWrap:"wrap"}}>
+                      <div style={{flexShrink:0}}>
+                        <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{width:"90px", height:"90px", objectFit:"contain"}} />
+                      </div>
                       
-                      {!isReturned && (
-                        hasManual(order.sku) ? (
-                          <>
-                            <button
-                              onClick={() => handleDIM(order)}
-                              disabled={isExpired}
-                              className="btn btn-secondary"
-                              style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
-                            >
-                              Get product support
-                            </button>
+                      <div className="flex flex-col flex-1 min-w-0" style={{minWidth:"200px"}}>
+                        <div className="amz-free-link" style={{fontSize:"14px", fontWeight:700, color:"#007185", lineHeight:"1.4"}}>
+                          {order.name}
+                        </div>
+                        <div style={{fontSize:"12px", color:"#565959", marginTop:"4px"}}>
+                          Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
+                        </div>
+                        
+                        {isReturned && (
+                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#C7511F"}}>
+                            Return in progress
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Footer (Actions) */}
+                      <div className="flex flex-col gap-2" style={{width:"220px", flexShrink:0}}>
+                        <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Track package</button>
+                        
+                        {!isReturned && (
+                          hasManual(order.sku) ? (
+                            <>
+                              <button
+                                onClick={() => handleDIM(order)}
+                                disabled={isExpired}
+                                className="btn btn-secondary"
+                                style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
+                              >
+                                Get product support
+                              </button>
+                              <button
+                                onClick={() => setReasonOrder(order)}
+                                disabled={isExpired}
+                                className="btn btn-secondary"
+                                style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
+                              >
+                                Return or replace items
+                              </button>
+                            </>
+                          ) : (
                             <button
                               onClick={() => setReasonOrder(order)}
                               disabled={isExpired}
@@ -390,29 +422,20 @@ export default function L6Orders() {
                             >
                               Return or replace items
                             </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => setReasonOrder(order)}
-                            disabled={isExpired}
-                            className="btn btn-secondary"
-                            style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
-                          >
-                            Return or replace items
-                          </button>
-                        )
-                      )}
-                      
-                      <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Leave seller feedback</button>
-                      <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Write a product review</button>
+                          )
+                        )}
+                        
+                        <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Leave seller feedback</button>
+                        <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Write a product review</button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Get Help (DIM) Modal */}
       {getHelpOrder && (
@@ -424,21 +447,6 @@ export default function L6Orders() {
             setReasonOrder(getHelpOrder);
           }}
           onClose={() => setGetHelpOrder(null)}
-        />
-      )}
-
-      {/* Return Reason Modal */}
-      {reasonOrder && (
-        <ReturnReasonModal
-          order={reasonOrder}
-          onClose={() => setReasonOrder(null)}
-          onRouteDecision={(classification, claimType) => {
-            if (classification === "vibe_mismatch") {
-              routeToL5DarkStore(reasonOrder);
-            } else {
-              routeToL2Fraud(reasonOrder, claimType as any);
-            }
-          }}
         />
       )}
 

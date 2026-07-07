@@ -457,7 +457,7 @@ export function HeroCarousel({ onShopNow }: { onShopNow: (sku: string) => void }
           <p className="hero-slide-subline">{slide.product.description}</p>
           <div className="hero-slide-price" style={{ color: slide.theme.accentColor }}>
             ${slide.product.price.toFixed(2)}
-            <span className="text-sm font-medium text-slate-400 ml-2 line-through">${(slide.product.price * 1.4).toFixed(2)}</span>
+            <span className="text-sm font-medium text-slate-400 line-through" style={{ marginLeft: "10px" }}>${(slide.product.price * 1.4).toFixed(2)}</span>
           </div>
           <div className="hero-slide-actions">
             <button className="hero-btn-primary" onClick={() => onShopNow(slide.product.sku)}>Shop Now <ChevronRight className="w-4 h-4" /></button>
@@ -605,15 +605,16 @@ export interface AppContextType {
   }>;
   setResaleListings: (fn: any) => void;
   isAdminMode: boolean;
-  setIsAdminMode: (v: boolean) => void;
 
-  // Fraud image (shared with product card capture)
-  fraudImage: string | null;
-  setFraudImage: (v: string | null) => void;
-  fraudImageType: string;
-  setFraudImageType: (v: string) => void;
-  fraudClaimType: "damaged_product" | "different_product";
-  setFraudClaimType: (v: "damaged_product" | "different_product") => void;
+  fraudResult: any;
+  setFraudResult: React.Dispatch<React.SetStateAction<any>>;
+
+  userDescription: string;
+  setUserDescription: React.Dispatch<React.SetStateAction<string>>;
+
+  // Admin Manual Review Queue
+  manualReviewQueue: any[];
+  setManualReviewQueue: React.Dispatch<React.SetStateAction<any[]>>;
 
   // Admin Inspect Queue
   inspectQueue: InspectQueueItem[];
