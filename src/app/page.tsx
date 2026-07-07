@@ -151,6 +151,8 @@ export default function Home() {
   const [manualReviewQueue, setManualReviewQueue] = useState<any[]>([]);
   const [processedFraudQueue, setProcessedFraudQueue] = useState<any[]>([]);
 
+  const [isHydrated, setIsHydrated] = useState(false);
+
   // Hydrate queues from localStorage on mount
   useEffect(() => {
     try {
@@ -163,20 +165,27 @@ export default function Home() {
       const processedSaved = localStorage.getItem("reloop_processed_queue");
       if (processedSaved) setProcessedFraudQueue(JSON.parse(processedSaved));
     } catch {}
+    setIsHydrated(true);
   }, []);
 
   // Save queues to localStorage whenever they change
   useEffect(() => {
-    try { localStorage.setItem("reloop_inspect_queue", JSON.stringify(inspectQueue)); } catch {}
-  }, [inspectQueue]);
+    if (isHydrated) {
+      try { localStorage.setItem("reloop_inspect_queue", JSON.stringify(inspectQueue)); } catch {}
+    }
+  }, [inspectQueue, isHydrated]);
 
   useEffect(() => {
-    try { localStorage.setItem("reloop_manual_queue", JSON.stringify(manualReviewQueue)); } catch {}
-  }, [manualReviewQueue]);
+    if (isHydrated) {
+      try { localStorage.setItem("reloop_manual_queue", JSON.stringify(manualReviewQueue)); } catch {}
+    }
+  }, [manualReviewQueue, isHydrated]);
 
   useEffect(() => {
-    try { localStorage.setItem("reloop_processed_queue", JSON.stringify(processedFraudQueue)); } catch {}
-  }, [processedFraudQueue]);
+    if (isHydrated) {
+      try { localStorage.setItem("reloop_processed_queue", JSON.stringify(processedFraudQueue)); } catch {}
+    }
+  }, [processedFraudQueue, isHydrated]);
 
 
   // ── SEARCH CLICK-OUTSIDE ──

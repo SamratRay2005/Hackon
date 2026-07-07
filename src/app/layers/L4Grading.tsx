@@ -42,6 +42,7 @@ export default function L4Grading() {
   const [gradingVideoBase64, setGradingVideoBase64] = React.useState("");
   const [gradingLoading, setGradingLoading] = React.useState(false);
   const [gradingResult, setGradingResult] = React.useState<any>(null);
+  const [gradingFraudImage, setGradingFraudImage] = React.useState<string | null>(null);
 
   // ── Post-listing state ──
   const [listedItem, setListedItem] = React.useState<any>(null);
@@ -152,17 +153,36 @@ export default function L4Grading() {
                   key={item.id}
                   className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
                 >
+                  {/* Product thumbnail from customer evidence photo */}
+                  {item.fraudImage && (
+                    <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-slate-100">
+                      <img src={item.fraudImage} alt={item.itemName} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <div className="font-bold text-slate-800 truncate w-full">{item.itemName}</div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="font-mono text-[9px] text-slate-500">SKU: {item.sku}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${item.source === "fraud" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
-                      {item.source === "fraud" ? "Damaged" : "Vibe"}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${
+                      item.isResalable
+                        ? "bg-emerald-100 text-emerald-700"
+                        : item.source === "vibe"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}>
+                      {item.isResalable
+                        ? "Resalable"
+                        : item.source === "vibe"
+                        ? "Vibe"
+                        : item.claimType === "different_product"
+                        ? "Wrong Item"
+                        : "Returned"}
                     </span>
                   </div>
                   <button
                     onClick={() => {
                       setGradingSku(item.sku);
                       setGradingItemName(item.itemName);
+                      setGradingFraudImage(item.fraudImage || null);
                       setGradingResult(null);
                       setGradingVideoUrl("");
                       setGradingVideoBase64("");
@@ -176,7 +196,7 @@ export default function L4Grading() {
                         : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
                     }`}
                   >
-                    {gradingSku === item.sku ? "Selected" : "Add to Checker"}
+                    {gradingSku === item.sku ? "✓ Inspecting" : "Inspect This Item"}
                   </button>
                 </div>
               )) : (
@@ -240,7 +260,12 @@ export default function L4Grading() {
               <div className="border-t border-slate-200 pt-3 flex gap-3">
                 <div className="w-16 h-16 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {gradingSku ? (
-                    <img src={getProductImage(gradingSku)} alt={gradingItemName} className="w-full h-full object-cover" />
+                    // Priority: customer's evidence photo > catalog image
+                    <img
+                      src={gradingFraudImage || getProductImage(gradingSku)}
+                      alt={gradingItemName}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <Package className="w-6 h-6 text-slate-300" />
                   )}

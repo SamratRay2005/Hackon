@@ -58,6 +58,7 @@ export default function L2Fraud() {
   const [fraudImageName, setFraudImageName] = React.useState("uploaded_claim_evidence.jpg");
   const [fraudDemoCycle, setFraudDemoCycle] = React.useState(0);
   const [adminTab, setAdminTab] = React.useState<"manual" | "processed">("manual");
+  const [filterResalable, setFilterResalable] = React.useState(false);
 
   const triggerFraudCheck = async () => {
     if (!fraudImage) return;
@@ -101,6 +102,7 @@ export default function L2Fraud() {
             breakdown: data.breakdown,
             reasoning: data.reasoning,
             defectExplanation: data.defectExplanation,
+            isResalable: !!data.isResalable,
             claimType,
             timestamp: new Date().toISOString(),
             status: "APPROVED"
@@ -109,10 +111,12 @@ export default function L2Fraud() {
             if (prev.find((item: any) => item.sku === fraudSku)) return prev;
             return [claimObj, ...prev];
           });
-          setInspectQueue((prev: any[]) => {
-            if (prev.find((item: any) => item.sku === fraudSku)) return prev;
-            return [...prev, { ...claimObj, source: "fraud" }];
-          });
+          if (data.isResalable) {
+            setInspectQueue((prev: any[]) => {
+              if (prev.find((item: any) => item.sku === fraudSku)) return prev;
+              return [...prev, { ...claimObj, source: "fraud" }];
+            });
+          }
         }
         
         // If blocked autonomously
@@ -131,6 +135,7 @@ export default function L2Fraud() {
             breakdown: data.breakdown,
             reasoning: data.reasoning,
             defectExplanation: data.defectExplanation,
+            isResalable: !!data.isResalable,
             claimType,
             timestamp: new Date().toISOString(),
             status: "REJECTED"
@@ -159,6 +164,7 @@ export default function L2Fraud() {
               breakdown: data.breakdown,
               reasoning: data.reasoning,
               defectExplanation: data.defectExplanation,
+              isResalable: !!data.isResalable,
               claimType,
               timestamp: new Date().toISOString(),
               status: "MANUAL_REVIEW"
@@ -369,14 +375,29 @@ export default function L2Fraud() {
               </button>
            </div>
            
+           {/* Resalable Filter */}
+           <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <label className="text-[11px] font-bold text-slate-600 cursor-pointer flex items-center gap-2">
+                 <input 
+                   type="checkbox" 
+                   checked={filterResalable} 
+                   onChange={(e) => setFilterResalable(e.target.checked)} 
+                   className="cursor-pointer accent-emerald-600 w-3 h-3"
+                 />
+                 Show Only Resalable
+              </label>
+           </div>
+           
            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
-             {(adminTab === "manual" ? manualReviewQueue : processedFraudQueue).length === 0 ? (
+             {(adminTab === "manual" ? manualReviewQueue : processedFraudQueue).filter((c: any) => filterResalable ? c.isResalable : true).length === 0 ? (
                <div className="text-center p-8 text-slate-400 my-auto">
                  <Shield className="w-8 h-8 mx-auto mb-2 opacity-30" />
                  <div className="text-xs font-medium">No claims in this queue.</div>
                </div>
              ) : (
-               (adminTab === "manual" ? manualReviewQueue : processedFraudQueue).map((claim: any) => (
+               (adminTab === "manual" ? manualReviewQueue : processedFraudQueue)
+                 .filter((claim: any) => filterResalable ? claim.isResalable : true)
+                 .map((claim: any) => (
                  <div 
                    key={claim.id} 
                    onClick={() => setSelectedClaim(claim)}
@@ -393,9 +414,16 @@ export default function L2Fraud() {
                    </div>
                    <div className="text-[10px] text-slate-500 font-mono mb-1 flex justify-between relative z-10">
                      <span>User: {claim.userId}</span>
-                     {claim.status && <span className="font-bold">{claim.status}</span>}
+                     <span className={`font-bold uppercase ${claim.status === "APPROVED" ? "text-emerald-600" : (claim.status === "REJECTED" ? "text-rose-600" : "text-amber-500")}`}>
+                       {claim.status === "MANUAL_REVIEW" ? "Pending" : claim.status}
+                     </span>
                    </div>
-                   <div className="text-[10px] text-slate-400">{new Date(claim.timestamp).toLocaleString()}</div>
+                   <div className="text-[9px] text-slate-400 flex justify-between items-center relative z-10">
+                     <span>{new Date(claim.timestamp).toLocaleString()}</span>
+                     {claim.isResalable && (
+                       <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">RESALABLE</span>
+                     )}
+                   </div>
                  </div>
                ))
              )}

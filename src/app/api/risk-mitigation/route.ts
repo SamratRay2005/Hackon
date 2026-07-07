@@ -31,6 +31,11 @@ Set "isRelevant" to false if the product in the customer photo is visually DIFFE
 Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
 Set "isDamaged" to false.
 
+Resalability check (always apply):
+Regardless of whether the returned item is the correct product or a different product, assess if the item in the photo appears to be in pristine, resalable condition (e.g., original packaging visible, tags attached, no visible wear/tear/damage).
+Set "isResalable" to true if the item looks like it could be restocked and sold as new.
+Set "isResalable" to false if there is any damage, significant wear, missing parts, or the photo quality is too poor to assess.
+
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
 1. aiGenerationScore: Probability that the photo is AI-generated or digitally altered. Scrutinize for AI artifacts: perfectly pure white backgrounds (highly unnatural for user returns), missing or illogical shadows around physical damage, floating objects, or hyper-realistic studio lighting. If the image looks like a stock photo, a digital render, or has a pure white background, give a very high score (7.0 - 10.0).
 2. damagePlausibility: Set to 0 since we are focusing on product verification.
@@ -44,6 +49,7 @@ Provide your analysis in the following strict JSON format:
   "photoStagingSigns": 0.0 to 10.0,
   "isRelevant": true/false,
   "isDamaged": false,
+  "isResalable": true/false,
   "productVerificationNotes": "Evidence confirming or disproving whether the item is a different product by comparing it to the catalog reference image (color, style, category mismatches).",
   "defectExplanation": "A concise explanation of whether the item is different from the catalog item and any staging/AI anomalies."
 }${userDescription ? `\n\nAdditional context provided by the customer: "${userDescription}"\nUse this description to aid your analysis, especially for issues that may not be visually apparent from the photo alone.` : ''}`
@@ -68,6 +74,7 @@ Perform a Product Check. First, execute a chain of thought reasoning process:
 Set "isRelevant" to false if the product in the customer photo is visually DIFFERENT in model, form factor, design, brand, COLOR, or category from the catalog reference image (e.g. returning a black electric drip coffee machine instead of a glass cup of iced coffee beverage or a pour-over dripper setup). They must match precisely in product type, model design, style, AND COLOR.
 Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
 Since the defect is internal, do not search for physical cracks/tears. Mark "isDamaged" as true because of the reported functional issue.
+Set "isResalable" to false since the product has a reported functional defect.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
 1. aiGenerationScore: Probability that the photo is AI-generated or digitally altered. Scrutinize for AI artifacts: perfectly pure white backgrounds (highly unnatural for user returns), missing or illogical shadows around physical damage, floating objects, or hyper-realistic studio lighting. If the image looks like a stock photo, a digital render, or has a pure white background, give a very high score (7.0 - 10.0).
@@ -82,6 +89,7 @@ Provide your analysis in the following strict JSON format:
   "photoStagingSigns": 0.0 to 10.0,
   "isRelevant": true/false,
   "isDamaged": true,
+  "isResalable": false,
   "productVerificationNotes": "Evidence verifying correct product identity against the catalog reference.",
   "defectExplanation": "A concise explanation confirming that the product identity matches (or doesn't match) the catalog reference and summarizing the user's reported functional defect."
 }${userDescription ? `\n\nAdditional context provided by the customer: "${userDescription}"\nUse this to supplement the diagnostic answers above and aid identification of the defect.` : ''}`
@@ -109,6 +117,11 @@ Perform two main checks:
    Set "isDamaged" to true if clear damage is visible.
    Set "isDamaged" to false if the product appears pristine and undamaged in the photo.
 
+3. Resalability check (only if isRelevant is true):
+   Assess if the item appears to be in pristine, resalable condition (e.g., original packaging visible, tags attached, no visible wear/tear/damage).
+   Set "isResalable" to true if the item looks like it could be restocked and sold as new (undamaged, no visible wear).
+   Set "isResalable" to false if there is any damage, significant wear, or missing parts visible.
+
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
 1. aiGenerationScore: Probability that the photo is AI-generated or digitally altered. Scrutinize for AI artifacts: perfectly pure white backgrounds (highly unnatural for user returns), missing or illogical shadows around physical damage, floating objects, or hyper-realistic studio lighting. If the image looks like a stock photo, a digital render, or has a pure white background, give a very high score (7.0 - 10.0).
 2. damagePlausibility: If damage is claimed but looks highly suspicious or digitally added.
@@ -122,6 +135,7 @@ Provide your analysis in the following strict JSON format:
   "photoStagingSigns": 0.0 to 10.0,
   "isRelevant": true/false,
   "isDamaged": true/false,
+  "isResalable": true/false,
   "productVerificationNotes": "Evidence verifying correct product identity against the catalog reference.",
   "defectExplanation": "A concise explanation of whether the product matches the catalog reference, whether clear damage is visible, and any staging/AI anomalies."
 }${userDescription ? `\n\nAdditional context provided by the customer: "${userDescription}"\nUse this description to help identify the defect location or type that may not be fully visible in the photo.` : ''}`);
@@ -136,10 +150,11 @@ Provide your analysis in the following strict JSON format:
         photoStagingSigns: { type: "NUMBER", description: "Score from 0.0 to 10.0 for photo staging signs." },
         isRelevant: { type: "BOOLEAN", description: "Whether the product in the photo matches the SKU/item description." },
         isDamaged: { type: "BOOLEAN", description: "Whether there is visible physical damage or defect on the product." },
+        isResalable: { type: "BOOLEAN", description: "Whether the product appears pristine and could be restocked and resold as new." },
         productVerificationNotes: { type: "STRING", description: "Evidence confirming or disproving whether the item is the correct product." },
         defectExplanation: { type: "STRING", description: "A concise explanation of the analysis." }
       },
-      required: ["reasoning", "aiGenerationScore", "damagePlausibility", "photoStagingSigns", "isRelevant", "isDamaged", "productVerificationNotes", "defectExplanation"]
+      required: ["reasoning", "aiGenerationScore", "damagePlausibility", "photoStagingSigns", "isRelevant", "isDamaged", "isResalable", "productVerificationNotes", "defectExplanation"]
     };
 
     // Parallel calls setup: call Gemini with fallback to Groq/mock
@@ -147,35 +162,41 @@ Provide your analysis in the following strict JSON format:
 
     const groqPromise = (async () => {
       if (isSvg) {
-        // Let sample_item_close_up.svg act as the wrong product mock for verification testing
+        // SVG mock: map image names to known test scenarios
         let isRelevant = true;
         let isDamaged = true;
+        let isResalable = false;
         let shouldRetake = false;
 
         if (claimType === "different_product") {
-          // If different product was claimed:
-          // Let sample_genuine_claim.svg and sample_staged_claim.svg represent SAME product (isRelevant: true -> causes shouldRetake: true)
-          // Let sample_item_close_up.svg represent DIFFERENT product (isRelevant: false -> claim validated -> shouldRetake: false)
+          // sample_item_close_up.svg = different product returned (claim is valid, may be resalable)
+          // sample_genuine_claim.svg / sample_staged_claim.svg = same product returned (claim invalid -> shouldRetake)
           const isSame = imageName !== "sample_item_close_up.svg";
           isRelevant = isSame;
           isDamaged = false;
+          // Even for different_product, check if the RETURNED item is pristine & resalable
+          isResalable = imageName === "sample_genuine_claim.svg" || (!isSame && imageName === "sample_item_close_up.svg");
           shouldRetake = isSame;
         } else {
-          // If damaged product was claimed:
-          // Let sample_item_close_up.svg represent DIFFERENT product (isRelevant: false -> causes shouldRetake: true)
-          // Let sample_genuine_claim.svg represent correct product + damaged (isRelevant: true, isDamaged: true -> shouldRetake: false)
-          // Let sample_staged_claim.svg represent correct product + pristine/no damage (isRelevant: true, isDamaged: false -> shouldRetake: false)
+          // damaged_product:
+          // sample_item_close_up.svg -> wrong product, shouldRetake
+          // sample_staged_claim.svg  -> correct product, pristine (NOT damaged), IS resalable
+          // sample_genuine_claim.svg -> correct product, NOT damaged, IS resalable
           if (imageName === "sample_item_close_up.svg") {
             isRelevant = false;
             isDamaged = false;
+            isResalable = false;
             shouldRetake = true;
           } else if (imageName === "sample_staged_claim.svg") {
             isRelevant = true;
-            isDamaged = isDamageVisible === false ? true : false; // If functional, we treat it as damaged
+            isDamaged = isDamageVisible === false ? true : false;
+            isResalable = !isDamaged;
             shouldRetake = false;
           } else {
+            // sample_genuine_claim.svg -> pristine perfume box, fully resalable
             isRelevant = true;
-            isDamaged = true;
+            isDamaged = false;
+            isResalable = true;
             shouldRetake = false;
           }
         }
@@ -188,12 +209,13 @@ Provide your analysis in the following strict JSON format:
             damagePlausibility: isDamaged ? 8.0 : 0.0,
             isRelevant,
             isDamaged,
+            isResalable,
             productVerificationNotes: isRelevant
-              ? "Product aligns with catalog reference format."
+              ? (isResalable ? "Product aligns with catalog reference and appears pristine and resalable." : "Product aligns with catalog reference format.")
               : `The scanned return photo shows a different visual profile than the purchased "${itemName || "Product"}" (SKU: ${sku}).`,
             defectExplanation: shouldRetake
               ? "Verification mismatch triggered. Photo retake required."
-              : "Demo scan completed."
+              : (isResalable ? "Item is in pristine condition and eligible for restocking in Dark Store." : "Demo scan completed.")
           }),
           fromMock: true
         };
@@ -312,6 +334,7 @@ Provide your analysis in the following strict JSON format:
     const groqStagingSigns = Math.round((groqAnalysis.photoStagingSigns || 0) * 10);
     const isRelevant = groqAnalysis.isRelevant !== false;
     const isDamaged = groqAnalysis.isDamaged === true;
+    const isResalable = groqAnalysis.isResalable === true;
     const productNotes = groqAnalysis.productVerificationNotes || "";
 
     // Determine if photo should be retaken based on claimType rules:
@@ -389,9 +412,9 @@ Provide your analysis in the following strict JSON format:
     } else {
       // damaged_product
       if (!isDamaged) {
-        // Pristine item returned but claimed damaged
-        weightedRiskScore = 85;
-        recommendedAction = "MANUAL_REVIEW";
+        // Pristine item returned but claimed damaged -> flag but let admin decide
+        weightedRiskScore = isResalable ? 10 : 85;
+        recommendedAction = isResalable ? "APPROVE" : "MANUAL_REVIEW";
       } else {
         // Correct item returned and is indeed damaged
         weightedRiskScore = Math.round(
@@ -417,6 +440,9 @@ Provide your analysis in the following strict JSON format:
       signals.push("RETAKE REQUIRED: Photo content conflicts with claims context.");
     } else if (claimType === "different_product") {
       signals.push("VERIFIED: Returned item is different from purchased catalog product.");
+      if (isResalable) {
+        signals.push("RESALABLE: Returned item appears pristine and eligible for Dark Store restocking.");
+      }
     } else {
       signals.push("VERIFIED: Product matches catalog reference identity.");
       if (isDamaged) {
@@ -426,7 +452,11 @@ Provide your analysis in the following strict JSON format:
           signals.push("VERIFIED: Clear physical damage/defects detected.");
         }
       } else {
-        signals.push("WARNING: Product shows no visible physical damage (claims pristine).");
+        if (isResalable) {
+          signals.push("RESALABLE: Product appears pristine and eligible for Dark Store restocking.");
+        } else {
+          signals.push("WARNING: Product shows no visible physical damage (claims pristine).");
+        }
       }
     }
 
@@ -461,6 +491,7 @@ Provide your analysis in the following strict JSON format:
       isRelevant,
       isDamaged,
       isDamageVisible,
+      isResalable,
       shouldRetake,
       retakeReason,
       productVerificationNotes: productNotes,

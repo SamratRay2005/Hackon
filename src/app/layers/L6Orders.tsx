@@ -259,6 +259,9 @@ export default function L6Orders() {
     setChatMessages,
     setIfixitGuides,
     setInspectQueue,
+    setFraudImage,
+    setFraudResult,
+    setUserDescription,
     manualReviewQueue,
     processedFraudQueue,
     inspectQueue,
@@ -306,6 +309,10 @@ export default function L6Orders() {
     setFraudItemName(order.name);
     setRefundBaseAmount(order.price);
     setFraudClaimType(claimType);
+    // Clear stale photo/result from previous return session
+    setFraudImage(null);
+    setFraudResult(null);
+    setUserDescription("");
     setGetHelpOrder(null);
     setReasonOrder(null);
     setActiveTab("fraud-mitigation");
