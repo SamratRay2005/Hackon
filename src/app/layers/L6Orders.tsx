@@ -107,11 +107,16 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
   const [reasonText, setReasonText] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [showChatbotModal, setShowChatbotModal] = React.useState(false);
 
   const handleSubmit = async () => {
     const choice = COMMON_REASONS.find(r => r.id === selectedReasonId);
     
     if (choice?.route !== "api") {
+      if (choice?.id === "defective") {
+        setShowChatbotModal(true);
+        return;
+      }
       onRouteDecision(choice!.route, choice!.claimType);
       return;
     }
@@ -204,6 +209,33 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
           {loading ? <span className="spinner border-slate-900 border-t-transparent w-4 h-4 mx-auto block" /> : "Continue"}
         </button>
       </div>
+
+      {/* Chatbot Interstitial Modal */}
+      {showChatbotModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative">
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">Want to try fixing this?</h3>
+            <p className="text-slate-600 mb-6">
+              Many common issues with {order.name} can be fixed in a few minutes. 
+              Would you like to chat with <b>Nova</b>, our tech support assistant, before proceeding with the return?
+            </p>
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => onRouteDecision("deflection")}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              >
+                Yes, chat with Nova
+              </button>
+              <button 
+                onClick={() => onRouteDecision("defective", "damaged_product")}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition-colors"
+              >
+                No, proceed with return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -219,6 +251,7 @@ export default function L6Orders() {
     setDeflectReason,
     setSelectedProductSku,
     setFraudSku,
+    setFraudOrderId,
     setFraudItemName,
     setRefundBaseAmount,
     setFraudClaimType,
@@ -269,6 +302,7 @@ export default function L6Orders() {
   const routeToL2Fraud = (order: any, claimType: "damaged_product" | "different_product" = "damaged_product") => {
     setSelectedProductSku(order.sku);
     setFraudSku(order.sku);
+    setFraudOrderId(order.orderId);
     setFraudItemName(order.name);
     setRefundBaseAmount(order.price);
     setFraudClaimType(claimType);
@@ -323,6 +357,8 @@ export default function L6Orders() {
           onRouteDecision={(classification, claimType) => {
             if (classification === "vibe_mismatch") {
               routeToL5DarkStore(reasonOrder);
+            } else if (classification === "deflection") {
+              handleDIM(reasonOrder);
             } else {
               routeToL2Fraud(reasonOrder, claimType as any);
             }
@@ -341,7 +377,16 @@ export default function L6Orders() {
               {orders.map((order: any) => {
                 const daysLeft = getDaysRemaining(order);
                 const isExpired = daysLeft <= 0;
-                const isReturned = inspectQueue?.some((i: any) => i.orderId === order.orderId);
+                const manualItem = manualReviewQueue?.find((i: any) => i.orderId === order.orderId);
+                const processedItem = processedFraudQueue?.find((i: any) => i.orderId === order.orderId);
+                const inspectItem = inspectQueue?.find((i: any) => i.orderId === order.orderId);
+                
+                let returnStatus = null;
+                if (manualItem) returnStatus = "MANUAL_REVIEW";
+                else if (processedItem) returnStatus = processedItem.status;
+                else if (inspectItem) returnStatus = "APPROVED";
+                
+                const isReturned = !!returnStatus || inspectItem;
 
                 return (
                   <div
@@ -384,11 +429,23 @@ export default function L6Orders() {
                           Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
                         </div>
                         
-                        {isReturned && (
+                        {returnStatus === "MANUAL_REVIEW" ? (
+                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#B12704", display:"flex", alignItems:"center", gap:"4px"}}>
+                            ⏳ Under Manual Review
+                          </div>
+                        ) : returnStatus === "APPROVED" ? (
+                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#067D62", display:"flex", alignItems:"center", gap:"4px"}}>
+                            ✅ Return Approved
+                          </div>
+                        ) : returnStatus === "REJECTED" ? (
+                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#B12704", display:"flex", alignItems:"center", gap:"4px"}}>
+                            ❌ Return Denied
+                          </div>
+                        ) : isReturned ? (
                           <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#C7511F"}}>
                             Return in progress
                           </div>
-                        )}
+                        ) : null}
                       </div>
 
                       {/* Card Footer (Actions) */}

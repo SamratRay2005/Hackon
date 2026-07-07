@@ -82,6 +82,7 @@ export default function Home() {
 
   // L2 Fraud
   const [fraudSku, setFraudSku] = useState("DENIM-JKT-001");
+  const [fraudOrderId, setFraudOrderId] = useState("");
   const [fraudItemName, setFraudItemName] = useState("Classic Denim Jacket");
   const [fraudImage, setFraudImage] = useState<string | null>(null);
   const [fraudImageType, setFraudImageType] = useState<string>("genuine");
@@ -91,7 +92,7 @@ export default function Home() {
   const [deflectSku, setDeflectSku] = useState("CF-Mkr-99");
   const [deflectReason, setDeflectReason] = useState("Defective / Won't turn on");
   const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([
-    { role: "bot", content: "Hi there! I see you want to return your **Smart Drip Coffee Maker** because it won't turn on. Before we issue a return label, let's see if we can resolve this together! Can you check if the power indicator light is blinking when you plug it in?" }
+    { role: "bot", content: "Hi there! I'm Nova. I see you want to return your **Smart Drip Coffee Maker** because it won't turn on. Before we issue a return label, let's see if we can resolve this together! Can you check if the power indicator light is blinking when you plug it in?" }
   ]);
   const [ifixitGuides, setIfixitGuides] = useState<Array<any>>([]);
 
@@ -149,6 +150,34 @@ export default function Home() {
   const [inspectQueue, setInspectQueue] = useState<any[]>([]);
   const [manualReviewQueue, setManualReviewQueue] = useState<any[]>([]);
   const [processedFraudQueue, setProcessedFraudQueue] = useState<any[]>([]);
+
+  // Hydrate queues from localStorage on mount
+  useEffect(() => {
+    try {
+      const inspectSaved = localStorage.getItem("reloop_inspect_queue");
+      if (inspectSaved) setInspectQueue(JSON.parse(inspectSaved));
+
+      const manualSaved = localStorage.getItem("reloop_manual_queue");
+      if (manualSaved) setManualReviewQueue(JSON.parse(manualSaved));
+
+      const processedSaved = localStorage.getItem("reloop_processed_queue");
+      if (processedSaved) setProcessedFraudQueue(JSON.parse(processedSaved));
+    } catch {}
+  }, []);
+
+  // Save queues to localStorage whenever they change
+  useEffect(() => {
+    try { localStorage.setItem("reloop_inspect_queue", JSON.stringify(inspectQueue)); } catch {}
+  }, [inspectQueue]);
+
+  useEffect(() => {
+    try { localStorage.setItem("reloop_manual_queue", JSON.stringify(manualReviewQueue)); } catch {}
+  }, [manualReviewQueue]);
+
+  useEffect(() => {
+    try { localStorage.setItem("reloop_processed_queue", JSON.stringify(processedFraudQueue)); } catch {}
+  }, [processedFraudQueue]);
+
 
   // ── SEARCH CLICK-OUTSIDE ──
   useEffect(() => {
@@ -371,7 +400,7 @@ export default function Home() {
     selectedProductSku, setSelectedProductSku,
     walletInfo, setWalletInfo, fetchWalletInfo,
     metrics, setMetrics,
-    fraudSku, setFraudSku,
+    fraudSku, setFraudSku, fraudOrderId, setFraudOrderId,
     fraudItemName, setFraudItemName,
     deflectProduct, setDeflectProduct,
     deflectSku, setDeflectSku,

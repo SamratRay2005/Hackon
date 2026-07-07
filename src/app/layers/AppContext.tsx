@@ -540,6 +540,8 @@ export interface AppContextType {
   // Cross-layer product state (L2/L3/L5 all read these)
   fraudSku: string;
   setFraudSku: (v: string) => void;
+  fraudOrderId: string;
+  setFraudOrderId: (v: string) => void;
   fraudItemName: string;
   setFraudItemName: (v: string) => void;
   deflectProduct: string;

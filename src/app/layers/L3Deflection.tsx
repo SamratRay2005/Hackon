@@ -131,8 +131,8 @@ export default function L3Deflection() {
   return (
     <div style={{display:"flex", flexDirection:"column", gap:"20px", background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
       <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
-        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Get Help — Chat Before You Return</h2>
-        <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>AI Support</span>
+        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Chat with Nova — AI Tech Support</h2>
+        <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>AI Assistant</span>
       </div>
 
       {/* Selected Product Context */}
@@ -186,20 +186,7 @@ export default function L3Deflection() {
             </div>
           )}
 
-          <div className="border-t border-slate-100 pt-2">
-            <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Return Reason</div>
-            <select
-              value={deflectReason}
-              onChange={e => setDeflectReason(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
-            >
-              <option>Defective / Won't turn on</option>
-              <option>Wrong size</option>
-              <option>Not as described</option>
-              <option>Damaged on arrival</option>
-              <option>Changed my mind</option>
-            </select>
-          </div>
+
         </div>
 
         {/* Chat window */}
@@ -207,7 +194,7 @@ export default function L3Deflection() {
           <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-bold text-slate-700">AI Repair Assistant</span>
+              <span className="text-xs font-bold text-slate-700">Nova</span>
             </div>
             <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]" title={deflectProduct}>{deflectProduct}</span>
           </div>

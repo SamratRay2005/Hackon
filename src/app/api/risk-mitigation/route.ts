@@ -32,7 +32,7 @@ Set "isRelevant" to true only if the product in the customer photo appears to be
 Set "isDamaged" to false.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
-1. aiGenerationScore: Probability that the photo contains AI-generated/modified elements or is entirely synthetic.
+1. aiGenerationScore: Probability that the photo is AI-generated or digitally altered. Scrutinize for AI artifacts: perfectly pure white backgrounds (highly unnatural for user returns), missing or illogical shadows around physical damage, floating objects, or hyper-realistic studio lighting. If the image looks like a stock photo, a digital render, or has a pure white background, give a very high score (7.0 - 10.0).
 2. damagePlausibility: Set to 0 since we are focusing on product verification.
 3. photoStagingSigns: Evidence of staging, professional lighting, or multiple background artifacts.
 
@@ -70,7 +70,7 @@ Set "isRelevant" to true only if the product in the customer photo appears to be
 Since the defect is internal, do not search for physical cracks/tears. Mark "isDamaged" as true because of the reported functional issue.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
-1. aiGenerationScore: Probability that the photo contains AI-generated/modified elements or is entirely synthetic.
+1. aiGenerationScore: Probability that the photo is AI-generated or digitally altered. Scrutinize for AI artifacts: perfectly pure white backgrounds (highly unnatural for user returns), missing or illogical shadows around physical damage, floating objects, or hyper-realistic studio lighting. If the image looks like a stock photo, a digital render, or has a pure white background, give a very high score (7.0 - 10.0).
 2. damagePlausibility: Set to 0 since the damage is functional/internal.
 3. photoStagingSigns: Evidence of staging, professional lighting, or multiple background artifacts.
 
@@ -110,7 +110,7 @@ Perform two main checks:
    Set "isDamaged" to false if the product appears pristine and undamaged in the photo.
 
 Assess the likelihood of fraud along three specific dimensions (score each 0-10 where 0 is pristine/legit, and 10 is clear fraud/staging):
-1. aiGenerationScore: Probability that the photo contains AI-generated/modified elements or is entirely synthetic.
+1. aiGenerationScore: Probability that the photo is AI-generated or digitally altered. Scrutinize for AI artifacts: perfectly pure white backgrounds (highly unnatural for user returns), missing or illogical shadows around physical damage, floating objects, or hyper-realistic studio lighting. If the image looks like a stock photo, a digital render, or has a pure white background, give a very high score (7.0 - 10.0).
 2. damagePlausibility: If damage is claimed but looks highly suspicious or digitally added.
 3. photoStagingSigns: Evidence of staging, professional lighting, or multiple background artifacts.
 

@@ -31,6 +31,7 @@ export default function L2Fraud() {
     fraudImage,
     setFraudImage,
     fraudSku,
+    fraudOrderId,
     fraudItemName,
     profileUserId,
     profileEmail,
@@ -88,7 +89,7 @@ export default function L2Fraud() {
         if (data && !data.shouldRetake && data.riskScore <= 40) {
           const claimObj = {
             id: Math.random().toString(36).substr(2, 9),
-            orderId: Math.random().toString(36).substr(2, 9),
+            orderId: fraudOrderId || Math.random().toString(36).substr(2, 9),
             sku: fraudSku,
             itemName: fraudItemName,
             userId: profileUserId,
@@ -118,7 +119,7 @@ export default function L2Fraud() {
         if (data && !data.shouldRetake && data.recommendedAction === "BLOCK") {
           const claimObj = {
             id: Math.random().toString(36).substr(2, 9),
-            orderId: Math.random().toString(36).substr(2, 9),
+            orderId: fraudOrderId || Math.random().toString(36).substr(2, 9),
             sku: fraudSku,
             itemName: fraudItemName,
             userId: profileUserId,
@@ -146,6 +147,7 @@ export default function L2Fraud() {
             if (prev.find((item: any) => item.sku === fraudSku)) return prev;
             return [...prev, {
               id: Math.random().toString(36).substr(2, 9),
+              orderId: fraudOrderId || Math.random().toString(36).substr(2, 9),
               sku: fraudSku,
               itemName: fraudItemName,
               userId: profileUserId,
