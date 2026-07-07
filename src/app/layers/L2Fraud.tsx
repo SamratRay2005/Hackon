@@ -15,6 +15,7 @@ import {
   Package,
   AlertTriangle,
   ImageIcon,
+  CheckCircle,
 } from "lucide-react";
 import {
   useApp,
@@ -47,12 +48,15 @@ export default function L2Fraud() {
     setUserDescription,
     manualReviewQueue, 
     setManualReviewQueue,
+    processedFraudQueue, 
+    setProcessedFraudQueue,
   } = useApp() as any;
 
   const [fraudLoading, setFraudLoading] = React.useState(false);
   const [selectedClaim, setSelectedClaim] = React.useState<any>(null);
   const [fraudImageName, setFraudImageName] = React.useState("uploaded_claim_evidence.jpg");
   const [fraudDemoCycle, setFraudDemoCycle] = React.useState(0);
+  const [adminTab, setAdminTab] = React.useState<"manual" | "processed">("manual");
 
   const triggerFraudCheck = async () => {
     if (!fraudImage) return;
@@ -80,18 +84,59 @@ export default function L2Fraud() {
         const data = await res.json();
         setFraudResult(data);
 
-        // If it's not a retake and score is <= 40 (Approved), push to inspect queue
+        // If it's not a retake and score is <= 40 (Approved), push to processedFraudQueue and inspectQueue
         if (data && !data.shouldRetake && data.riskScore <= 40) {
+          const claimObj = {
+            id: Math.random().toString(36).substr(2, 9),
+            orderId: Math.random().toString(36).substr(2, 9),
+            sku: fraudSku,
+            itemName: fraudItemName,
+            userId: profileUserId,
+            riskScore: data.riskScore,
+            recommendedAction: data.recommendedAction,
+            signals: data.signals || [],
+            userDescription,
+            fraudImage,
+            breakdown: data.breakdown,
+            reasoning: data.reasoning,
+            defectExplanation: data.defectExplanation,
+            claimType,
+            timestamp: new Date().toISOString(),
+            status: "APPROVED"
+          };
+          setProcessedFraudQueue((prev: any[]) => {
+            if (prev.find((item: any) => item.sku === fraudSku)) return prev;
+            return [claimObj, ...prev];
+          });
           setInspectQueue((prev: any[]) => {
             if (prev.find((item: any) => item.sku === fraudSku)) return prev;
-            return [...prev, {
-              id: Math.random().toString(36).substr(2, 9),
-              orderId: Math.random().toString(36).substr(2, 9),
-              sku: fraudSku,
-              itemName: fraudItemName,
-              source: "fraud",
-              timestamp: new Date().toISOString()
-            }];
+            return [...prev, { ...claimObj, source: "fraud" }];
+          });
+        }
+        
+        // If blocked autonomously
+        if (data && !data.shouldRetake && data.recommendedAction === "BLOCK") {
+          const claimObj = {
+            id: Math.random().toString(36).substr(2, 9),
+            orderId: Math.random().toString(36).substr(2, 9),
+            sku: fraudSku,
+            itemName: fraudItemName,
+            userId: profileUserId,
+            riskScore: data.riskScore,
+            recommendedAction: data.recommendedAction,
+            signals: data.signals || [],
+            userDescription,
+            fraudImage,
+            breakdown: data.breakdown,
+            reasoning: data.reasoning,
+            defectExplanation: data.defectExplanation,
+            claimType,
+            timestamp: new Date().toISOString(),
+            status: "REJECTED"
+          };
+          setProcessedFraudQueue((prev: any[]) => {
+            if (prev.find((item: any) => item.sku === fraudSku)) return prev;
+            return [claimObj, ...prev];
           });
         }
 
@@ -111,8 +156,10 @@ export default function L2Fraud() {
               fraudImage,
               breakdown: data.breakdown,
               reasoning: data.reasoning,
+              defectExplanation: data.defectExplanation,
               claimType,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              status: "MANUAL_REVIEW"
             }];
           });
         }
@@ -299,37 +346,53 @@ export default function L2Fraud() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-        {/* Left Column: Manual Review Queue */}
+        {/* Left Column: Queues */}
         <div className="lg:col-span-1 border border-slate-200 rounded-xl bg-slate-50 flex flex-col h-[700px] shadow-sm">
-           <div className="p-4 border-b border-slate-200 bg-white rounded-t-xl flex justify-between items-center">
-             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-               <AlertTriangle className="w-4 h-4 text-rose-500" />
-               Manual Review Queue
-             </h3>
-             <span className="bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{manualReviewQueue.length}</span>
+           
+           {/* Queue Tabs */}
+           <div className="flex border-b border-slate-200 bg-white rounded-t-xl">
+              <button 
+                onClick={() => { setAdminTab("manual"); setSelectedClaim(null); }}
+                className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 ${adminTab === "manual" ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-500 hover:bg-slate-50"}`}
+              >
+                <AlertTriangle className="w-3.5 h-3.5" /> Manual Review 
+                <span className="bg-slate-100 px-1.5 py-0.5 rounded-full text-[10px]">{manualReviewQueue.length}</span>
+              </button>
+              <button 
+                onClick={() => { setAdminTab("processed"); setSelectedClaim(null); }}
+                className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 ${adminTab === "processed" ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-500 hover:bg-slate-50"}`}
+              >
+                <CheckCircle className="w-3.5 h-3.5" /> Processed
+                <span className="bg-slate-100 px-1.5 py-0.5 rounded-full text-[10px]">{processedFraudQueue.length}</span>
+              </button>
            </div>
            
            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
-             {manualReviewQueue.length === 0 ? (
+             {(adminTab === "manual" ? manualReviewQueue : processedFraudQueue).length === 0 ? (
                <div className="text-center p-8 text-slate-400 my-auto">
                  <Shield className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                 <div className="text-xs font-medium">No claims awaiting review.</div>
-                 <div className="text-[10px] mt-1 opacity-70">When AI is unsure, claims will appear here.</div>
+                 <div className="text-xs font-medium">No claims in this queue.</div>
                </div>
              ) : (
-               manualReviewQueue.map((claim: any) => (
+               (adminTab === "manual" ? manualReviewQueue : processedFraudQueue).map((claim: any) => (
                  <div 
                    key={claim.id} 
                    onClick={() => setSelectedClaim(claim)}
-                   className={`p-3 border rounded-xl cursor-pointer transition-all ${selectedClaim?.id === claim.id ? 'bg-indigo-50 border-indigo-200 shadow-md ring-1 ring-indigo-200' : 'bg-white border-slate-200 hover:border-indigo-300 shadow-sm'}`}
+                   className={`p-3 border rounded-xl cursor-pointer transition-all relative overflow-hidden ${selectedClaim?.id === claim.id ? 'bg-indigo-50 border-indigo-200 shadow-md ring-1 ring-indigo-200' : 'bg-white border-slate-200 hover:border-indigo-300 shadow-sm'}`}
                  >
-                   <div className="flex justify-between items-start mb-2">
+                   {claim.status === "APPROVED" && <div className="absolute top-0 right-0 w-8 h-8 bg-emerald-100 rounded-bl-full" />}
+                   {claim.status === "REJECTED" && <div className="absolute top-0 right-0 w-8 h-8 bg-rose-100 rounded-bl-full" />}
+                   
+                   <div className="flex justify-between items-start mb-2 relative z-10">
                      <div className="font-bold text-sm text-slate-800 line-clamp-1">{claim.itemName}</div>
-                     <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded flex-shrink-0 ${claim.recommendedAction === 'BLOCK' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+                     <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded flex-shrink-0 ${claim.riskScore > 70 ? 'bg-rose-100 text-rose-700' : (claim.riskScore > 40 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')}`}>
                        Score: {claim.riskScore}
                      </span>
                    </div>
-                   <div className="text-[10px] text-slate-500 font-mono mb-1">User: {claim.userId}</div>
+                   <div className="text-[10px] text-slate-500 font-mono mb-1 flex justify-between relative z-10">
+                     <span>User: {claim.userId}</span>
+                     {claim.status && <span className="font-bold">{claim.status}</span>}
+                   </div>
                    <div className="text-[10px] text-slate-400">{new Date(claim.timestamp).toLocaleString()}</div>
                  </div>
                ))
@@ -417,7 +480,20 @@ export default function L2Fraud() {
                  {/* Signals & Actions */}
                  <div className="flex flex-col gap-4">
                    <div className="flex flex-col gap-3">
-                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">AI Signals</span>
+                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">AI Deduction & Reasoning</span>
+                     <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-xs text-indigo-900 leading-relaxed shadow-sm">
+                       <strong className="block mb-1">Reasoning Chain:</strong>
+                       {displayClaim.reasoning || "AI processed claim autonomously."}
+                       
+                       {displayClaim.defectExplanation && (
+                         <div className="mt-2 pt-2 border-t border-indigo-200/50">
+                           <strong className="block mb-1">Conclusion:</strong>
+                           {displayClaim.defectExplanation}
+                         </div>
+                       )}
+                     </div>
+
+                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-2">Risk Signals</span>
                      <ul className="flex flex-col gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         {displayClaim.signals?.map((sig: string, i: number) => (
                           <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5 leading-relaxed">
@@ -429,15 +505,31 @@ export default function L2Fraud() {
                    
                    <div className="mt-auto flex flex-col gap-2.5 pt-4 border-t border-slate-100">
                      <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors" onClick={() => { 
-                         if (selectedClaim) setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
-                         setFraudResult((prev: any) => ({ ...prev, status: "APPROVED" }));
+                         if (selectedClaim) {
+                           setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
+                           setProcessedFraudQueue((prev: any[]) => {
+                             if (prev.find(p => p.id === selectedClaim.id)) return prev;
+                             return [{...selectedClaim, status: "APPROVED"}, ...prev];
+                           });
+                           setInspectQueue((prev: any[]) => {
+                             if (prev.find(p => p.id === selectedClaim.id)) return prev;
+                             return [{...selectedClaim, status: "APPROVED", source: "fraud"}, ...prev];
+                           });
+                         }
+                         setFraudResult((prev: any) => prev ? ({ ...prev, status: "APPROVED" }) : null);
                          setSelectedClaim(null); 
                      }}>
                        Approve Return (Override AI)
                      </button>
                      <button className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors" onClick={() => { 
-                         if (selectedClaim) setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
-                         setFraudResult((prev: any) => ({ ...prev, status: "REJECTED" }));
+                         if (selectedClaim) {
+                           setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
+                           setProcessedFraudQueue((prev: any[]) => {
+                             if (prev.find(p => p.id === selectedClaim.id)) return prev;
+                             return [{...selectedClaim, status: "REJECTED"}, ...prev];
+                           });
+                         }
+                         setFraudResult((prev: any) => prev ? ({ ...prev, status: "REJECTED" }) : null);
                          setSelectedClaim(null); 
                          setMetrics((prev: any) => ({ ...prev, fraudAttemptsBlocked: prev.fraudAttemptsBlocked + 1 })); 
                      }}>

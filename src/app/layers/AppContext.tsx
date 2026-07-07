@@ -616,6 +616,10 @@ export interface AppContextType {
   manualReviewQueue: any[];
   setManualReviewQueue: React.Dispatch<React.SetStateAction<any[]>>;
 
+  // Admin Processed Fraud Queue
+  processedFraudQueue: any[];
+  setProcessedFraudQueue: React.Dispatch<React.SetStateAction<any[]>>;
+
   // Admin Inspect Queue
   inspectQueue: InspectQueueItem[];
   setInspectQueue: React.Dispatch<React.SetStateAction<InspectQueueItem[]>>;

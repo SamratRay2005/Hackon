@@ -148,6 +148,7 @@ export default function Home() {
   const isAdminMode = globalMode === "admin";
   const [inspectQueue, setInspectQueue] = useState<any[]>([]);
   const [manualReviewQueue, setManualReviewQueue] = useState<any[]>([]);
+  const [processedFraudQueue, setProcessedFraudQueue] = useState<any[]>([]);
 
   // ── SEARCH CLICK-OUTSIDE ──
   useEffect(() => {
@@ -402,6 +403,7 @@ export default function Home() {
     resaleListings, setResaleListings,
     isAdminMode,
     manualReviewQueue, setManualReviewQueue,
+    processedFraudQueue, setProcessedFraudQueue,
     inspectQueue, setInspectQueue,
     globalMode, setGlobalMode,
     // extra fields consumed by L3 via any-cast

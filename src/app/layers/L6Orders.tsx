@@ -226,6 +226,8 @@ export default function L6Orders() {
     setChatMessages,
     setIfixitGuides,
     setInspectQueue,
+    manualReviewQueue,
+    processedFraudQueue,
     inspectQueue,
     ledgerRecords,
   } = useApp() as any;
