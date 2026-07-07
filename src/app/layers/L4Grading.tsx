@@ -46,6 +46,7 @@ export default function L4Grading() {
 
   // ── Post-listing state ──
   const [listedItem, setListedItem] = React.useState<any>(null);
+  const [scrappedItem, setScrappedItem] = React.useState<any>(null);
 
   // ── Inline P2P Logistics state ──
   const [buyerZip, setBuyerZip] = React.useState("98004");
@@ -187,6 +188,7 @@ export default function L4Grading() {
                       setGradingVideoUrl("");
                       setGradingVideoBase64("");
                       setListedItem(null);
+                      setScrappedItem(null);
                       setLogisticsResult(null);
                       setLabelGenerated(false);
                     }}
@@ -343,6 +345,10 @@ export default function L4Grading() {
                       const gradeUpper = grade.toUpperCase();
 
                       if (gradeUpper === "D" || gradeUpper === "F") {
+                        setScrappedItem({ sku: gradingSku, name: gradingItemName, grade: gradeUpper, reason: gradingResult.resaleCategory || "Liquidation Salvage" });
+                        setListedItem(null);
+                        setLogisticsResult(null);
+                        setLabelGenerated(false);
                         setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
                         setGradingResult(null);
                         setGradingVideoUrl("");
@@ -538,6 +544,24 @@ export default function L4Grading() {
           </div>
         </div>
       )}
+
+      {/* ── POST-SCRAPPING: SUCCESS ── */}
+      {scrappedItem && (
+        <div className="glass-card border-2 border-slate-200 bg-slate-50 flex flex-col gap-5 mt-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
+              <Package className="w-6 h-6 text-slate-500" />
+            </div>
+            <div>
+              <div className="font-extrabold text-slate-800 text-sm">Item Routed to {scrappedItem.reason}</div>
+              <div className="text-[11px] text-slate-600 mt-0.5">
+                <span className="font-mono font-bold">{scrappedItem.name}</span> · Grade <span className="font-extrabold text-rose-700">{scrappedItem.grade}</span> · Removed from active inventory
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

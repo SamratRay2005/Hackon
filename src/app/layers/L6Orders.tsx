@@ -93,11 +93,11 @@ interface ReturnReasonModalProps {
 
 const COMMON_REASONS = [
   { id: "defective", label: "Defective / doesn't work properly", route: "defective", claimType: "damaged_product" },
-  { id: "not_described", label: "Item not as described", route: "defective", claimType: "different_product" },
-  { id: "mind", label: "Changed my mind", route: "vibe_mismatch" },
-  { id: "price", label: "Better price available", route: "vibe_mismatch" },
   { id: "wrong", label: "Wrong item was sent", route: "defective", claimType: "different_product" },
   { id: "damaged", label: "Arrived damaged", route: "defective", claimType: "damaged_product" },
+  { id: "size", label: "Size issue / doesn't fit", route: "vibe_mismatch" },
+  { id: "mind", label: "Changed my mind", route: "vibe_mismatch" },
+  { id: "price", label: "Better price available", route: "vibe_mismatch" },
   { id: "unneeded", label: "No longer needed", route: "vibe_mismatch" },
   { id: "other", label: "Other", route: "api" },
 ];
