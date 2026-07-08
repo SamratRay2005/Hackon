@@ -104,6 +104,7 @@ const RAW_PRODUCT_CATALOG = [
   { sku: "ESPADRIL-44",     name: "Braided Jute Sole Canvas Espadrilles",              price: 48.00,  sizes: ["7","8","9","10","11","12"] },
 
   // --- ELECTRONICS ---
+  { sku: "BOAT-EARBUDS-01", name: "boat earbuds",                              price: 25.00,  sizes: ["Standard"] },
   { sku: "CF-Mkr-99",       name: "Smart Drip Coffee Maker",                           price: 89.00,  sizes: ["Standard"] },
   { sku: "SPK-AIR-12",      name: "HiFi Wireless Speaker",                             price: 150.00, sizes: ["Standard"] },
   { sku: "EAR-BUDS-50",     name: "Active Noise-Cancelling Wireless Earbuds",          price: 129.00, sizes: ["Standard"] },

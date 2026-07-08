@@ -43,6 +43,13 @@ export default function L4Grading() {
   const [gradingLoading, setGradingLoading] = React.useState(false);
   const [gradingResult, setGradingResult] = React.useState<any>(null);
   const [gradingFraudImage, setGradingFraudImage] = React.useState<string | null>(null);
+  const [gradingReasoning, setGradingReasoning] = React.useState<string>("");
+  const [gradingVariantNotes, setGradingVariantNotes] = React.useState<string>("");
+  // Graded history stored locally for admin filter view
+  const [gradedHistory, setGradedHistory] = React.useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem("reloop_graded_history") || "[]"); } catch { return []; }
+  });
+  const [historyFilter, setHistoryFilter] = React.useState<string>("ALL");
 
   // ── Post-listing state ──
   const [listedItem, setListedItem] = React.useState<any>(null);
@@ -83,6 +90,11 @@ export default function L4Grading() {
     map.fitBounds(L.latLngBounds([origin, dest, centralWh]), { padding: [40, 40] });
   }, [logisticsResult]);
 
+  // Persist graded history
+  React.useEffect(() => {
+    try { localStorage.setItem("reloop_graded_history", JSON.stringify(gradedHistory)); } catch {}
+  }, [gradedHistory]);
+
   // ── API: Grade product ──
   const triggerWarehouseGrading = async () => {
     if (!gradingVideoUrl && !gradingVideoBase64) return;
@@ -102,8 +114,19 @@ export default function L4Grading() {
       if (res.ok) {
         const data = await res.json();
         setGradingResult(data.report);
+        setGradingReasoning(data.reasoning || "");
+        setGradingVariantNotes(data.variantNotes || "");
         setLedgerRecords((prev: any) => [data.report, ...prev]);
         setMetrics((prev: any) => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
+        // Add to persistent graded history for admin view
+        setGradedHistory((prev: any[]) => [{
+          ...data.report,
+          reasoning: data.reasoning || "",
+          variantNotes: data.variantNotes || "",
+          gradedAt: new Date().toISOString(),
+        }, ...prev]);
+        // Remove from inspect queue immediately once graded
+        setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
       }
     } catch { } finally { setGradingLoading(false); }
   };
@@ -127,13 +150,6 @@ export default function L4Grading() {
     } catch { } finally { setLogisticsLoading(false); }
   };
 
-  const getProductImage = (sku: string) => {
-    if (sku === "CF-Mkr-99") return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
-    if (sku === "DENIM-JKT-001") return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
-    if (sku === "SPK-AIR-12") return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
-    if (sku === "YRDLY-GNTLMN-001") return "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500";
-    return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
-  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -148,15 +164,24 @@ export default function L4Grading() {
               <span>Inspect Queue</span>
               <span style={{background:"#F0F8FA", color:"#007185", padding:"2px 6px", borderRadius:"12px", fontSize:"10px", border:"1px solid #007185"}}>{inspectQueue?.length || 0}</span>
             </div>
-            <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px] pr-1">
-              {inspectQueue && inspectQueue.length > 0 ? inspectQueue.map((item: any) => (
+
+            {/* ── Queue Tabs ── */}
+            {(() => {
+              const [queueTab, setQueueTab] = React.useState<"evidence" | "direct">("evidence");
+              const evidenceItems = (inspectQueue || []).filter((i: any) => i.source === "fraud");
+              const directItems = (inspectQueue || []).filter((i: any) => i.source === "vibe");
+
+              const renderItem = (item: any) => (
                 <div
                   key={item.id}
                   className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
                 >
-                  {/* Product thumbnail from customer evidence photo or fallback */}
-                  <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-slate-50 border border-slate-200 flex items-center justify-center p-1">
+                  {/* Product thumbnail */}
+                  <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-slate-50 border border-slate-200 flex items-center justify-center p-1 relative">
                     <img src={item.fraudImage || getSKUReferenceImage(item.sku)} alt={item.itemName} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                    {item.fraudImage && (
+                      <span style={{position:"absolute", top:3, right:3, background:"#4f46e5", color:"#fff", fontSize:"8px", fontWeight:700, padding:"1px 4px", borderRadius:"3px"}}>📷 PHOTO</span>
+                    )}
                   </div>
                   <div className="font-bold text-slate-800 truncate w-full">{item.itemName}</div>
                   <div className="flex items-center justify-between mt-1">
@@ -199,10 +224,63 @@ export default function L4Grading() {
                     {gradingSku === item.sku ? "✓ Inspecting" : "Inspect This Item"}
                   </button>
                 </div>
-              )) : (
-                <div className="text-[10px] text-slate-400 text-center py-6 italic">Queue is empty</div>
-              )}
-            </div>
+              );
+
+              return (
+                <>
+                  {/* Tab bar */}
+                  <div style={{display:"flex", gap:"4px", marginBottom:"4px"}}>
+                    <button
+                      onClick={() => setQueueTab("evidence")}
+                      style={{
+                        flex:1, padding:"5px 4px", fontSize:"9px", fontWeight:700,
+                        textTransform:"uppercase", border:"1px solid", borderRadius:"6px",
+                        cursor:"pointer", transition:"all 0.15s",
+                        background: queueTab === "evidence" ? "#4f46e5" : "#f8fafc",
+                        color: queueTab === "evidence" ? "#fff" : "#64748b",
+                        borderColor: queueTab === "evidence" ? "#4f46e5" : "#e2e8f0",
+                      }}
+                    >
+                      📷 With Evidence
+                      <span style={{marginLeft:"4px", background: queueTab === "evidence" ? "rgba(255,255,255,0.25)" : "#e2e8f0", color: queueTab === "evidence" ? "#fff" : "#475569", padding:"1px 5px", borderRadius:"8px"}}>
+                        {evidenceItems.length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setQueueTab("direct")}
+                      style={{
+                        flex:1, padding:"5px 4px", fontSize:"9px", fontWeight:700,
+                        textTransform:"uppercase", border:"1px solid", borderRadius:"6px",
+                        cursor:"pointer", transition:"all 0.15s",
+                        background: queueTab === "direct" ? "#d97706" : "#f8fafc",
+                        color: queueTab === "direct" ? "#fff" : "#64748b",
+                        borderColor: queueTab === "direct" ? "#d97706" : "#e2e8f0",
+                      }}
+                    >
+                      📦 Direct Return
+                      <span style={{marginLeft:"4px", background: queueTab === "direct" ? "rgba(255,255,255,0.25)" : "#e2e8f0", color: queueTab === "direct" ? "#fff" : "#475569", padding:"1px 5px", borderRadius:"8px"}}>
+                        {directItems.length}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Tab description */}
+                  <div style={{fontSize:"9px", color:"#94a3b8", marginBottom:"4px", padding:"0 2px"}}>
+                    {queueTab === "evidence"
+                      ? "Customer submitted a photo via Verify Return. Compare video against their evidence."
+                      : "Customer returned directly (vibe mismatch). Use catalog image as sole reference."}
+                  </div>
+
+                  {/* List */}
+                  <div className="flex flex-col gap-2 overflow-y-auto max-h-[540px] pr-1">
+                    {(queueTab === "evidence" ? evidenceItems : directItems).length > 0
+                      ? (queueTab === "evidence" ? evidenceItems : directItems).map(renderItem)
+                      : <div className="text-[10px] text-slate-400 text-center py-6 italic">No items in this queue</div>
+                    }
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -262,7 +340,7 @@ export default function L4Grading() {
                   {gradingSku ? (
                     // Priority: customer's evidence photo > catalog image
                     <img
-                      src={gradingFraudImage || getProductImage(gradingSku)}
+                      src={gradingFraudImage || getSKUReferenceImage(gradingSku)}
                       alt={gradingItemName}
                       className="w-full h-full object-cover"
                     />
@@ -302,35 +380,101 @@ export default function L4Grading() {
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Condition Report Card</div>
               {gradingResult ? (
                 <div className="flex flex-col gap-4">
+                  {/* ── Grade header ── */}
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="text-sm font-bold text-slate-800">{gradingResult.itemName}</h4>
                       <span className="text-[10px] font-mono text-slate-400 mt-0.5 block">SKU: {gradingResult.sku}</span>
                     </div>
-                    <div className={`text-2xl font-extrabold px-3.5 py-1.5 rounded-xl border-2 font-mono ${
-                      gradingResult.grade === "A" ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
-                      gradingResult.grade === "B" ? "bg-indigo-50 border-indigo-200 text-indigo-700" :
-                      gradingResult.grade === "C" ? "bg-amber-50 border-amber-200 text-amber-700" :
-                      "bg-rose-50 border-rose-200 text-rose-700"
+                    <div className={`flex flex-col items-center gap-0.5 px-3.5 py-2 rounded-xl border-2 font-mono ${
+                      gradingResult.grade === "A" ? "bg-emerald-50 border-emerald-300 text-emerald-700" :
+                      gradingResult.grade === "B" ? "bg-indigo-50 border-indigo-300 text-indigo-700" :
+                      gradingResult.grade === "C" ? "bg-amber-50 border-amber-300 text-amber-700" :
+                      "bg-rose-50 border-rose-300 text-rose-700"
                     }`}>
-                      {gradingResult.grade}
+                      <span className="text-2xl font-extrabold leading-none">{gradingResult.grade}</span>
+                      <span className="text-[8px] font-bold uppercase tracking-wider opacity-70">
+                        {gradingResult.grade === "A" ? "Like New" : gradingResult.grade === "B" ? "Very Good" : gradingResult.grade === "C" ? "Moderate" : "Rejected"}
+                      </span>
                     </div>
                   </div>
 
+                  {/* ── Grading scale legend ── */}
+                  <div style={{background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:"10px", padding:"10px 12px"}}>
+                    <div style={{fontSize:"9px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:"6px"}}>Grading Scale</div>
+                    <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"4px"}}>
+                      {[
+                        { g:"A", label:"Like New", sub:"9–10/10", bg:"#ecfdf5", border:"#6ee7b7", text:"#065f46" },
+                        { g:"B", label:"Very Good", sub:"7–8.9/10", bg:"#eef2ff", border:"#a5b4fc", text:"#3730a3" },
+                        { g:"C", label:"Moderate", sub:"4–6.9/10", bg:"#fffbeb", border:"#fcd34d", text:"#92400e" },
+                        { g:"D", label:"Rejected", sub:"0–3.9/10", bg:"#fff1f2", border:"#fda4af", text:"#9f1239" },
+                      ].map(({g, label, sub, bg, border, text}) => (
+                        <div key={g} style={{background:bg, border:`1.5px solid ${border}`, borderRadius:"6px", padding:"5px 4px", textAlign:"center",
+                          boxShadow: gradingResult.grade === g ? `0 0 0 2px ${border}` : "none", opacity: gradingResult.grade === g ? 1 : 0.5}}>
+                          <div style={{fontSize:"14px", fontWeight:900, color:text, fontFamily:"monospace"}}>{g}</div>
+                          <div style={{fontSize:"8px", fontWeight:700, color:text}}>{label}</div>
+                          <div style={{fontSize:"7px", color:text, opacity:0.7}}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Resale channel highlight ── */}
+                  <div style={{
+                    background: gradingResult.grade === "A" ? "linear-gradient(135deg,#ecfdf5,#d1fae5)" :
+                               gradingResult.grade === "B" ? "linear-gradient(135deg,#eef2ff,#e0e7ff)" :
+                               gradingResult.grade === "C" ? "linear-gradient(135deg,#fffbeb,#fef3c7)" :
+                               "linear-gradient(135deg,#fff1f2,#ffe4e6)",
+                    border: `2px solid ${gradingResult.grade === "A" ? "#6ee7b7" : gradingResult.grade === "B" ? "#a5b4fc" : gradingResult.grade === "C" ? "#fcd34d" : "#fda4af"}`,
+                    borderRadius:"10px", padding:"10px 14px", display:"flex", alignItems:"center", justifyContent:"space-between"
+                  }}>
+                    <div>
+                      <div style={{fontSize:"9px", fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.08em"}}>Resale Channel</div>
+                      <div style={{fontSize:"14px", fontWeight:900,
+                        color: gradingResult.grade === "A" ? "#065f46" : gradingResult.grade === "B" ? "#3730a3" : gradingResult.grade === "C" ? "#92400e" : "#9f1239"}}>
+                        {gradingResult.resaleCategory}
+                      </div>
+                    </div>
+                    <div style={{fontSize:"24px"}}>
+                      {gradingResult.grade === "A" ? "🏆" : gradingResult.grade === "B" ? "♻️" : gradingResult.grade === "C" ? "🏷️" : "🚫"}
+                    </div>
+                  </div>
+
+                  {/* ── Key metrics ── */}
                   <div className="flex flex-col gap-2 text-xs border-y border-slate-100 py-3">
                     {[
                       { label: "Variant Check", value: gradingResult.isCorrectVariant ? "✓ MATCHED" : "✗ MISMATCH", colored: true },
-                      { label: "Defects Found", value: gradingResult.defects?.join(", ") || "None", colored: false },
-                      { label: "Resale Channel", value: gradingResult.resaleCategory, colored: false },
                       { label: "Functional Score", value: `${gradingResult.functionalScore}/10`, colored: false },
-                    ].map(({ label, value, colored }) => (
+                      { label: "Defects Found", value: gradingResult.defects?.join(", ") || "None", colored: false },
+                      ...(gradingResult.missingComponents?.length > 0
+                        ? [{ label: "⚠️ Missing Components", value: gradingResult.missingComponents.join(", "), colored: true, isMissing: true }]
+                        : []),
+                    ].map(({ label, value, colored, isMissing }: any) => (
                       <div key={label} className="flex justify-between gap-2">
                         <span className="text-slate-500">{label}:</span>
-                        <span className={`font-bold text-right text-slate-800 ${colored && value.startsWith("✓") ? "text-emerald-600" : colored && value.startsWith("✗") ? "text-rose-600" : ""}`}>{value}</span>
+                        <span className={`font-bold text-right ${
+                          isMissing ? "text-rose-600" :
+                          colored && value.startsWith("✓") ? "text-emerald-600" :
+                          colored && value.startsWith("✗") ? "text-rose-600" : "text-slate-800"
+                        }`}>{value}</span>
                       </div>
                     ))}
                   </div>
 
+                  {/* ── AI Reasoning ── */}
+                  {gradingReasoning && (
+                    <div style={{background:"#f8fafc", border:"1px solid #cbd5e1", borderRadius:"10px", padding:"10px 12px"}}>
+                      <div style={{fontSize:"9px", fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:"4px"}}>🤖 AI Inspector Reasoning</div>
+                      <div style={{fontSize:"11px", color:"#334155", lineHeight:1.6}}>{gradingReasoning}</div>
+                      {gradingVariantNotes && (
+                        <div style={{fontSize:"10px", color:"#64748b", marginTop:"6px", paddingTop:"6px", borderTop:"1px solid #e2e8f0"}}>
+                          <span style={{fontWeight:700}}>Variant notes: </span>{gradingVariantNotes}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Ledger block ── */}
                   <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
                     <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Ledger Block SHA-256</div>
                     <div className="font-mono text-[9px] text-indigo-700 break-all leading-relaxed">{gradingResult.hash}</div>
@@ -347,7 +491,6 @@ export default function L4Grading() {
                         setListedItem(null);
                         setLogisticsResult(null);
                         setLabelGenerated(false);
-                        setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
                         setGradingResult(null);
                         setGradingVideoUrl("");
                         setGradingVideoBase64("");
@@ -375,7 +518,6 @@ export default function L4Grading() {
                         ];
                       });
 
-                      setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
                       setListedItem({ sku: gradingSku, name: gradingItemName, grade: gradeUpper });
                       setLogisticsResult(null);
                       setLabelGenerated(false);
@@ -559,6 +701,109 @@ export default function L4Grading() {
           </div>
         </div>
       )}
+
+      {/* ── GRADED HISTORY (Admin View) ── */}
+      <div style={{background:"#FFF", border:"1px solid #DDD", borderRadius:"4px", padding:"20px", marginTop:"8px"}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"14px", flexWrap:"wrap", gap:"8px"}}>
+          <div>
+            <h3 style={{fontSize:"16px", fontWeight:600, color:"#0F1111", margin:0}}>Graded History</h3>
+            <div style={{fontSize:"11px", color:"#565959", marginTop:"2px"}}>All inspected items · stored locally · {gradedHistory.length} records</div>
+          </div>
+          {/* Grade filter pills */}
+          <div style={{display:"flex", gap:"6px", flexWrap:"wrap"}}>
+            {["ALL","A","B","C","D"].map(f => (
+              <button key={f} onClick={() => setHistoryFilter(f)} style={{
+                padding:"4px 12px", fontSize:"11px", fontWeight:700, borderRadius:"20px",
+                border:"1.5px solid",
+                background: historyFilter === f
+                  ? (f === "ALL" ? "#0F1111" : f === "A" ? "#065f46" : f === "B" ? "#3730a3" : f === "C" ? "#92400e" : "#9f1239")
+                  : "#f8fafc",
+                color: historyFilter === f ? "#fff" : "#64748b",
+                borderColor: historyFilter === f
+                  ? (f === "ALL" ? "#0F1111" : f === "A" ? "#065f46" : f === "B" ? "#3730a3" : f === "C" ? "#92400e" : "#9f1239")
+                  : "#e2e8f0",
+                cursor:"pointer", transition:"all 0.15s"
+              }}>
+                {f === "ALL" ? "All" : `Grade ${f}`}
+                <span style={{marginLeft:"5px", fontSize:"10px", opacity:0.75}}>
+                  ({f === "ALL" ? gradedHistory.length : gradedHistory.filter((r:any) => r.grade === f).length})
+                </span>
+              </button>
+            ))}
+            {gradedHistory.length > 0 && (
+              <button onClick={() => { setGradedHistory([]); }} style={{
+                padding:"4px 10px", fontSize:"10px", fontWeight:600, borderRadius:"20px",
+                border:"1px solid #fca5a5", background:"#fff1f2", color:"#dc2626", cursor:"pointer"
+              }}>Clear</button>
+            )}
+          </div>
+        </div>
+
+        {gradedHistory.filter((r:any) => historyFilter === "ALL" || r.grade === historyFilter).length === 0 ? (
+          <div style={{textAlign:"center", padding:"32px", color:"#94a3b8", fontSize:"12px", fontStyle:"italic"}}>
+            No graded items yet. Run a grading inspection to see results here.
+          </div>
+        ) : (
+          <div style={{display:"flex", flexDirection:"column", gap:"8px"}}>
+            {gradedHistory
+              .filter((r:any) => historyFilter === "ALL" || r.grade === historyFilter)
+              .map((record: any, i: number) => {
+                const gradeColors: Record<string, {bg:string, border:string, text:string, badge:string}> = {
+                  A: { bg:"#ecfdf5", border:"#6ee7b7", text:"#065f46", badge:"#059669" },
+                  B: { bg:"#eef2ff", border:"#a5b4fc", text:"#3730a3", badge:"#4f46e5" },
+                  C: { bg:"#fffbeb", border:"#fcd34d", text:"#92400e", badge:"#d97706" },
+                  D: { bg:"#fff1f2", border:"#fda4af", text:"#9f1239", badge:"#e11d48" },
+                };
+                const gc = gradeColors[record.grade] || gradeColors["D"];
+                return (
+                  <div key={i} style={{
+                    display:"grid", gridTemplateColumns:"auto 1fr auto",
+                    gap:"12px", alignItems:"flex-start",
+                    background:gc.bg, border:`1px solid ${gc.border}`,
+                    borderRadius:"10px", padding:"12px 14px"
+                  }}>
+                    {/* Grade badge */}
+                    <div style={{
+                      width:"40px", height:"40px", borderRadius:"8px", flexShrink:0,
+                      background:gc.badge, color:"#fff", fontWeight:900, fontSize:"20px",
+                      fontFamily:"monospace", display:"flex", alignItems:"center", justifyContent:"center"
+                    }}>{record.grade}</div>
+
+                    {/* Info */}
+                    <div style={{minWidth:0}}>
+                      <div style={{display:"flex", alignItems:"center", gap:"8px", flexWrap:"wrap"}}>
+                        <span style={{fontWeight:700, fontSize:"13px", color:"#0F1111"}}>{record.itemName}</span>
+                        <span style={{fontSize:"9px", fontFamily:"monospace", color:"#64748b", background:"#f1f5f9", padding:"2px 6px", borderRadius:"4px"}}>{record.sku}</span>
+                        <span style={{fontSize:"10px", fontWeight:700, color:gc.text, background:"white", border:`1px solid ${gc.border}`, padding:"1px 7px", borderRadius:"10px"}}>
+                          {record.resaleCategory}
+                        </span>
+                      </div>
+                      <div style={{display:"flex", gap:"12px", marginTop:"4px", flexWrap:"wrap"}}>
+                        <span style={{fontSize:"11px", color:"#64748b"}}>Score: <b style={{color:gc.text}}>{record.functionalScore}/10</b></span>
+                        {record.defects?.length > 0 && (
+                          <span style={{fontSize:"11px", color:"#64748b"}}>Defects: <b>{record.defects.join(", ")}</b></span>
+                        )}
+                        {record.missingComponents?.length > 0 && (
+                          <span style={{fontSize:"11px", color:"#dc2626"}}>⚠️ Missing: <b>{record.missingComponents.join(", ")}</b></span>
+                        )}
+                      </div>
+                      {record.reasoning && (
+                        <div style={{marginTop:"6px", fontSize:"11px", color:"#475569", lineHeight:1.5, borderTop:`1px solid ${gc.border}`, paddingTop:"6px"}}>
+                          <span style={{fontWeight:700, color:gc.text}}>AI: </span>{record.reasoning}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Time */}
+                    <div style={{fontSize:"9px", color:"#94a3b8", flexShrink:0, textAlign:"right", whiteSpace:"nowrap"}}>
+                      {record.gradedAt ? new Date(record.gradedAt).toLocaleString("en-IN", {hour:"2-digit", minute:"2-digit", month:"short", day:"numeric"}) : ""}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
 
     </div>
   );

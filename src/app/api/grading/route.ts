@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryGemini, queryGroq, wasGeminiDailyQuotaExhausted, db } from "@/lib/services";
+import { PRODUCT_CATALOG } from "@/lib/catalog";
 import os from "os";
 import path from "path";
 import fs from "fs";
@@ -278,23 +279,62 @@ export async function POST(req: NextRequest) {
     // ── Compact grading prompt ──
     const numReturned = imagesToSend.length;
 
-    const prompt = `You are a warehouse grading inspector. Compare returned item photos against the catalog reference to grade condition.
+    // ── Product-specific context for the AI ──
+    const catalogProduct = PRODUCT_CATALOG.find(p => p.sku === sku);
+    const productCategory = catalogProduct?.category || "Unknown";
+    const productFeatures = catalogProduct?.features?.join(", ") || "";
+    const productBrand = catalogProduct?.brand || "";
 
-SKU: ${sku}${itemName ? ` ("${itemName}")` : ""}
-Image 1 = catalog reference. Image ${numReturned > 1 ? "2-" + (numReturned + 1) : "2"} = returned item.
+    // Build a completeness hint: tell the AI what components to expect
+    let completenessHint = "";
+    const productNameLower = (itemName || "").toLowerCase();
+    if (productNameLower.includes("earbuds") || productNameLower.includes("earbud") || productNameLower.includes("tws") || productNameLower.includes("airpods")) {
+      completenessHint = `CRITICAL: This product is a pair of wireless earbuds. The set MUST include: LEFT earbud, RIGHT earbud, and charging case. If ANY of these three components is absent from the returned video/photos, it is an INCOMPLETE return — list the missing item in missingComponents and assign Grade D automatically. A single earbud in the case means one earbud is missing — this IS Grade D.`;
+    } else if (productNameLower.includes("shoe") || productNameLower.includes("sneaker") || productNameLower.includes("boot") || productNameLower.includes("slipper") || productNameLower.includes("sandal")) {
+      completenessHint = `CRITICAL: This product is a pair of shoes. Both the left and right shoe must be present. If only one is visible, list the missing shoe in missingComponents and assign Grade D.`;
+    } else if (productCategory === "Electronics") {
+      completenessHint = `Check for all accessories typically bundled with electronics (cables, adapters, manuals, etc.). Missing primary components = Grade D. Missing only accessories = Grade C at most.`;
+    }
 
-INSPECTION (do all 5 in order):
-1. VARIANT CHECK: Does returned item match reference (model, color, logos, form factor)? Flag false only on clear mismatch.
-2. COMPLETENESS: List components visible in reference but missing in returned photos. Don't speculate about hidden angles.
-3. SURFACE SCAN: Classify defects — MINOR (smudges, dust, faint marks), MODERATE (scratches <2cm, light scuffs, small chips), SEVERE (deep scratches, dents, cracks, warping, corrosion).
-4. STRUCTURAL: Cracked housing, broken hinges, exposed wiring = automatic Grade D.
-5. SCORE each viewpoint 0.0-10.0, then grade by LOWEST score:
-   9.0-10.0=A (Like New), 7.0-8.9=B (Very Good, minor cosmetic only), 4.0-6.9=C (Moderate wear, functional), 0.0-3.9=D (Damaged/wrong variant/missing critical parts).
+    const prompt = `You are a strict warehouse grading inspector for a returns processing center. Compare returned item photos against the catalog reference image.
 
-Grade→Resale: A="Excellent Open-Box", B="Refurbished", C="Discount Outlet", D="Liquidation Salvage"
+PRODUCT INFO:
+- SKU: ${sku}
+- Name: ${itemName || "Unknown"}
+- Brand: ${productBrand}
+- Category: ${productCategory}
+- Features: ${productFeatures}
 
-Output ONLY raw JSON (no markdown/backticks):
-{"chainOfThought":"1-2 sentence reasoning","isCorrectVariant":true,"variantNotes":"evidence","missingComponents":[],"viewpoints":[{"viewpointIndex":1,"functionalScore":8.5,"severityBreakdown":{"minor":1,"moderate":0,"severe":0},"defects":["defect description"]}],"overallGrade":"B","resaleCategory":"Refurbished"}`;
+IMAGES:
+- Image 1 = Official catalog reference (what a COMPLETE product looks like)
+- Image ${numReturned > 1 ? "2–" + (numReturned + 1) : "2"} = Returned item frames from inspection video
+
+${completenessHint ? `⚠️ PRODUCT-SPECIFIC RULE:
+${completenessHint}
+
+` : ""}INSPECTION STEPS (perform ALL in order, be strict):
+1. VARIANT CHECK: Does the returned item match the reference in model, color, brand logos, and overall form factor? Set isCorrectVariant=false on any clear mismatch.
+2. COMPLETENESS: Count and list every component present in the reference that is absent in the returned item. Be explicit — "left earbud missing", "charging cable missing", etc. Do NOT give the benefit of the doubt if a component is not visible.
+3. SURFACE SCAN: Classify all visible defects:
+   - MINOR: smudges, fingerprints, light dust
+   - MODERATE: scratches <2cm, light scuffs, small chips
+   - SEVERE: deep gouges, dents, cracks, warping, corrosion
+4. STRUCTURAL: Cracked housing, broken hinges, or exposed internals = automatic Grade D.
+5. SCORE each video frame viewpoint 0.0–10.0, then derive grade from the LOWEST score:
+   - 9.0–10.0 = A (Like New — zero visible defects, 100% complete)
+   - 7.0–8.9  = B (Very Good — complete set, only minor cosmetic defects)
+   - 4.0–6.9  = C (Moderate — functional but damaged or minor missing accessories)
+   - 0.0–3.9  = D (Reject — wrong variant, missing critical components, or structurally damaged)
+
+GRADE OVERRIDE RULES (non-negotiable, apply AFTER scoring):
+- isCorrectVariant=false → Grade D, no exceptions
+- missingComponents is non-empty AND contains a primary component → Grade D, no exceptions
+- Any severe structural defect → Grade D, no exceptions
+
+Grade→Resale mapping: A="Excellent Open-Box", B="Refurbished", C="Discount Outlet", D="Liquidation Salvage"
+
+Output ONLY raw JSON (no markdown, no backticks, no prose):
+{"chainOfThought":"concise 2-3 sentence reasoning covering completeness check first","isCorrectVariant":true,"variantNotes":"evidence for variant decision","missingComponents":[],"viewpoints":[{"viewpointIndex":1,"functionalScore":8.5,"severityBreakdown":{"minor":1,"moderate":0,"severe":0},"defects":["description"]}],"overallGrade":"B","resaleCategory":"Refurbished"}`;
 
     // ── Build message content helper ──
     function buildMessageContent(ref: string, imgs: string[]) {
@@ -475,6 +515,13 @@ Output ONLY raw JSON (no markdown/backticks):
 
         if (isCorrectVariant === false) {
           grade = "D";
+        } else if (missingComponents.length > 0) {
+          // ── Server-side completeness enforcement ──
+          // Any non-empty missingComponents list means the return is incomplete.
+          // The AI already has instructions to grade D for missing primary components,
+          // but we enforce it here server-side as a hard rule to prevent prompt drift.
+          grade = "D";
+          console.log(`[Grading] Grade forced to D — missingComponents: ${JSON.stringify(missingComponents)}`);
         } else {
           // Use the LLM's overallGrade if provided, otherwise derive from the worst-angle score
           if (result.overallGrade && ["A", "B", "C", "D"].includes(result.overallGrade)) {

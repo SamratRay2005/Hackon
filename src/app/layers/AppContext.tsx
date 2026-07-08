@@ -135,6 +135,7 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
   "CF-Mkr-99": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
   "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500",
   "YRDLY-GNTLMN-001": "/yardley-gentleman.webp",
+  "BOAT-EARBUDS-01": "/boat-earbuds.jpg",
 };
 
 export const getSKUReferenceImage = (sku: string) => {
