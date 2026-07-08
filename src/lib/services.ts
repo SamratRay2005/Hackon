@@ -1418,7 +1418,11 @@ export const db = {
     if (list.length > 0) return list;
     const p = PRODUCT_CATALOG.find((x) => x.sku === sku);
     if (!p) return [];
-    const names = ["Alice Chen", "David Kim", "Marcus Aurelius", "Sarah Connor", "Bruce Wayne", "Clark Kent", "Peter Parker"];
+    const names = [
+      "Aarav Sharma", "Rahul Patel", "Priya Singh", "Ananya Gupta", "Vikram Desai",
+      "Neha Reddy", "Aditya Verma", "Rohan Iyer", "Kavita Nair", "Siddharth Joshi",
+      "Sneha Kapoor", "Amit Kumar", "Meera Menon", "Karan Malhotra", "Rajesh Rao"
+    ];
     let buyerZip = "560034";
     if (returnerZip) {
       const isIndian = /^\d{6}$/.test(returnerZip.trim());

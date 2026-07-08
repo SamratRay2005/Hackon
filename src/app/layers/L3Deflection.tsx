@@ -30,11 +30,14 @@ export default function L3Deflection() {
     deflectReason,
     setDeflectReason,
     deflectSku,
+    deflectOrderId,
     walletInfo,
     profileUserId,
     setMetrics,
     setActiveTab,
     fetchWalletInfo,
+    setInspectQueue,
+    setShowReturnSuccess,
   } = useApp() as any;
 
   const [chatInput, setChatInput] = React.useState(_chatInput || "");
@@ -237,8 +240,21 @@ export default function L3Deflection() {
                 style={{ background: "#FFF", color: "#0F1111", borderRadius: "4px", border: "1px solid #a88734" }}
                 className="flex-1 py-2 text-[13px] font-bold shadow-sm hover:bg-slate-50 flex items-center justify-center transition-colors" 
                 onClick={() => {
-                setChatMessages((prev: any) => [...prev, { role: "bot", content: "Understood. Proceeding to circular logistics router. Head to L5 for shipping options, or L6 for refund routing." }]);
-                setTimeout(() => setActiveTab("logistics"), 1500);
+                setChatMessages((prev: any) => [...prev, { role: "bot", content: "Return Initiated." }]);
+                
+                setInspectQueue((prev: any) => {
+                  if (prev.some((q: any) => q.orderId === deflectOrderId)) return prev;
+                  return [...prev, {
+                    id: Math.random().toString(36).substring(7),
+                    orderId: deflectOrderId,
+                    sku: deflectSku,
+                    itemName: deflectProduct,
+                    source: "vibe",
+                    timestamp: new Date().toISOString()
+                  }];
+                });
+                setShowReturnSuccess(true);
+                setTimeout(() => setActiveTab("orders"), 1500);
               }}>
                 Still Return
               </button>

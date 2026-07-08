@@ -35,6 +35,10 @@ export default function L4Grading() {
     setInspectQueue,
     setGradingSku,
     setGradingItemName,
+    gradingQueueId,
+    setGradingQueueId,
+    walletInfo,
+    setWalletInfo,
   } = useApp() as any;
 
   // ── Grading state ──
@@ -151,6 +155,8 @@ export default function L4Grading() {
   };
 
 
+  // ── API: P2P route calculation ──
+
   return (
     <div className="flex flex-col gap-5">
 
@@ -174,7 +180,7 @@ export default function L4Grading() {
               const renderItem = (item: any) => (
                 <div
                   key={item.id}
-                  className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
+                  className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingQueueId === item.id ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
                 >
                   {/* Product thumbnail */}
                   <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-slate-50 border border-slate-200 flex items-center justify-center p-1 relative">
@@ -204,6 +210,7 @@ export default function L4Grading() {
                   </div>
                   <button
                     onClick={() => {
+                      setGradingQueueId(item.id);
                       setGradingSku(item.sku);
                       setGradingItemName(item.itemName);
                       setGradingFraudImage(item.fraudImage || null);
@@ -216,12 +223,12 @@ export default function L4Grading() {
                       setLabelGenerated(false);
                     }}
                     className={`mt-2 w-full py-1.5 rounded text-[10px] font-bold uppercase transition-all ${
-                      gradingSku === item.sku
+                      gradingQueueId === item.id
                         ? "bg-indigo-600 text-white shadow-sm"
                         : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
                     }`}
                   >
-                    {gradingSku === item.sku ? "✓ Inspecting" : "Inspect This Item"}
+                    {gradingQueueId === item.id ? "✓ Inspecting" : "Inspect This Item"}
                   </button>
                 </div>
               );
@@ -491,6 +498,20 @@ export default function L4Grading() {
                         setListedItem(null);
                         setLogisticsResult(null);
                         setLabelGenerated(false);
+
+                        const currentItem = inspectQueue?.find((q: any) => q.id === gradingQueueId);
+                        const orderIdToRemove = currentItem?.orderId;
+                        setInspectQueue((prev: any[]) => prev.filter((q: any) => q.id !== gradingQueueId));
+                        if (orderIdToRemove) {
+                          setWalletInfo((prev: any) => {
+                            if (!prev || !prev.orders) return prev;
+                            return {
+                              ...prev,
+                              orders: prev.orders.filter((o: any) => o.orderId !== orderIdToRemove)
+                            };
+                          });
+                        }
+
                         setGradingResult(null);
                         setGradingVideoUrl("");
                         setGradingVideoBase64("");
@@ -517,6 +538,20 @@ export default function L4Grading() {
                           },
                         ];
                       });
+
+
+                      const currentItem = inspectQueue?.find((q: any) => q.id === gradingQueueId);
+                      const orderIdToRemove = currentItem?.orderId;
+                      setInspectQueue((prev: any[]) => prev.filter((q: any) => q.id !== gradingQueueId));
+                      if (orderIdToRemove) {
+                        setWalletInfo((prev: any) => {
+                          if (!prev || !prev.orders) return prev;
+                          return {
+                            ...prev,
+                            orders: prev.orders.filter((o: any) => o.orderId !== orderIdToRemove)
+                          };
+                        });
+                      }
 
                       setListedItem({ sku: gradingSku, name: gradingItemName, grade: gradeUpper });
                       setLogisticsResult(null);
