@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useApp, getSKUReferenceImage } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
+import { db } from "@/lib/services";
 
 // ── Get Help (DIM) confirmation modal ──────────────────────────
 interface GetHelpModalProps {
@@ -118,8 +119,11 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
     
     if (choice?.route !== "api") {
       if (choice?.id === "defective") {
-        setShowChatbotModal(true);
-        return;
+        const manual = db.getManualBySku(order.sku);
+        if (manual) {
+          setShowChatbotModal(true);
+          return;
+        }
       }
       onRouteDecision(choice!.route, choice!.claimType);
       return;
