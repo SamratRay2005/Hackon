@@ -37,6 +37,8 @@ export default function L4Grading() {
     setGradingItemName,
     gradingQueueId,
     setGradingQueueId,
+    walletInfo,
+    setWalletInfo,
   } = useApp() as any;
 
   // ── Grading state ──
@@ -106,11 +108,6 @@ export default function L4Grading() {
         setGradingResult(data.report);
         setLedgerRecords((prev: any) => [data.report, ...prev]);
         setMetrics((prev: any) => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
-        
-        // Remove item from inspect queue once graded
-        if (gradingQueueId) {
-          setInspectQueue((prev: any) => prev.filter((item: any) => item.id !== gradingQueueId));
-        }
       }
     } catch { } finally { setGradingLoading(false); }
   };
@@ -349,7 +346,20 @@ export default function L4Grading() {
                         setListedItem(null);
                         setLogisticsResult(null);
                         setLabelGenerated(false);
-                        setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
+                        
+                        const currentItem = inspectQueue?.find((q: any) => q.id === gradingQueueId);
+                        const orderIdToRemove = currentItem?.orderId;
+                        setInspectQueue((prev: any[]) => prev.filter((q: any) => q.id !== gradingQueueId));
+                        if (orderIdToRemove) {
+                          setWalletInfo((prev: any) => {
+                            if (!prev || !prev.orders) return prev;
+                            return {
+                              ...prev,
+                              orders: prev.orders.filter((o: any) => o.orderId !== orderIdToRemove)
+                            };
+                          });
+                        }
+                        
                         setGradingResult(null);
                         setGradingVideoUrl("");
                         setGradingVideoBase64("");
@@ -377,7 +387,19 @@ export default function L4Grading() {
                         ];
                       });
 
-                      setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
+                      const currentItem = inspectQueue?.find((q: any) => q.id === gradingQueueId);
+                      const orderIdToRemove = currentItem?.orderId;
+                      setInspectQueue((prev: any[]) => prev.filter((q: any) => q.id !== gradingQueueId));
+                      if (orderIdToRemove) {
+                        setWalletInfo((prev: any) => {
+                          if (!prev || !prev.orders) return prev;
+                          return {
+                            ...prev,
+                            orders: prev.orders.filter((o: any) => o.orderId !== orderIdToRemove)
+                          };
+                        });
+                      }
+
                       setListedItem({ sku: gradingSku, name: gradingItemName, grade: gradeUpper });
                       setLogisticsResult(null);
                       setLabelGenerated(false);

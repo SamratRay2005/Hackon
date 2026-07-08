@@ -436,7 +436,7 @@ export default function L6Orders() {
                         </div>
                         <div className="flex flex-col hidden sm:flex">
                           <span style={{textTransform:"uppercase"}}>Ship To</span>
-                          <span className="amz-free-link" style={{color:"#007185"}}>Samrat Ray <ChevronDown className="w-3 h-3 inline" /></span>
+                          <span className="amz-free-link" style={{color:"#007185"}}>{profileUserId || "Customer"} <ChevronDown className="w-3 h-3 inline" /></span>
                         </div>
                       </div>
                       <div className="flex flex-col text-right">
