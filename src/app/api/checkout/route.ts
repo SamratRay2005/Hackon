@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
     if (applyVoucher) {
       const voucherDiscount = await db.redeemVoucher(userId, applyVoucher);
       if (voucherDiscount > 0) {
-        discountApplied += voucherDiscount;
+        const effectiveVoucherDiscount = Math.min(orderTotal, voucherDiscount);
+        discountApplied += effectiveVoucherDiscount;
         voucherApplied = { id: applyVoucher, discountAmount: voucherDiscount };
       }
     }
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     // ── 3. Spend cashback balance (if requested) ───────────────────
     let cashbackSpent = 0;
     if (applyCashback && wallet.cashbackBalance > 0) {
-      const spendable = Math.min(wallet.cashbackBalance, orderTotal - discountApplied);
+      const spendable = Math.max(0, Math.min(wallet.cashbackBalance, orderTotal - discountApplied));
       cashbackSpent = parseFloat(spendable.toFixed(2));
       discountApplied += cashbackSpent;
       await db.spendCashback(userId, cashbackSpent);
