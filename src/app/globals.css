@@ -371,7 +371,7 @@ input, button, select, textarea { font-family: var(--font-sans); }
 .hero-carousel {
   position: relative;
   width: 100%;
-  min-height: 360px;
+  height: 360px;
   border-radius: 8px;
   overflow: hidden;
   background: #FFFFFF;
@@ -400,7 +400,6 @@ input, button, select, textarea { font-family: var(--font-sans); }
 .hero-slide.active {
   opacity: 1; transform: translateX(0);
   pointer-events: all;
-  position: relative;
 }
 .hero-slide.exiting {
   opacity: 0; transform: translateX(-24px);
@@ -408,8 +407,8 @@ input, button, select, textarea { font-family: var(--font-sans); }
 }
 
 @media (max-width: 640px) {
-  .hero-slide { grid-template-columns: 1fr; min-height: 440px; }
-  .hero-carousel { min-height: 440px; }
+  .hero-slide { grid-template-columns: 1fr; height: 440px; }
+  .hero-carousel { height: 440px; }
   .carousel-arrow { display: none !important; }
 }
 

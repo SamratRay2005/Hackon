@@ -132,12 +132,12 @@ export default function L3Deflection() {
     <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#FFF", padding: "20px", border: "1px solid #DDD", borderRadius: "4px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111" }}>Chat with Nova — AI Tech Support</h2>
-        <span style={{ fontSize: "12px", background: "#C7511F", color: "#FFF", padding: "2px 8px", borderRadius: "4px" }}>AI Assistant</span>
+        <span style={{ background: "#c45500", color: "white", padding: "3px 8px", fontSize: "12px", fontWeight: "bold", borderRadius: "0px" }}>AI Assistant</span>
       </div>
 
       {/* Selected Product Context */}
       {deflectProduct && deflectSku && (
-        <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm">
+        <div style={{ border: "1px solid #e7e7e7" }} className="p-4 rounded-lg bg-white flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm">
           <div className="w-24 h-24 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0">
             <img src={getSKUReferenceImage(deflectSku)} className="w-full h-full object-contain" alt={deflectProduct} />
           </div>
@@ -177,10 +177,12 @@ export default function L3Deflection() {
           ) : (
             <div className="flex flex-col gap-2">
               {ifixitGuides.map((guide: any) => (
-                <a key={guide.id} href={guide.url} target="_blank" rel="noopener noreferrer" className="block bg-slate-50 hover:bg-indigo-50 p-3 rounded-xl border border-slate-100 hover:border-indigo-200 text-[11px] leading-relaxed transition-all group">
-                  <span className="font-bold text-slate-800 group-hover:text-indigo-700 block">{guide.title}</span>
-                  {guide.summary && <span className="text-slate-400 block mt-0.5 text-[10px] leading-relaxed">{guide.summary.slice(0, 80)}...</span>}
-                  <span className="text-indigo-500 text-[9px] mt-1 flex items-center gap-0.5 font-medium"><ExternalLink className="w-2.5 h-2.5" /> View Guide</span>
+                <a key={guide.id} href={guide.url} target="_blank" rel="noopener noreferrer" className="block bg-white hover:bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px] leading-relaxed transition-all group" style={{ textDecoration: 'none' }}>
+                  <span className="font-bold text-slate-800 block mb-1">{guide.title}</span>
+                  {guide.summary && <span className="text-slate-500 block mb-2 text-[11px] leading-relaxed">{guide.summary.slice(0, 80)}...</span>}
+                  <span style={{ color: "#007185", textDecoration: "none" }} className="text-[12px] flex items-center gap-1 font-medium hover:underline">
+                    View Guide <ExternalLink className="w-3 h-3" />
+                  </span>
                 </a>
               ))}
             </div>
@@ -190,16 +192,16 @@ export default function L3Deflection() {
         </div>
 
         {/* Chat window */}
-        <div className="bg-white border border-slate-200 rounded-2xl flex flex-col h-[450px] overflow-hidden shadow-sm">
-          <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center flex-shrink-0">
-            <div className="flex items-center gap-2">
+        <div className="bg-white border border-slate-200 rounded-lg flex flex-col h-[450px] overflow-hidden shadow-sm">
+          <div style={{ backgroundColor: "#f0f2f2", borderBottom: "1px solid #d5d9d9", display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px" }} className="flex-shrink-0 justify-between">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <img src="/nova_icon.png" alt="Nova" className="w-6 h-6 rounded-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'} />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border border-slate-50 rounded-full bg-emerald-500 animate-pulse" />
+                <img src="/nova_icon.png" alt="Nova" className="w-9 h-9 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-white rounded-full bg-emerald-500" />
               </div>
-              <span className="text-xs font-bold text-slate-700">Nova</span>
+              <span className="text-sm font-bold text-slate-800">Nova</span>
             </div>
-            <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]" title={deflectProduct}>{deflectProduct}</span>
+            <span className="text-[11px] text-slate-500 font-medium truncate max-w-[120px]" title={deflectProduct}>{deflectProduct}</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50/50">
@@ -223,11 +225,18 @@ export default function L3Deflection() {
           </div>
 
           <div className="mt-auto flex flex-col flex-shrink-0">
-            <div className="flex gap-2 px-3 py-2 bg-slate-50 border-t border-slate-100">
-              <button className="btn btn-success flex-1 py-1.5 text-[11px] font-bold" onClick={resolveDeflection}>
-                <CheckCircle className="w-3 h-3" /> Resolved! Cancel Return
+            <div className="flex gap-3 px-4 py-3 bg-slate-50 border-t border-slate-200">
+              <button 
+                style={{ background: "#FFA41C", color: "#0F1111", borderRadius: "4px" }}
+                className="flex-1 py-2 text-[13px] font-bold shadow-sm hover:bg-[#F7CA00] flex items-center justify-center transition-colors" 
+                onClick={resolveDeflection}
+              >
+                Resolved! Cancel Return
               </button>
-              <button className="btn btn-secondary flex-1 py-1.5 text-[11px] font-bold" onClick={() => {
+              <button 
+                style={{ background: "#FFF", color: "#0F1111", borderRadius: "4px", border: "1px solid #a88734" }}
+                className="flex-1 py-2 text-[13px] font-bold shadow-sm hover:bg-slate-50 flex items-center justify-center transition-colors" 
+                onClick={() => {
                 setChatMessages((prev: any) => [...prev, { role: "bot", content: "Understood. Proceeding to circular logistics router. Head to L5 for shipping options, or L6 for refund routing." }]);
                 setTimeout(() => setActiveTab("logistics"), 1500);
               }}>
@@ -235,16 +244,21 @@ export default function L3Deflection() {
               </button>
             </div>
 
-            <form onSubmit={handleSendChatMessage} className="flex gap-2 p-3 bg-white border-t border-slate-200">
+            <form onSubmit={handleSendChatMessage} className="flex gap-3 px-4 py-3 bg-white border-t border-slate-200 items-center">
               <input
                 type="text"
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                className="flex-1 bg-white border border-[#a6a6a6] rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-[#e77600] focus:shadow-[0_0_3px_2px_rgba(228,121,17,0.5)] transition-all h-10"
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 placeholder="Describe your issue..."
                 disabled={chatLoading}
               />
-              <button type="submit" className="btn btn-primary py-2 px-5 text-xs font-bold" disabled={chatLoading || !chatInput.trim()}>
+              <button 
+                type="submit" 
+                style={{ background: "#FFD814", border: "1px solid #a88734", borderRadius: "4px", padding: "0 20px", fontSize: "14px" }}
+                className="h-10 font-bold text-[#0F1111] hover:bg-[#F7CA00] transition-colors" 
+                disabled={chatLoading || !chatInput.trim()}
+              >
                 Send
               </button>
             </form>

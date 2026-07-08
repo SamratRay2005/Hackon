@@ -44,9 +44,12 @@ export default function L0Dashboard() {
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
 
   // Catalog State
+  const [localCatalogSearch, setLocalCatalogSearch] = React.useState("");
+
   const filteredCatalog = PRODUCT_CATALOG.filter(p => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
+    const activeSearch = searchQuery || localCatalogSearch;
+    if (!activeSearch) return true;
+    const q = activeSearch.toLowerCase();
     return p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
   }).slice(0, 30); // show 30 items max
 
@@ -56,13 +59,15 @@ export default function L0Dashboard() {
   const [marketSearch, setMarketSearch] = React.useState("");
 
   useEffect(() => {
-    if (profileUserId && profileZip && shopTab === "preloved") {
-      const timer = setTimeout(() => {
-        fetchMarketplaceFeed(marketSearch);
-      }, 300);
-      return () => clearTimeout(timer);
+    if (profileUserId && profileZip) {
+      if (shopTab === "preloved" || searchQuery) {
+        const timer = setTimeout(() => {
+          fetchMarketplaceFeed(searchQuery || marketSearch);
+        }, 300);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [profileUserId, profileZip, marketSearch, shopTab]);
+  }, [profileUserId, profileZip, marketSearch, searchQuery, shopTab]);
 
   const fetchMarketplaceFeed = async (query: string = "") => {
     setMarketplaceLoading(true);
@@ -80,7 +85,13 @@ export default function L0Dashboard() {
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
   const now = Date.now();
-  const activeResale = resaleListings.filter((r: any) => (now - r.addedToStoreAt) < SEVEN_DAYS_MS);
+  const activeResale = resaleListings.filter((r: any) => {
+    if ((now - r.addedToStoreAt) >= SEVEN_DAYS_MS) return false;
+    const activeSearch = searchQuery || marketSearch;
+    if (!activeSearch) return true;
+    const q = activeSearch.toLowerCase();
+    return r.name?.toLowerCase().includes(q) || r.sku?.toLowerCase().includes(q) || r.brand?.toLowerCase().includes(q);
+  });
 
   const routeToSizing = (sku: string) => {
     setSelectedProductDetails(null);
@@ -132,22 +143,30 @@ export default function L0Dashboard() {
       }} />
 
       {/* Tabs */}
-      <div style={{display:"flex", gap:"16px", borderBottom:"1px solid #DDD", paddingBottom:"0px", marginBottom:"8px", overflowX:"auto"}}>
-        <button
-          onClick={() => setShopTab("catalog")}
-          style={{padding:"8px 12px", fontSize:"14px", fontWeight: shopTab === "catalog" ? 700 : 400, color: shopTab === "catalog" ? "#0F1111" : "#007185", borderBottom: shopTab === "catalog" ? "2px solid #E47911" : "2px solid transparent", whiteSpace:"nowrap", cursor:"pointer", background:"none"}}
-        >
-          Amazon Catalog (New)
-        </button>
-        <button
-          onClick={() => setShopTab("preloved")}
-          style={{padding:"8px 12px", fontSize:"14px", fontWeight: shopTab === "preloved" ? 700 : 400, color: shopTab === "preloved" ? "#0F1111" : "#007185", borderBottom: shopTab === "preloved" ? "2px solid #E47911" : "2px solid transparent", whiteSpace:"nowrap", cursor:"pointer", background:"none"}}
-        >
-          Shop Pre-Loved
-        </button>
-      </div>
+      {!searchQuery && (
+        <div style={{display:"flex", gap:"16px", borderBottom:"1px solid #DDD", paddingBottom:"0px", marginBottom:"8px", overflowX:"auto"}}>
+          <button
+            onClick={() => setShopTab("catalog")}
+            style={{padding:"8px 12px", fontSize:"14px", fontWeight: shopTab === "catalog" ? 700 : 400, color: shopTab === "catalog" ? "#0F1111" : "#007185", borderBottom: shopTab === "catalog" ? "2px solid #E47911" : "2px solid transparent", whiteSpace:"nowrap", cursor:"pointer", background:"none"}}
+          >
+            Amazon Catalog (New)
+          </button>
+          <button
+            onClick={() => setShopTab("preloved")}
+            style={{padding:"8px 12px", fontSize:"14px", fontWeight: shopTab === "preloved" ? 700 : 400, color: shopTab === "preloved" ? "#0F1111" : "#007185", borderBottom: shopTab === "preloved" ? "2px solid #E47911" : "2px solid transparent", whiteSpace:"nowrap", cursor:"pointer", background:"none"}}
+          >
+            Shop Pre-Loved
+          </button>
+        </div>
+      )}
 
-      {shopTab === "catalog" && (
+      {searchQuery && (
+        <div style={{marginBottom: "8px"}}>
+          <h2 style={{fontSize:"20px", fontWeight:700, color:"#0F1111"}}>Search Results for "{searchQuery}"</h2>
+        </div>
+      )}
+
+      {(shopTab === "catalog" || searchQuery) && (
         <div className="glass-card flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px"}}>
             <h2 style={{fontSize:"20px", fontWeight:700, color:"#0F1111"}}>Amazon Catalog</h2>
@@ -160,8 +179,11 @@ export default function L0Dashboard() {
               type="text"
               style={{width:"100%", background:"#FFF", border:"1px solid #888C8C", borderRadius:"4px", padding:"8px 10px 8px 32px", fontSize:"14px", color:"#0F1111", outline:"none"}}
               placeholder="Search 150+ products..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              value={localCatalogSearch}
+              onChange={e => {
+                setLocalCatalogSearch(e.target.value);
+                if (searchQuery) setSearchQuery("");
+              }}
             />
           </div>
 
@@ -171,20 +193,32 @@ export default function L0Dashboard() {
                 <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
                   <img src={getSKUReferenceImage(p.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={p.name} />
                 </div>
-                <div className="p-3 flex flex-col flex-1 bg-white">
-                  <div style={{fontSize:"11px", color:"#565959", textTransform:"uppercase", fontWeight:700, marginBottom:"4px"}}>{p.brand}</div>
-                  <h3 className="amz-free-link" style={{fontSize:"16px", fontWeight:400, color:"#0F1111", lineHeight:"1.4", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", cursor:"pointer"}}>{p.name}</h3>
-                  <div style={{display:"flex", alignItems:"center", gap:"4px", marginTop:"4px"}}>
-                     <span style={{color:"#DE7921", fontSize:"16px"}}>★★★★☆</span> <span className="amz-free-link" style={{fontSize:"14px", color:"#007185"}}>{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                <div className="p-4 flex flex-col flex-1 bg-white gap-1.5 text-left">
+                  <div className="text-[11px] text-[#565959] uppercase tracking-wide">{p.brand}</div>
+                  <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(p, false)}>{p.name}</h3>
+                  <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-1">
+                       <span className="text-[#DE7921] text-base leading-none">★★★★☆</span> 
+                       <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                     </div>
+                     <span className="bg-[#232F3E] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Prime</span>
                   </div>
-                  <div className="mt-1 mb-2 flex flex-col">
-                     <span style={{color:"#0F1111", fontWeight:400, fontSize:"28px", display:"flex", alignItems:"flex-start"}}><sup style={{fontSize:"14px", marginTop:"4px"}}>$</sup>{Math.floor(p.price)}<sup style={{fontSize:"14px", marginTop:"4px"}}>{(p.price % 1).toFixed(2).substring(2)}</sup></span>
-                     <div className="amz-instock" style={{fontSize:"12px", marginTop:"2px", color:"#007600"}}>In Stock</div>
+                  <div className="flex items-end gap-2 mt-1">
+                     <div className="flex items-start text-[#0F1111]">
+                       <span className="text-sm font-normal mt-[2px] mr-[1px]">$</span>
+                       <span className="text-[28px] font-normal leading-none">{Math.floor(p.price)}</span>
+                       <span className="text-sm font-normal mt-[2px] ml-[1px]">{(p.price % 1).toFixed(2).substring(2)}</span>
+                     </div>
+                     <div className="flex flex-col mb-0.5">
+                       <span className="text-[#565959] text-xs">Typical: <span className="line-through">${(p.price * 1.2).toFixed(2)}</span></span>
+                     </div>
+                  </div>
+                  <div className="text-xs text-[#565959] mb-2 leading-relaxed">
+                    <span className="text-[#007600] font-medium">In Stock.</span> FREE delivery on qualifying orders.
                   </div>
                   
                   <button
-                    className="btn btn-primary w-full shadow-sm mt-auto"
-                    style={{padding:"8px 10px", fontSize:"14px", fontWeight:400, borderRadius:"100px", background:"linear-gradient(to bottom,#f8e3ad,#eebc51)", border:"1px solid #a88734", color:"#111"}}
+                    className="w-full mt-auto h-10 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#a88734] text-[#111] rounded shadow-sm text-sm transition-colors flex items-center justify-center"
                     onClick={() => openProductDetails(p, false)}
                   >
                     View Details
@@ -196,7 +230,7 @@ export default function L0Dashboard() {
         </div>
       )}
 
-      {shopTab === "preloved" && (
+      {(shopTab === "preloved" || searchQuery) && (
         <div className="glass-card flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px"}}>
             <h2 style={{fontSize:"20px", fontWeight:700, color:"#0F1111"}}>Shop Pre-Loved — Buy Near You</h2>
@@ -213,7 +247,10 @@ export default function L0Dashboard() {
               type="text"
               placeholder="Search Pre-Loved items..."
               value={marketSearch}
-              onChange={(e) => setMarketSearch(e.target.value)}
+              onChange={(e) => {
+                setMarketSearch(e.target.value);
+                if (searchQuery) setSearchQuery("");
+              }}
               style={{width:"100%", background:"#FFF", border:"1px solid #888C8C", borderRadius:"4px", padding:"8px 10px 8px 32px", fontSize:"14px", color:"#0F1111", outline:"none"}}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -282,24 +319,38 @@ export default function L0Dashboard() {
                       <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
                         <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
                       </div>
-                      <div className="p-3 flex flex-col flex-1 bg-white">
-                        <div style={{fontSize:"11px", color:"#565959", textTransform:"uppercase", fontWeight:700, marginBottom:"4px"}}>{item.brand}</div>
-                        <h3 className="amz-free-link" style={{fontSize:"16px", fontWeight:400, color:"#0F1111", lineHeight:"1.4", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", cursor:"pointer"}}>{item.name}</h3>
-                        <div style={{display:"flex", alignItems:"center", gap:"4px", marginTop:"4px"}}>
-                           <span style={{color:"#DE7921", fontSize:"16px"}}>★★★★☆</span> <span className="amz-free-link" style={{fontSize:"14px", color:"#007185"}}>{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                      <div className="p-4 flex flex-col flex-1 bg-white gap-1.5 text-left">
+                        <div className="text-[11px] text-[#565959] uppercase tracking-wide">{item.brand}</div>
+                        <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
+                        <div className="flex items-center gap-2">
+                           <div className="flex items-center gap-1">
+                             <span className="text-[#DE7921] text-base leading-none">★★★★☆</span> 
+                             <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                           </div>
+                           <span className="bg-[#007185] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Certified</span>
                         </div>
-                        <div className="mt-1 mb-1 flex items-baseline gap-2">
-                           <span style={{color:"#B12704", fontWeight:400, fontSize:"28px", display:"flex", alignItems:"flex-start"}}><sup style={{fontSize:"14px", marginTop:"4px"}}>$</sup>{Math.floor(item.price)}<sup style={{fontSize:"14px", marginTop:"4px"}}>{(item.price % 1).toFixed(2).substring(2)}</sup></span>
-                           <span style={{color:"#565959", fontSize:"14px", textDecoration:"line-through"}}>${item.originalPrice.toFixed(2)}</span>
+                        <div className="flex items-end gap-2 mt-1">
+                           <div className="flex items-start text-[#B12704]">
+                             <span className="text-sm font-normal mt-[2px] mr-[1px]">$</span>
+                             <span className="text-[28px] font-normal leading-none">{Math.floor(item.price)}</span>
+                             <span className="text-sm font-normal mt-[2px] ml-[1px]">{(item.price % 1).toFixed(2).substring(2)}</span>
+                           </div>
+                           <div className="flex flex-col mb-0.5">
+                             <span className="text-[#565959] text-xs">New: <span className="line-through">${item.originalPrice.toFixed(2)}</span></span>
+                           </div>
                         </div>
-                        {isReturnedProduct && (
-                          <div style={{fontSize:"14px", color:"#007600", marginBottom:"12px", display:"flex", alignItems:"center", gap:"4px"}}>
-                            <Award className="w-4 h-4" /> Earn ${(item.price * 0.05).toFixed(2)} Cashback
+                        <div className="flex flex-col gap-1 mb-2">
+                          <div className="text-xs text-[#565959] leading-relaxed">
+                            <span className="text-[#007600] font-medium">Available Now.</span> Ready for local pickup or fast delivery.
                           </div>
-                        )}
+                          {isReturnedProduct && (
+                            <div className="text-xs text-[#007600] flex items-center gap-1">
+                              <Award className="w-3.5 h-3.5" /> Earn ${(item.price * 0.05).toFixed(2)} Cashback
+                            </div>
+                          )}
+                        </div>
                         <button
-                          className="btn btn-primary w-full shadow-sm mt-auto"
-                          style={{padding:"8px 10px", fontSize:"14px", fontWeight:400, borderRadius:"100px", background:"linear-gradient(to bottom,#f8e3ad,#eebc51)", border:"1px solid #a88734", color:"#111"}}
+                          className="w-full mt-auto h-10 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#a88734] text-[#111] rounded shadow-sm text-sm transition-colors flex items-center justify-center"
                           onClick={() => openProductDetails(item, true)}
                         >
                           View Details
@@ -334,32 +385,48 @@ export default function L0Dashboard() {
                     </div>
                   </div>
 
-                  <div className="p-3 flex flex-col flex-1 bg-white">
-                    <div className="flex gap-1 mb-1 flex-wrap">
-                      <span style={{fontSize:"12px", color:"#007185", display:"flex", alignItems:"center", gap:"2px"}}><Leaf className="w-3 h-3" /> -{item.co2Saved}kg CO₂</span>
-                      <span style={{fontSize:"12px", color:"#565959", display:"flex", alignItems:"center", gap:"2px"}}><Map className="w-3 h-3" /> {item.distance}</span>
+                  <div className="p-4 flex flex-col flex-1 bg-white gap-1.5 text-left">
+                    <div className="flex gap-2 mb-1 flex-wrap">
+                      <span className="text-xs text-[#007185] flex items-center gap-1"><Leaf className="w-3 h-3" /> -{item.co2Saved}kg CO₂</span>
+                      <span className="text-xs text-[#565959] flex items-center gap-1"><Map className="w-3 h-3" /> {item.distance}</span>
                     </div>
 
-                    <div style={{fontSize:"11px", color:"#565959", textTransform:"uppercase", fontWeight:700, marginBottom:"4px"}}>{item.brand}</div>
-                    <h3 className="amz-free-link" style={{fontSize:"16px", fontWeight:400, color:"#0F1111", lineHeight:"1.4", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", cursor:"pointer"}}>{item.name}</h3>
+                    <div className="text-[11px] text-[#565959] uppercase tracking-wide">{item.brand}</div>
+                    <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
 
-                    <div style={{display:"flex", alignItems:"center", gap:"4px", marginTop:"4px"}}>
-                       <span style={{color:"#DE7921", fontSize:"16px"}}>★★★★☆</span> <span className="amz-free-link" style={{fontSize:"14px", color:"#007185"}}>{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                    <div className="flex items-center gap-2">
+                       <div className="flex items-center gap-1">
+                         <span className="text-[#DE7921] text-base leading-none">★★★★☆</span> 
+                         <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                       </div>
+                       <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Local</span>
                     </div>
 
-                    <div className="mt-1 mb-1 flex items-baseline gap-2">
-                       <span style={{color:"#B12704", fontWeight:400, fontSize:"28px", display:"flex", alignItems:"flex-start"}}><sup style={{fontSize:"14px", marginTop:"4px"}}>$</sup>{Math.floor(item.price)}<sup style={{fontSize:"14px", marginTop:"4px"}}>{(item.price % 1).toFixed(2).substring(2)}</sup></span>
-                       <span style={{color:"#565959", fontSize:"14px", textDecoration:"line-through"}}>${item.originalPrice.toFixed(2)}</span>
-                    </div>
+                    <div className="flex flex-col mt-1 gap-1">
+                       <div className="flex items-end gap-2">
+                         <div className="flex items-start text-[#B12704]">
+                           <span className="text-sm font-normal mt-[2px] mr-[1px]">$</span>
+                           <span className="text-[28px] font-normal leading-none">{Math.floor(item.price)}</span>
+                           <span className="text-sm font-normal mt-[2px] ml-[1px]">{(item.price % 1).toFixed(2).substring(2)}</span>
+                         </div>
+                         <div className="flex flex-col mb-0.5">
+                           <span className="text-[#565959] text-xs">New: <span className="line-through">${item.originalPrice.toFixed(2)}</span></span>
+                         </div>
+                       </div>
 
-                    <div style={{fontSize:"14px", color:"#007600", marginBottom:"12px", display:"flex", alignItems:"start", gap:"4px"}}>
-                      <Award className="w-4 h-4 flex-shrink-0" />
-                      <span><strong>Earn ${(item.price * (item.grade === "A" ? 0.03 : 0.05)).toFixed(2)} Cashback</strong> instantly.</span>
+                       <div className="flex flex-col gap-1 mb-2">
+                         <div className="text-xs text-[#565959] leading-relaxed">
+                           <span className="text-[#007600] font-medium">In Stock locally.</span> Available for immediate pickup.
+                         </div>
+                         <div className="text-xs text-[#007600] flex items-start gap-1">
+                           <Award className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                           <span><strong>Earn ${(item.price * (item.grade === "A" ? 0.03 : 0.05)).toFixed(2)} Cashback</strong> instantly.</span>
+                         </div>
+                       </div>
                     </div>
 
                     <button
-                      className="btn btn-primary w-full shadow-sm mt-auto"
-                      style={{padding:"8px 10px", fontSize:"14px", fontWeight:400, borderRadius:"100px", background:"linear-gradient(to bottom,#f8e3ad,#eebc51)", border:"1px solid #a88734", color:"#111"}}
+                      className="w-full mt-auto h-10 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#a88734] text-[#111] rounded shadow-sm text-sm transition-colors flex items-center justify-center"
                       onClick={() => openProductDetails(item, true)}
                     >
                       View Details

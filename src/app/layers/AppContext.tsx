@@ -400,7 +400,7 @@ export function WebcamCapture({ onCapture, overlayType, compact }: WebcamCapture
 }
 
 // Hero Carousel
-const CAROUSEL_SKUS = ["DENIM-JKT-001", "SPK-AIR-12", "RUN-SHOE-30", "PARKA-WTR-06", "MONITOR-54"];
+const CAROUSEL_SKUS = ["DENIM-JKT-001", "SPK-AIR-12", "RUN-SHOE-30", "PARKA-WTR-06", "MONITOR-54", "YRDLY-GNTLMN-001", "BOOT-WTR-32", "JOGGER-FLC-10", "OXFORD-LE-38", "TRENCH-COAT-17"];
 const CAROUSEL_THEMES = [
   { eyebrowBg: "bg-violet-100 text-violet-700", gradient: "from-violet-50 via-white to-indigo-50", accentColor: "#4f46e5", tag: "★ Trending Now" },
   { eyebrowBg: "bg-sky-100 text-sky-700", gradient: "from-sky-50 via-white to-cyan-50", accentColor: "#0284c7", tag: "⚡ New Arrival" },
