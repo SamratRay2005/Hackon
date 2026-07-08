@@ -77,10 +77,11 @@ export default function L7Cart() {
 
   // ── Computed totals ───────────────────────────────────────────
   const subtotal = shoppingBag.reduce((s: number, i: any) => s + i.price, 0);
-  const tax = subtotal * 0.08;
+  const tax = parseFloat((subtotal * 0.08).toFixed(2));
 
   const selectedVoucher = activeVouchers.find((v: any) => v.id === selectedVoucherId) ?? null;
-  const voucherDiscount = selectedVoucher?.discountAmount ?? 0;
+  const rawVoucherDiscount = selectedVoucher?.discountAmount ?? 0;
+  const voucherDiscount = Math.min(subtotal + tax, rawVoucherDiscount);
 
   // Cashback usable = min(balance, remaining after voucher)
   const maxCashback = Math.max(0, subtotal + tax - voucherDiscount);
@@ -100,20 +101,12 @@ export default function L7Cart() {
 
   // ── Toggle voucher selection ───────────────────────────────────
   const toggleVoucher = (id: string) => {
-    setSelectedVoucherId(prev => {
-      const isSelecting = prev !== id;
-      if (isSelecting) setUseCashback(false); // Mutually exclusive
-      return isSelecting ? id : null;
-    });
+    setSelectedVoucherId(prev => (prev !== id ? id : null));
   };
 
   const toggleCashback = () => {
     if (cashbackBalance > 0) {
-      setUseCashback((v) => {
-        const isEnabling = !v;
-        if (isEnabling) setSelectedVoucherId(null); // Mutually exclusive
-        return isEnabling;
-      });
+      setUseCashback((v) => !v);
     }
   };
 
