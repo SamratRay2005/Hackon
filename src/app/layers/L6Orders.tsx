@@ -268,6 +268,7 @@ export default function L6Orders() {
     setActiveTab,
     setDeflectProduct,
     setDeflectSku,
+    setDeflectOrderId,
     setDeflectReason,
     setSelectedProductSku,
     setFraudSku,
@@ -286,12 +287,13 @@ export default function L6Orders() {
     processedFraudQueue,
     inspectQueue,
     ledgerRecords,
+    showReturnSuccess,
+    setShowReturnSuccess,
   } = useApp() as any;
 
   const [getHelpOrder, setGetHelpOrder] = React.useState<any>(null);
   const [reasonOrder, setReasonOrder] = React.useState<any>(null);
   const [returnReason, setReturnReason] = React.useState("");
-  const [returnSuccess, setReturnSuccess] = React.useState(false);
 
   const orders: any[] = walletInfo?.orders ?? [];
 
@@ -312,6 +314,7 @@ export default function L6Orders() {
   const handleDIM = (order: any) => {
     setDeflectProduct(order.name);
     setDeflectSku(order.sku);
+    setDeflectOrderId(order.orderId);
     setDeflectReason("Defective / Won't turn on");
     setChatMessages([]);
     const isElectrical =
@@ -355,11 +358,11 @@ export default function L6Orders() {
     });
     
     // Instead of alert, show our nice modal
-    setReturnSuccess(true);
+    setShowReturnSuccess(true);
   };
 
   const closeReturnSuccess = () => {
-    setReturnSuccess(false);
+    setShowReturnSuccess(false);
     setActiveTab("dashboard");
   };
 
@@ -417,7 +420,7 @@ export default function L6Orders() {
 
                 return (
                   <div
-                    key={order.sku}
+                    key={order.orderId || order.sku + Math.random()}
                     style={{border:"1px solid #D5D9D9", borderRadius:"8px", overflow:"hidden", background:"#FFF"}}
                   >
                     {/* Card Header */}
@@ -462,7 +465,7 @@ export default function L6Orders() {
                           </div>
                         ) : returnStatus === "APPROVED" ? (
                           <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#067D62", display:"flex", alignItems:"center", gap:"4px"}}>
-                            ✅ Return Approved
+                            Return Initiated
                           </div>
                         ) : returnStatus === "REJECTED" ? (
                           <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#B12704", display:"flex", alignItems:"center", gap:"4px"}}>
@@ -537,7 +540,7 @@ export default function L6Orders() {
       )}
 
       {/* Return Success Modal */}
-      {returnSuccess && (
+      {showReturnSuccess && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 shadow-2xl">
             <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
@@ -545,7 +548,7 @@ export default function L6Orders() {
             </div>
             <h3 className="text-xl font-extrabold text-slate-800">Return Initiated!</h3>
             <p className="text-sm text-slate-600">
-              Your return has been approved. Please drop off your item at the nearest <strong>Dark Store</strong> for inspection.
+              Your return has been approved and is now processing.
             </p>
             <button
               className="btn btn-primary w-full py-3 mt-2 text-sm font-bold"
