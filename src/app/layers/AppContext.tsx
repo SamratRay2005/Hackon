@@ -558,6 +558,8 @@ export interface AppContextType {
   setGradingSku: (v: string) => void;
   gradingItemName: string;
   setGradingItemName: (v: string) => void;
+  gradingQueueId: string;
+  setGradingQueueId: (v: string) => void;
   refundBaseAmount: number;
   setRefundBaseAmount: (v: number) => void;
 

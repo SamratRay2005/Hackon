@@ -100,6 +100,7 @@ export default function Home() {
   // L4 Grading
   const [gradingSku, setGradingSku] = useState("CF-Mkr-99");
   const [gradingItemName, setGradingItemName] = useState("Smart Drip Coffee Maker");
+  const [gradingQueueId, setGradingQueueId] = useState("");
   const [ledgerRecords, setLedgerRecords] = useState<Array<any>>([]);
   const [showReturnSuccess, setShowReturnSuccess] = useState(false);
 
@@ -434,6 +435,7 @@ export default function Home() {
     logisticsSku, setLogisticsSku,
     gradingSku, setGradingSku,
     gradingItemName, setGradingItemName,
+    gradingQueueId, setGradingQueueId,
     refundBaseAmount, setRefundBaseAmount,
     sizingResult, setSizingResult,
     sizingImage, setSizingImage,
