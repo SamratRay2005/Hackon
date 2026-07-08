@@ -198,7 +198,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { images, video, videoUrl, sku, itemName, userId } = await req.json();
+    const { images, video, videoUrl, sku, itemName, userId, evidenceImage } = await req.json();
 
     let activeImages = images || [];
 
@@ -206,7 +206,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing SKU" }, { status: 400 });
     }
 
-    const refImage = db.getSKUReferenceImage(sku);
+    // ── Select reference image ──
+    // "With Evidence" flow: customer submitted a photo that already passed the fraud check.
+    //   → Use the evidence photo as primary reference (is the physical arrival what they claimed to send?)
+    //   → Keep catalog image as secondary anchor only for variant/SKU sanity check.
+    // "Direct Return" flow: no evidence photo, compare against pristine catalog image.
+    const catalogRefImage = db.getSKUReferenceImage(sku);
+    const refImage = evidenceImage || catalogRefImage;
+    const hasEvidenceRef = !!evidenceImage;
 
     if (video || videoUrl) {
       try {
@@ -296,18 +303,31 @@ export async function POST(req: NextRequest) {
       completenessHint = `Check for all accessories typically bundled with electronics (cables, adapters, manuals, etc.). Missing primary components = Grade D. Missing only accessories = Grade C at most.`;
     }
 
-    const prompt = `You are a strict warehouse grading inspector for a returns processing center. Compare returned item photos against the catalog reference image.
+    const prompt = `You are a strict warehouse grading inspector for a returns processing center.
 
-PRODUCT INFO:
+${hasEvidenceRef ? `PRODUCT INFO:
+- SKU: ${sku}
+- Note: This item has already been verified by the fraud system. Do NOT judge if it matches the SKU name. Only judge if the physical item matches the EVIDENCE PHOTO.` : `PRODUCT INFO:
 - SKU: ${sku}
 - Name: ${itemName || "Unknown"}
 - Brand: ${productBrand}
 - Category: ${productCategory}
-- Features: ${productFeatures}
+- Features: ${productFeatures}`}
 
 IMAGES:
-- Image 1 = Official catalog reference (what a COMPLETE product looks like)
-- Image ${numReturned > 1 ? "2–" + (numReturned + 1) : "2"} = Returned item frames from inspection video
+${hasEvidenceRef
+  ? `- Image 1 = Customer's EVIDENCE PHOTO (already fraud-verified — this is what the customer claimed to send)
+- Image ${numReturned > 1 ? "2–" + (numReturned + 1) : "2"} = Physical item video frames received at the dark store
+
+⚠️ COMPARISON CONTEXT — EVIDENCE MODE:
+The evidence photo (Image 1) has already been verified by our fraud system as showing the correct product in resalable condition. Your job is NOT to compare against the original catalog item. Instead, answer: does the physical item that arrived (video frames) match what the customer's evidence photo showed? Check that:
+  a) It is the exact same item as shown in Image 1 (model, color, form factor match Image 1)
+  b) The physical condition is not significantly WORSE than Image 1
+  c) No components visible in Image 1 are missing from the physical item
+Do NOT penalize pre-existing wear that is consistent with what the evidence photo already showed.`
+  : `- Image 1 = Official catalog reference (what a COMPLETE, pristine product looks like)
+- Image ${numReturned > 1 ? "2–" + (numReturned + 1) : "2"} = Returned item video frames received at the dark store`
+}
 
 ${completenessHint ? `⚠️ PRODUCT-SPECIFIC RULE:
 ${completenessHint}
@@ -318,13 +338,14 @@ ${completenessHint}
 3. SURFACE SCAN: Classify all visible defects:
    - MINOR: smudges, fingerprints, light dust
    - MODERATE: scratches <2cm, light scuffs, small chips
-   - SEVERE: deep gouges, dents, cracks, warping, corrosion
+   - SEVERE: deep gouges, dents, cracks, warping, corrosion${hasEvidenceRef ? `
+   NOTE: In evidence mode, only flag as SEVERE if the damage is clearly WORSE than what appeared in the evidence photo.` : ""}
 4. STRUCTURAL: Cracked housing, broken hinges, or exposed internals = automatic Grade D.
 5. SCORE each video frame viewpoint 0.0–10.0, then derive grade from the LOWEST score:
-   - 9.0–10.0 = A (Like New — zero visible defects, 100% complete)
-   - 7.0–8.9  = B (Very Good — complete set, only minor cosmetic defects)
-   - 4.0–6.9  = C (Moderate — functional but damaged or minor missing accessories)
-   - 0.0–3.9  = D (Reject — wrong variant, missing critical components, or structurally damaged)
+   - 9.0–10.0 = A (Like New — matches reference with zero new defects)
+   - 7.0–8.9  = B (Very Good — matches reference with only minor cosmetic differences)
+   - 4.0–6.9  = C (Moderate — functional but noticeably worse than reference or minor missing accessories)
+   - 0.0–3.9  = D (Reject — wrong item, missing critical components, or significantly worse than reference)
 
 GRADE OVERRIDE RULES (non-negotiable, apply AFTER scoring):
 - isCorrectVariant=false → Grade D, no exceptions

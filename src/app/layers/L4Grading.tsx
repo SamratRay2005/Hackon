@@ -113,22 +113,36 @@ export default function L4Grading() {
           sku: gradingSku,
           itemName: gradingItemName,
           userId: profileUserId,
+          // If this item came through Verify Return, pass the customer's evidence photo
+          // as the reference. The fraud check already confirmed it's the correct product,
+          // so we compare the physical arrival against what the customer claimed to send.
+          evidenceImage: gradingFraudImage || undefined,
         }),
       });
       if (res.ok) {
         const data = await res.json();
-        setGradingResult(data.report);
+        
+        // Grab the original claim info from the queue to know if it was a "different product"
+        const currentItem = inspectQueue?.find((q: any) => q.sku === gradingSku);
+        const enhancedReport = {
+          ...data.report,
+          claimType: currentItem?.claimType
+        };
+
+        setGradingResult(enhancedReport);
         setGradingReasoning(data.reasoning || "");
         setGradingVariantNotes(data.variantNotes || "");
-        setLedgerRecords((prev: any) => [data.report, ...prev]);
+        setLedgerRecords((prev: any) => [enhancedReport, ...prev]);
         setMetrics((prev: any) => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
+        
         // Add to persistent graded history for admin view
         setGradedHistory((prev: any[]) => [{
-          ...data.report,
+          ...enhancedReport,
           reasoning: data.reasoning || "",
           variantNotes: data.variantNotes || "",
           gradedAt: new Date().toISOString(),
         }, ...prev]);
+        
         // Remove from inspect queue immediately once graded
         setInspectQueue((prev: any[]) => prev.filter((q: any) => q.sku !== gradingSku));
       }
@@ -364,7 +378,16 @@ export default function L4Grading() {
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col">
                       <span className="text-[9px] font-bold text-slate-400 uppercase">User</span>
-                      <span className="text-[10px] text-slate-800 font-medium truncate">{profileUserId || "None"}</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-slate-800 font-medium truncate">{profileUserId || "None"}</span>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                          (walletInfo.trustScore ?? 100) >= 80 ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                          (walletInfo.trustScore ?? 100) >= 50 ? "bg-amber-100 text-amber-700 border border-amber-200" :
+                          "bg-rose-100 text-rose-700 border border-rose-200"
+                        }`}>
+                          Trust: {walletInfo.trustScore ?? 100}
+                        </span>
+                      </div>
                     </div>
                     <div className="col-span-2 text-xs font-medium text-slate-700 truncate" title={gradingItemName}>
                       {gradingItemName}
@@ -390,7 +413,9 @@ export default function L4Grading() {
                   {/* ── Grade header ── */}
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-800">{gradingResult.itemName}</h4>
+                      <h4 className="text-sm font-bold text-slate-800">
+                        {gradingResult.isCorrectVariant === false || gradingResult.claimType === "different_product" ? "Unknown Product (Variant Mismatch)" : gradingResult.itemName}
+                      </h4>
                       <span className="text-[10px] font-mono text-slate-400 mt-0.5 block">SKU: {gradingResult.sku}</span>
                     </div>
                     <div className={`flex flex-col items-center gap-0.5 px-3.5 py-2 rounded-xl border-2 font-mono ${
@@ -502,12 +527,24 @@ export default function L4Grading() {
                         const currentItem = inspectQueue?.find((q: any) => q.id === gradingQueueId);
                         const orderIdToRemove = currentItem?.orderId;
                         setInspectQueue((prev: any[]) => prev.filter((q: any) => q.id !== gradingQueueId));
+                        
                         if (orderIdToRemove) {
                           setWalletInfo((prev: any) => {
-                            if (!prev || !prev.orders) return prev;
+                            if (!prev) return prev;
+                            
+                            // Penalize trust score for mismatch/fraud return
+                            const newScore = Math.max(0, (prev.trustScore || 100) - 50);
+                            const newPrivs = newScore < 50 ? "REVOKED" : prev.returnPrivileges;
+                            
                             return {
                               ...prev,
-                              orders: prev.orders.filter((o: any) => o.orderId !== orderIdToRemove)
+                              trustScore: newScore,
+                              returnPrivileges: newPrivs,
+                              orders: prev.orders ? prev.orders.map((o: any) => 
+                                o.orderId === orderIdToRemove 
+                                  ? { ...o, status: "Refund Denied (Physical Mismatch)" }
+                                  : o
+                              ) : []
                             };
                           });
                         }
@@ -807,7 +844,9 @@ export default function L4Grading() {
                     {/* Info */}
                     <div style={{minWidth:0}}>
                       <div style={{display:"flex", alignItems:"center", gap:"8px", flexWrap:"wrap"}}>
-                        <span style={{fontWeight:700, fontSize:"13px", color:"#0F1111"}}>{record.itemName}</span>
+                        <span style={{fontWeight:700, fontSize:"13px", color:"#0F1111"}}>
+                          {record.isCorrectVariant === false || record.claimType === "different_product" ? "Unknown Product (Variant Mismatch)" : record.itemName}
+                        </span>
                         <span style={{fontSize:"9px", fontFamily:"monospace", color:"#64748b", background:"#f1f5f9", padding:"2px 6px", borderRadius:"4px"}}>{record.sku}</span>
                         <span style={{fontSize:"10px", fontWeight:700, color:gc.text, background:"white", border:`1px solid ${gc.border}`, padding:"1px 7px", borderRadius:"10px"}}>
                           {record.resaleCategory}

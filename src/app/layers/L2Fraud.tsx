@@ -108,12 +108,10 @@ export default function L2Fraud() {
             status: "APPROVED"
           };
           setProcessedFraudQueue((prev: any[]) => {
-            if (prev.find((item: any) => item.sku === fraudSku)) return prev;
             return [claimObj, ...prev];
           });
           if (data.isResalable) {
             setInspectQueue((prev: any[]) => {
-              if (prev.find((item: any) => item.sku === fraudSku)) return prev;
               return [...prev, { ...claimObj, source: "fraud" }];
             });
           }
@@ -141,7 +139,6 @@ export default function L2Fraud() {
             status: "REJECTED"
           };
           setProcessedFraudQueue((prev: any[]) => {
-            if (prev.find((item: any) => item.sku === fraudSku)) return prev;
             return [claimObj, ...prev];
           });
         }
@@ -149,7 +146,6 @@ export default function L2Fraud() {
         // If the AI is unsure (score > 40), push to Manual Review Queue
         if (data && !data.shouldRetake && data.riskScore > 40) {
           setManualReviewQueue((prev: any[]) => {
-            if (prev.find((item: any) => item.sku === fraudSku)) return prev;
             return [...prev, {
               id: Math.random().toString(36).substr(2, 9),
               orderId: fraudOrderId || Math.random().toString(36).substr(2, 9),
@@ -538,11 +534,9 @@ export default function L2Fraud() {
                          if (selectedClaim) {
                            setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
                            setProcessedFraudQueue((prev: any[]) => {
-                             if (prev.find(p => p.id === selectedClaim.id)) return prev;
                              return [{...selectedClaim, status: "APPROVED"}, ...prev];
                            });
                            setInspectQueue((prev: any[]) => {
-                             if (prev.find(p => p.id === selectedClaim.id)) return prev;
                              return [{...selectedClaim, status: "APPROVED", source: "fraud"}, ...prev];
                            });
                          }
@@ -555,7 +549,6 @@ export default function L2Fraud() {
                          if (selectedClaim) {
                            setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
                            setProcessedFraudQueue((prev: any[]) => {
-                             if (prev.find(p => p.id === selectedClaim.id)) return prev;
                              return [{...selectedClaim, status: "REJECTED"}, ...prev];
                            });
                          }

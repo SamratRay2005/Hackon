@@ -111,8 +111,10 @@ export default function Home() {
   const [walletInfo, setWalletInfo] = useState<{
     cashbackBalance: number;
     vouchers: Array<{ id: string; title: string; discountAmount: number; status: string; issuedAt: string }>;
-    orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string; returnWindowDays?: number }>;
-  }>({ cashbackBalance: 0, vouchers: [], orders: [] });
+    trustScore: number;
+    returnPrivileges: "INSTANT_ALLOWED" | "REVOKED";
+    orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string; returnWindowDays?: number; status?: string }>;
+  }>({ cashbackBalance: 0, vouchers: [], trustScore: 100, returnPrivileges: "INSTANT_ALLOWED", orders: [] });
 
   // Hydrate wallet from localStorage on mount (since serverless memory resets on hot-reload)
   useEffect(() => {

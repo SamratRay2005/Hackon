@@ -582,8 +582,10 @@ export interface AppContextType {
 
   // Wallet info (shared across layers)
   walletInfo: {
-    credits: number;
-    sustainabilityScore: number;
+    cashbackBalance?: number;
+    vouchers?: Array<any>;
+    trustScore?: number;
+    returnPrivileges?: "INSTANT_ALLOWED" | "REVOKED";
     orders?: Array<{ sku: string; name: string; price: number; purchaseDate: string; category: string; returnWindowDays?: number }>;
   };
   setWalletInfo: (v: any) => void;
