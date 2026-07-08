@@ -129,10 +129,10 @@ export default function L3Deflection() {
   };
 
   return (
-    <div style={{display:"flex", flexDirection:"column", gap:"20px", background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
-      <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
-        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Chat with Nova — AI Tech Support</h2>
-        <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>AI Assistant</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#FFF", padding: "20px", border: "1px solid #DDD", borderRadius: "4px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+        <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111" }}>Chat with Nova — AI Tech Support</h2>
+        <span style={{ fontSize: "12px", background: "#C7511F", color: "#FFF", padding: "2px 8px", borderRadius: "4px" }}>AI Assistant</span>
       </div>
 
       {/* Selected Product Context */}
@@ -193,7 +193,10 @@ export default function L3Deflection() {
         <div className="bg-white border border-slate-200 rounded-2xl flex flex-col h-[450px] overflow-hidden shadow-sm">
           <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center flex-shrink-0">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="relative">
+                <img src="/nova_icon.png" alt="Nova" className="w-6 h-6 rounded-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'} />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border border-slate-50 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
               <span className="text-xs font-bold text-slate-700">Nova</span>
             </div>
             <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]" title={deflectProduct}>{deflectProduct}</span>

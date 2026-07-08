@@ -382,8 +382,22 @@ export default function Home() {
   const filteredSuggestions = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return PRODUCT_CATALOG.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 8);
+    return PRODUCT_CATALOG.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)).slice(0, 4);
   }, [searchQuery]);
+
+  const [prelovedSuggestions, setPrelovedSuggestions] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      fetch(`/api/marketplace?query=${encodeURIComponent(searchQuery.trim())}&zipCode=${profileZip}&userId=${profileUserId}`)
+        .then(res => res.json())
+        .then(data => {
+           if (data.items) setPrelovedSuggestions(data.items.slice(0, 4));
+        }).catch(err => console.error(err));
+    } else {
+      setPrelovedSuggestions([]);
+    }
+  }, [searchQuery, profileZip, profileUserId]);
 
   const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
   const isApparelOrFootwear = !!(selectedProduct && (selectedProduct.category === "Apparel" || selectedProduct.category === "Footwear"));
@@ -548,14 +562,14 @@ export default function Home() {
             </div>
 
             {/* Search bar */}
-            <div className="amz-search hidden md:flex flex-1">
+            <div className="amz-search hidden md:flex flex-1 relative">
               <div className="amz-search-category">
                 All <ChevronDown className="w-3 h-3" />
               </div>
               <input
                 type="text"
                 className="amz-search-input"
-                placeholder="Search Amazon"
+                placeholder="Search Amazon & Pre-Loved"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{width:'auto',padding:'0 10px',border:'none',outline:'none',fontSize:'0.9rem'}}
@@ -563,6 +577,55 @@ export default function Home() {
               <button className="amz-search-btn">
                 <Search className="w-5 h-5" style={{color:'#0F1111'}} />
               </button>
+
+              {/* Search Dropdown */}
+              {searchQuery.trim().length > 0 && (filteredSuggestions.length > 0 || prelovedSuggestions.length > 0) && (
+                <div className="absolute top-full left-0 right-0 bg-white shadow-2xl border border-slate-200 mt-1 rounded-md z-50 overflow-hidden flex flex-col max-h-[80vh] overflow-y-auto">
+                  
+                  {filteredSuggestions.length > 0 && (
+                    <div className="flex flex-col">
+                      <div className="px-3 py-1.5 bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 flex items-center gap-1.5">
+                        Amazon Catalog
+                      </div>
+                      {filteredSuggestions.map(p => (
+                        <div key={`amz-${p.sku}`} className="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 flex items-center justify-between" onClick={() => {
+                          setSelectedProductSku(p.sku);
+                          setSearchQuery("");
+                          setActiveTab("dashboard");
+                        }}>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-slate-800">{p.name}</span>
+                            <span className="text-[10px] text-slate-500">Brand New • {p.category}</span>
+                          </div>
+                          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">${p.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {prelovedSuggestions.length > 0 && (
+                    <div className="flex flex-col">
+                      <div className="px-3 py-1.5 bg-amber-50 text-[10px] font-bold text-amber-700 uppercase tracking-wider border-b border-amber-200 flex items-center gap-1.5">
+                        ♻️ Pre-Loved (Near You)
+                      </div>
+                      {prelovedSuggestions.map((p, i) => (
+                        <div key={`pre-${p.sku}-${i}`} className="px-4 py-2 hover:bg-amber-50 cursor-pointer border-b border-amber-100 flex items-center justify-between" onClick={() => {
+                          setSelectedProductSku(p.sku);
+                          setSearchQuery("");
+                          setActiveTab("dashboard");
+                        }}>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-slate-800">{p.name}</span>
+                            <span className="text-[10px] text-emerald-600 font-bold">{p.distance} away • Grade {p.grade} • {p.trust}% Trust</span>
+                          </div>
+                          <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">${p.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+              )}
             </div>
 
             {/* Right controls */}

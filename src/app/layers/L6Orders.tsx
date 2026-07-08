@@ -14,6 +14,7 @@ import {
   Clock,
   AlertCircle,
   Wrench,
+  Sparkles,
   X,
   CheckCircle,
   ChevronDown,
@@ -33,51 +34,54 @@ interface GetHelpModalProps {
 function GetHelpModal({ orderName, onConfirmDIM, onProceedToReason, onClose }: GetHelpModalProps) {
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 sm:p-6"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 flex flex-col gap-5 relative"
+        className="bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden max-w-3xl w-full animate-in fade-in zoom-in-95 duration-200 relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="flex flex-col items-center text-center gap-3 pt-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 flex items-center justify-center shadow-sm">
-            <Wrench className="w-7 h-7 text-indigo-600" />
-          </div>
-          <div>
-            <h3 className="text-base font-extrabold text-slate-800">
-              Want to try fixing it first?
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xs mx-auto">
-              Our AI repair assistant has the official manual for your{" "}
-              <strong className="text-slate-700">{orderName}</strong> and can
-              walk you through a fix step-by-step.
-            </p>
-          </div>
+        <div className="bg-[#F0F2F2] border-b border-[#D5D9D9] px-6 py-4 flex items-center justify-between">
+          <h3 className="text-2xl font-bold text-[#0F1111] flex items-center gap-4">
+            <img src="/nova_icon.png" alt="Nova" className="w-16 h-16 object-contain" />
+            Want to try fixing it first?
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-slate-800 transition-colors p-2 -mr-2"
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
-        <div className="flex flex-col gap-2.5 mt-2">
-          <button
-            onClick={onConfirmDIM}
-            className="btn btn-primary w-full py-3 text-sm font-bold flex items-center justify-center gap-2"
-          >
-            <Wrench className="w-4 h-4" />
-            Yes, get AI repair help!
-          </button>
-          <button
-            onClick={onProceedToReason}
-            className="btn btn-secondary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 text-slate-500"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            No, proceed to return
-          </button>
+        <div className="p-8 flex flex-col gap-6 text-left">
+          <div>
+            <p className="text-base text-slate-600 font-medium">
+              Quick AI troubleshooting
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[15px] text-slate-700 leading-relaxed">
+              Our AI repair assistant has the official manual for your{" "}
+              <strong>{orderName}</strong> and can walk you through a fix step-by-step.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={onConfirmDIM}
+              className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
+            >
+              Yes, get AI repair help!
+            </button>
+            <button
+              onClick={onProceedToReason}
+              className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
+            >
+              No, proceed to return
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -212,26 +216,42 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
 
       {/* Chatbot Interstitial Modal */}
       {showChatbotModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative">
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">Want to try fixing this?</h3>
-            <p className="text-slate-600 mb-6">
-              Many common issues with {order.name} can be fixed in a few minutes. 
-              Would you like to chat with <b>Nova</b>, our tech support assistant, before proceeding with the return?
-            </p>
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={() => onRouteDecision("deflection")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors"
-              >
-                Yes, chat with Nova
-              </button>
-              <button 
-                onClick={() => onRouteDecision("defective", "damaged_product")}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition-colors"
-              >
-                No, proceed with return
-              </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 sm:p-6">
+          <div className="bg-white rounded-lg w-full max-w-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#F0F2F2] border-b border-[#D5D9D9] px-6 py-4 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-[#0F1111] flex items-center gap-4">
+                <img src="/nova_icon.png" alt="Nova" className="w-16 h-16 object-contain" />
+                Want to try fixing this?
+              </h3>
+            </div>
+            <div className="p-8 flex flex-col gap-6 text-left">
+              <div>
+                <p className="text-base text-slate-600 font-medium">
+                  Quick AI troubleshooting
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[15px] text-slate-700 leading-relaxed">
+                  Many common issues with <strong>{order.name}</strong> can be fixed in a few minutes. 
+                  Would you like to chat with <strong>Nova</strong>, our tech support assistant, before proceeding with the return?
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => onRouteDecision("deflection")}
+                  className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
+                >
+                  Yes, chat with Nova
+                </button>
+                <button 
+                  onClick={() => onRouteDecision("defective", "damaged_product")}
+                  className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
+                >
+                  No, proceed with return
+                </button>
+              </div>
             </div>
           </div>
         </div>

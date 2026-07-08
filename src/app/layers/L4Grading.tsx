@@ -20,7 +20,7 @@ import {
   Compass,
   Leaf,
 } from "lucide-react";
-import { useApp } from "./AppContext";
+import { useApp, getSKUReferenceImage } from "./AppContext";
 
 export default function L4Grading() {
   const {
@@ -154,12 +154,10 @@ export default function L4Grading() {
                   key={item.id}
                   className={`flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${gradingSku === item.sku ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
                 >
-                  {/* Product thumbnail from customer evidence photo */}
-                  {item.fraudImage && (
-                    <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-slate-100">
-                      <img src={item.fraudImage} alt={item.itemName} className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                  {/* Product thumbnail from customer evidence photo or fallback */}
+                  <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-slate-50 border border-slate-200 flex items-center justify-center p-1">
+                    <img src={item.fraudImage || getSKUReferenceImage(item.sku)} alt={item.itemName} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                  </div>
                   <div className="font-bold text-slate-800 truncate w-full">{item.itemName}</div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="font-mono text-[9px] text-slate-500">SKU: {item.sku}</span>
