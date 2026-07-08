@@ -21,7 +21,7 @@ import {
   ShoppingBag, AlertTriangle, Compass, ShieldCheck, MessageSquare,
   Leaf, Award, TrendingDown, Layers, Heart, ChevronRight,
   UserCheck, Camera, Zap, BarChart2, Shield, Wallet, Search,
-  ChevronDown, Shirt, X, Truck, Map,
+  ChevronDown, Shirt, X, Truck, Map, ShoppingCart,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -167,6 +167,9 @@ export default function Home() {
 
       const processedSaved = localStorage.getItem("reloop_processed_queue");
       if (processedSaved) setProcessedFraudQueue(JSON.parse(processedSaved));
+
+      const bagSaved = localStorage.getItem("reloop_shopping_bag");
+      if (bagSaved) setShoppingBag(JSON.parse(bagSaved));
     } catch {}
     setIsHydrated(true);
   }, []);
@@ -189,6 +192,12 @@ export default function Home() {
       try { localStorage.setItem("reloop_processed_queue", JSON.stringify(processedFraudQueue)); } catch {}
     }
   }, [processedFraudQueue, isHydrated]);
+
+  useEffect(() => {
+    if (isHydrated) {
+      try { localStorage.setItem("reloop_shopping_bag", JSON.stringify(shoppingBag)); } catch {}
+    }
+  }, [shoppingBag, isHydrated]);
 
 
   // ── SEARCH CLICK-OUTSIDE ──
@@ -729,15 +738,29 @@ export default function Home() {
               {/* Cart */}
               <button
                 onClick={() => setActiveTab("cart")}
-                className="navbar-link flex items-end gap-0.5"
+                className="navbar-link flex items-end gap-1.5"
                 style={{padding:'4px 8px',position:'relative'}}
               >
-                <img src="/cart_icon.png" alt="Cart" style={{width: '38px', height: '28px', objectFit: 'contain'}} />
-                {cart.length > 0 && (
-                  <span style={{position:'absolute',top:'-2px',left:'20px',color:'#E47911',width:'18px',height:'18px',fontSize:'0.85rem',fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                    {cart.length}
+                <div className="relative flex items-center">
+                  <ShoppingCart className="w-[30px] h-[25px] text-white" />
+                  <span style={{
+                    position:'absolute',
+                    top:'-6px',
+                    left:'14px',
+                    background:'#F08804',
+                    color:'#FFF',
+                    borderRadius:'50%',
+                    width:'16px',
+                    height:'16px',
+                    fontSize:'0.65rem',
+                    fontWeight:900,
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center'
+                  }}>
+                    {shoppingBag.length}
                   </span>
-                )}
+                </div>
                 <span style={{fontSize:'0.78rem',fontWeight:700, marginBottom: '2px'}}>Cart</span>
               </button>
             </div>
