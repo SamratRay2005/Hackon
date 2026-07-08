@@ -610,6 +610,8 @@ export interface AppContextType {
   setDeflectProduct: (v: string) => void;
   deflectSku: string;
   setDeflectSku: (v: string) => void;
+  deflectOrderId: string;
+  setDeflectOrderId: (v: string) => void;
   deflectReason: string;
   setDeflectReason: (v: string) => void;
   logisticsSku: string;
@@ -618,6 +620,8 @@ export interface AppContextType {
   setGradingSku: (v: string) => void;
   gradingItemName: string;
   setGradingItemName: (v: string) => void;
+  gradingQueueId: string;
+  setGradingQueueId: (v: string) => void;
   refundBaseAmount: number;
   setRefundBaseAmount: (v: number) => void;
 
@@ -659,6 +663,10 @@ export interface AppContextType {
   showSuggestions: boolean;
   setShowSuggestions: (v: boolean) => void;
   searchContainerRef: React.RefObject<HTMLDivElement>;
+
+  // Global return success modal state
+  showReturnSuccess: boolean;
+  setShowReturnSuccess: (v: boolean) => void;
 
   // Dark Store Resale (L4 → Marketplace pipeline)
   resaleListings: Array<{

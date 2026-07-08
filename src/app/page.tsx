@@ -90,6 +90,7 @@ export default function Home() {
   // L3 Chat
   const [deflectProduct, setDeflectProduct] = useState("Smart Drip Coffee Maker");
   const [deflectSku, setDeflectSku] = useState("CF-Mkr-99");
+  const [deflectOrderId, setDeflectOrderId] = useState("");
   const [deflectReason, setDeflectReason] = useState("Defective / Won't turn on");
   const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([
     { role: "bot", content: "Hi there! I'm Nova. I see you want to return your **Smart Drip Coffee Maker** because it won't turn on. Before we issue a return label, let's see if we can resolve this together! Can you check if the power indicator light is blinking when you plug it in?" }
@@ -99,7 +100,9 @@ export default function Home() {
   // L4 Grading
   const [gradingSku, setGradingSku] = useState("CF-Mkr-99");
   const [gradingItemName, setGradingItemName] = useState("Smart Drip Coffee Maker");
+  const [gradingQueueId, setGradingQueueId] = useState("");
   const [ledgerRecords, setLedgerRecords] = useState<Array<any>>([]);
+  const [showReturnSuccess, setShowReturnSuccess] = useState(false);
 
   // L5 Logistics
   const [logisticsSku, setLogisticsSku] = useState("DENIM-JKT-001");
@@ -427,10 +430,12 @@ export default function Home() {
     fraudItemName, setFraudItemName,
     deflectProduct, setDeflectProduct,
     deflectSku, setDeflectSku,
+    deflectOrderId, setDeflectOrderId,
     deflectReason, setDeflectReason,
     logisticsSku, setLogisticsSku,
     gradingSku, setGradingSku,
     gradingItemName, setGradingItemName,
+    gradingQueueId, setGradingQueueId,
     refundBaseAmount, setRefundBaseAmount,
     sizingResult, setSizingResult,
     sizingImage, setSizingImage,
@@ -442,6 +447,7 @@ export default function Home() {
     shoppingBag, setShoppingBag,
     showCheckoutModal, setShowCheckoutModal,
     checkoutStep, setCheckoutStep,
+    showReturnSuccess, setShowReturnSuccess,
     cart, setCart,
     showBracketingModal, setShowBracketingModal,
     searchQuery, setSearchQuery,
