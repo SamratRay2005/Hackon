@@ -142,6 +142,18 @@ export default function L0Dashboard() {
         if (item) openProductDetails(item, false);
       }} />
 
+      {/* Promotional Banners */}
+      {!searchQuery && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2 mb-2">
+          <img src="/header1.jpg" alt="Shop books" className="w-full aspect-[2/1] md:aspect-auto h-full rounded-md shadow-sm object-cover cursor-pointer hover:opacity-90 transition-opacity border border-slate-200" onClick={() => setSearchQuery("Planner")} />
+          <img src="/header2.jpg" alt="Gamers essentials" className="w-full aspect-[2/1] md:aspect-auto h-full rounded-md shadow-sm object-cover cursor-pointer hover:opacity-90 transition-opacity border border-slate-200" onClick={() => setSearchQuery("Game")} />
+          <img src="/header3.jpg" alt="Kitchen favorites" className="w-full aspect-[2/1] md:aspect-auto h-full rounded-md shadow-sm object-cover cursor-pointer hover:opacity-90 transition-opacity border border-slate-200" onClick={() => setSearchQuery("Kitchen")} />
+          <img src="/header4.jpg" alt="Lunar new year deals" className="w-full aspect-[2/1] md:aspect-auto h-full rounded-md shadow-sm object-cover cursor-pointer hover:opacity-90 transition-opacity border border-slate-200" onClick={() => setSearchQuery("Apparel")} />
+          <img src="/header5.jpg" alt="Beauty products" className="w-full aspect-[2/1] md:aspect-auto h-full rounded-md shadow-sm object-cover cursor-pointer hover:opacity-90 transition-opacity border border-slate-200" onClick={() => setSearchQuery("Other")} />
+          <img src="/header6.jpg" alt="New arrivals in Toys" className="w-full aspect-[2/1] md:aspect-auto h-full rounded-md shadow-sm object-cover cursor-pointer hover:opacity-90 transition-opacity border border-slate-200" onClick={() => setSearchQuery("Toy")} />
+        </div>
+      )}
+
       {/* Tabs */}
       {!searchQuery && (
         <div style={{display:"flex", gap:"16px", borderBottom:"1px solid #DDD", paddingBottom:"0px", marginBottom:"8px", overflowX:"auto"}}>
@@ -161,8 +173,12 @@ export default function L0Dashboard() {
       )}
 
       {searchQuery && (
-        <div style={{marginBottom: "8px"}}>
-          <h2 style={{fontSize:"20px", fontWeight:700, color:"#0F1111"}}>Search Results for "{searchQuery}"</h2>
+        <div style={{marginBottom: "12px", display:"flex", alignItems:"center", gap:"16px", background: "#f0f2f2", padding: "8px 12px", borderRadius: "4px", border: "1px solid #D5D9D9"}}>
+          <button onClick={() => setSearchQuery("")} className="text-[15px] font-bold text-[#007185] hover:text-[#c45500] hover:underline flex items-center gap-1.5" style={{letterSpacing: "0.02em"}}>
+            <span style={{fontSize: "18px", lineHeight: 1}}>←</span> Back to Home
+          </button>
+          <div style={{height: "24px", width: "1px", background: "#DDD"}}></div>
+          <h2 style={{fontSize:"18px", fontWeight:700, color:"#0F1111"}}>Search Results for "{searchQuery}"</h2>
         </div>
       )}
 
@@ -173,7 +189,7 @@ export default function L0Dashboard() {
             <span style={{fontSize:"12px", background:"#007185", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>Brand New</span>
           </div>
           
-          <div className="relative mb-2">
+          <div className="relative mb-2 w-full max-w-2xl">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
@@ -242,7 +258,7 @@ export default function L0Dashboard() {
             <span>Items shown below have been returned by users within a 100km radius. By purchasing locally, you earn Green Credits and save shipping emissions.</span>
           </div>
 
-          <div className="relative mb-2">
+          <div className="relative mb-2 w-full max-w-2xl">
             <input
               type="text"
               placeholder="Search Pre-Loved items..."
@@ -440,80 +456,93 @@ export default function L0Dashboard() {
       )}
       {/* Product Details Modal */}
       {selectedProductDetails && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setSelectedProductDetails(null)}>
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col md:flex-row overflow-hidden max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4" onClick={() => setSelectedProductDetails(null)}>
+          <div className="bg-white shadow-2xl max-w-4xl w-full flex flex-col md:flex-row overflow-hidden max-h-[90vh]" style={{borderRadius:"8px"}} onClick={e => e.stopPropagation()}>
             {/* Image Section */}
-            <div className="md:w-1/2 bg-slate-100 flex items-center justify-center relative p-6">
-              <button onClick={() => setSelectedProductDetails(null)} className="absolute top-4 left-4 md:hidden w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm text-slate-500 z-10"><X className="w-5 h-5" /></button>
-              <img src={getSKUReferenceImage(selectedProductDetails.sku)} alt={selectedProductDetails.name} className="w-full h-full object-contain max-h-64 md:max-h-full mix-blend-multiply drop-shadow-md" />
+            <div className="md:w-1/2 flex items-center justify-center relative p-8 bg-white" style={{borderRight:"1px solid #DDD"}}>
+              <button onClick={() => setSelectedProductDetails(null)} className="absolute top-4 left-4 md:hidden text-slate-500"><X className="w-6 h-6" /></button>
+              <img src={getSKUReferenceImage(selectedProductDetails.sku)} alt={selectedProductDetails.name} className="w-full h-full object-contain mix-blend-multiply" />
               {selectedProductDetails.isPreloved && (
-                <div className="absolute bottom-4 left-4 right-4 flex gap-2">
-                  <span className={`mini-badge shadow-sm bg-white border border-slate-200 ${selectedProductDetails.grade?.startsWith("A") ? "text-emerald-600" : "text-amber-600"}`}>Grade {selectedProductDetails.grade}</span>
-                  <span className="mini-badge shadow-sm bg-emerald-600 text-white border border-emerald-700 flex items-center gap-1"><Leaf className="w-3 h-3" /> -{selectedProductDetails.co2Saved || 8.5}kg CO₂</span>
+                <div className="absolute bottom-6 left-6 flex gap-2">
+                  <span className={`text-[11px] font-bold px-2 py-1 rounded shadow-sm ${selectedProductDetails.grade?.startsWith("A") ? "bg-[#007600] text-white" : "bg-[#E47911] text-white"}`}>Grade {selectedProductDetails.grade}</span>
+                  <span className="text-[11px] font-bold px-2 py-1 rounded shadow-sm bg-[#007185] text-white flex items-center gap-1"><Leaf className="w-3 h-3" /> -{selectedProductDetails.co2Saved || 8.5}kg CO₂</span>
                 </div>
               )}
             </div>
             
             {/* Details Section */}
-            <div className="md:w-1/2 p-6 md:p-8 flex flex-col overflow-y-auto">
-              <div className="flex justify-between items-start mb-2">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{selectedProductDetails.brand}</div>
-                <button onClick={() => setSelectedProductDetails(null)} className="hidden md:flex text-slate-400 hover:text-slate-700 transition-colors"><X className="w-6 h-6" /></button>
+            <div className="md:w-1/2 p-6 md:p-8 flex flex-col overflow-y-auto bg-white">
+              <div className="flex justify-between items-start mb-1">
+                <div className="text-[13px] text-[#007185] hover:text-[#c45500] hover:underline cursor-pointer">Visit the {selectedProductDetails.brand} Store</div>
+                <button onClick={() => setSelectedProductDetails(null)} className="hidden md:flex text-slate-500 hover:text-slate-800"><X className="w-6 h-6" /></button>
               </div>
               
-              <h2 className="text-2xl font-extrabold text-slate-800 leading-tight mb-2">{selectedProductDetails.name}</h2>
+              <h2 className="text-[22px] text-[#0F1111] leading-tight mb-2 font-medium">{selectedProductDetails.name}</h2>
               
-              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100">
-                <span className="text-2xl font-extrabold text-emerald-600 font-mono">${selectedProductDetails.price.toFixed(2)}</span>
-                {selectedProductDetails.isPreloved && selectedProductDetails.originalPrice && (
-                  <span className="text-sm font-medium text-slate-400 line-through">${selectedProductDetails.originalPrice.toFixed(2)}</span>
-                )}
-                <span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded-md ml-auto">SKU: {selectedProductDetails.sku}</span>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-[#DE7921] text-[15px] leading-none">★★★★☆</span> 
+                <span className="text-[13px] text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k ratings</span>
+                <span className="text-[11px] text-slate-500 bg-slate-100 px-2 py-1 rounded ml-auto border border-slate-200">SKU: {selectedProductDetails.sku}</span>
               </div>
               
-              <div className="text-sm text-slate-600 leading-relaxed mb-6">
+              <hr className="border-slate-200 mb-4" />
+
+              <div className="flex items-end gap-2 mb-2">
+                 <div className="flex items-start text-[#B12704]">
+                   <span className="text-sm font-normal mt-[3px] mr-[1px]">$</span>
+                   <span className="text-[32px] font-medium leading-none">{Math.floor(selectedProductDetails.price)}</span>
+                   <span className="text-sm font-normal mt-[3px] ml-[1px]">{(selectedProductDetails.price % 1).toFixed(2).substring(2)}</span>
+                 </div>
+                 {selectedProductDetails.isPreloved && selectedProductDetails.originalPrice && (
+                   <div className="flex flex-col mb-1.5 ml-2">
+                     <span className="text-[#565959] text-[13px]">List Price: <span className="line-through">${selectedProductDetails.originalPrice.toFixed(2)}</span></span>
+                   </div>
+                 )}
+              </div>
+              <div className="text-[14px] text-[#565959] mb-4">
+                <span className="text-[#007600] font-medium">{selectedProductDetails.isPreloved ? "Available Now." : "In Stock."}</span> FREE delivery for Prime members.
+              </div>
+
+              <div className="text-[14px] text-[#0F1111] leading-relaxed mb-6">
                 {selectedProductDetails.description || "Experience the perfect blend of style and sustainability. This item has been verified for quality and authenticity."}
               </div>
 
               {/* AI Certificate for Pre-loved Items */}
               {selectedProductDetails.isPreloved && (
-                <div className="mb-6 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                  
-                  <div className="flex items-center gap-2 mb-4 relative z-10">
-                    <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    <h3 className="font-extrabold text-emerald-900 text-sm">
+                <div className="mb-6 bg-[#F0F8FA] border border-[#007185] rounded-lg p-4 relative overflow-hidden">
+                  <div className="flex items-center gap-2 mb-3 relative z-10">
+                    <CheckCircle className="w-5 h-5 text-[#007185]" />
+                    <h3 className="font-bold text-[#0F1111] text-[14px]">
                       Amazon AI Certified: Grade {selectedProductDetails.grade || "B"}
                     </h3>
                   </div>
                   
-                  <div className="flex flex-col gap-2.5 text-xs text-slate-700 relative z-10 bg-white/60 p-3 rounded-xl border border-emerald-100/50">
+                  <div className="flex flex-col gap-2 text-[13px] text-[#0F1111] relative z-10 bg-white p-3 rounded border border-slate-200">
                     <div className="flex items-start gap-2">
-                      <span className="font-bold text-slate-900 w-24 flex-shrink-0">Screen:</span>
+                      <span className="font-bold w-24 flex-shrink-0">Screen:</span>
                       <span>No scratches detected by AI.</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="font-bold text-slate-900 w-24 flex-shrink-0">Body:</span>
+                      <span className="font-bold w-24 flex-shrink-0">Body:</span>
                       <span>Minor scuff on the back left corner.</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="font-bold text-slate-900 w-24 flex-shrink-0">Functionality:</span>
+                      <span className="font-bold w-24 flex-shrink-0">Functionality:</span>
                       <span>Passed all diagnostic tests.</span>
                     </div>
                   </div>
                   
-                  <div className="mt-4 flex items-center gap-2 relative z-10">
-                    <Award className="w-4 h-4 text-emerald-600" />
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Backed by Amazon's 30-Day Money-Back Guarantee</span>
+                  <div className="mt-3 flex items-center gap-2 relative z-10 text-[12px] font-bold text-[#007185]">
+                    <Award className="w-4 h-4" /> Backed by Amazon's 30-Day Money-Back Guarantee
                   </div>
                 </div>
               )}
               
               {/* Sizing Logic */}
               {(selectedProductDetails.category === "Apparel" || selectedProductDetails.category === "Footwear") && (
-                <div className="mb-6 flex flex-col gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-700">Select Size</span>
+                <div className="mb-6 flex flex-col gap-3">
+                  <div className="text-[14px] font-bold text-[#0F1111] flex items-center gap-1.5">
+                    Size: {selectedSize ? <span className="font-normal text-[#0F1111]">{selectedSize}</span> : <span className="text-[#B12704] font-medium flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Select a size</span>}
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
@@ -521,10 +550,10 @@ export default function L0Dashboard() {
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`w-10 h-10 rounded-xl border text-sm font-bold flex items-center justify-center transition-all ${
+                        className={`min-w-[44px] px-3 h-10 rounded-md text-[14px] flex items-center justify-center transition-all shadow-sm ${
                           selectedSize === size
-                            ? "bg-indigo-600 text-white border-indigo-700 shadow-md scale-105"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50"
+                            ? "bg-[#F3F8F9] text-[#0F1111] border-[2px] border-[#007185] font-bold"
+                            : "bg-white text-[#0F1111] border border-[#D5D9D9] hover:bg-[#F7F8F8] font-medium"
                         }`}
                       >
                         {size}
@@ -532,35 +561,34 @@ export default function L0Dashboard() {
                     ))}
                   </div>
 
-                  <div className="relative flex items-center py-2">
-                    <div className="flex-grow border-t border-slate-200"></div>
-                    <span className="flex-shrink-0 mx-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">or</span>
-                    <div className="flex-grow border-t border-slate-200"></div>
+                  <div className="relative flex items-center py-2 mt-2">
+                    <div className="flex-grow border-t border-[#D5D9D9]"></div>
+                    <span className="flex-shrink-0 mx-4 text-[12px] text-[#565959] uppercase tracking-wider font-semibold">or</span>
+                    <div className="flex-grow border-t border-[#D5D9D9]"></div>
                   </div>
 
                   <button
                     onClick={() => routeToSizing(selectedProductDetails.sku)}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border-2 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all shadow-sm"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-md border border-[#D5D9D9] bg-white hover:bg-[#F7F8F8] text-[#0F1111] text-[13px] font-medium transition-all shadow-sm"
                   >
-                    <Zap className="w-4 h-4 text-amber-500" /> Use AI Body Scanner for Perfect Fit
+                    <Zap className="w-4 h-4 text-[#007185]" /> Use AI Body Scanner for Perfect Fit
                   </button>
                 </div>
               )}
 
-              <div className="mt-auto pt-4">
+              <div className="mt-auto pt-2">
                 {selectedProductDetails.isPreloved && (
-                   <div className="flex items-start gap-2 text-[10px] text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-100 mb-3">
-                     <Award className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-500" />
-                     <span>Earn <strong>Green Credits</strong> instantly when you buy this pre-loved item locally.</span>
+                   <div className="flex items-start gap-2 text-[12px] text-[#0F1111] bg-[#F3F8F9] p-3 border border-[#007185] rounded-md mb-4 shadow-sm">
+                     <Award className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#007185]" />
+                     <span>Earn <strong className="text-[#007185]">Green Credits</strong> instantly when you buy this pre-loved item locally.</span>
                    </div>
                 )}
                 
                 <button
-                  className="btn btn-primary w-full py-3.5 text-sm font-bold shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-md shadow-[0_1px_2px_rgba(15,17,17,0.15)] hover:shadow-[0_2px_5px_rgba(15,17,17,0.2)] active:scale-[0.99] text-[14px] font-semibold flex items-center justify-center transition-all disabled:opacity-50 disabled:bg-[#F7F8F8] disabled:border-[#D5D9D9] disabled:text-[#565959] disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
                   onClick={handleAddToCart}
                   disabled={(selectedProductDetails.category === "Apparel" || selectedProductDetails.category === "Footwear") && !selectedSize}
                 >
-                  <ShoppingBag className="w-4 h-4" />
                   {(selectedProductDetails.category === "Apparel" || selectedProductDetails.category === "Footwear") && !selectedSize 
                     ? "Select a Size to Add to Cart" 
                     : "Add to Cart"}

@@ -546,25 +546,26 @@ export default function Home() {
 
           {/* ── AMAZON NAVBAR (row 1: dark navy) ── */}
           <nav className="navbar" style={{gap:'0.5rem'}}>
-            {/* Logo */}
-            <a href="#" className="navbar-logo" style={{fontSize:'1.4rem',letterSpacing:'-0.05em'}}>
-              Re<span>Loop</span>
-              <svg width="20" height="12" viewBox="0 0 100 50" style={{display:'block',marginLeft:'2px'}}>
-                <path d="M5 40 Q50 60 95 40" stroke="#FF9900" strokeWidth="8" fill="none" strokeLinecap="round"/>
-                <polygon points="88,28 100,44 76,44" fill="#FF9900"/>
-              </svg>
+            <a href="#" className="navbar-logo" style={{padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none'}}>
+              <img src="/amazon_logo.png" alt="Amazon" style={{ height: '26px', objectFit: 'contain', marginTop: '4px' }} />
+              <div style={{height: '18px', width: '1px', background: 'rgba(255, 255, 255, 0.4)', margin: '0 4px', marginTop: '2px'}} />
+              <span style={{color: '#fff', fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '2px'}}>
+                Re<span style={{color: '#FF9900'}}>Loop</span>
+              </span>
             </a>
 
             {/* Deliver to */}
             <div className="hidden md:flex flex-col text-white cursor-pointer px-2 py-1 rounded border-2 border-transparent hover:border-white" style={{lineHeight:'1.1'}}>
               <span style={{fontSize:'0.65rem',color:'#ccc'}}>Deliver to</span>
-              <span style={{fontSize:'0.78rem',fontWeight:700}}>📍 {profileZip}</span>
+              <span style={{fontSize:'0.78rem',fontWeight:700, display: 'flex', alignItems: 'center', gap: '2px'}}>
+                <img src="/location_icon.png" alt="" style={{width: '14px', height: '14px'}} /> {profileZip}
+              </span>
             </div>
 
             {/* Search bar */}
             <div className="amz-search hidden md:flex flex-1 relative" ref={searchContainerRef}>
-              <div className="amz-search-category">
-                All <ChevronDown className="w-3 h-3" />
+              <div className="amz-search-category" style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                All <img src="/dropdown_icon.png" alt="" style={{width: '10px', height: '10px', opacity: 0.6}} />
               </div>
               <input
                 type="text"
@@ -586,12 +587,13 @@ export default function Home() {
               />
               <button 
                 className="amz-search-btn"
+                style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}
                 onClick={() => {
                   setShowSuggestions(false);
                   setActiveTab("dashboard");
                 }}
               >
-                <Search className="w-5 h-5" style={{color:'#0F1111'}} />
+                <img src="/search_icon.png" alt="Search" style={{width: '20px', height: '20px'}} />
               </button>
 
               {/* Search Dropdown */}
@@ -678,7 +680,9 @@ export default function Home() {
                   style={{lineHeight:'1.1',padding:'4px 8px'}}
                 >
                   <span style={{fontSize:'0.65rem',color:'#ccc'}}>Hello, {profileUserId}</span>
-                  <span style={{fontSize:'0.78rem',fontWeight:700}}>Account & Lists <ChevronDown style={{display:'inline',width:'10px',height:'10px'}} /></span>
+                  <span style={{fontSize:'0.78rem',fontWeight:700, display: 'flex', alignItems: 'center', gap: '2px'}}>
+                    Account & Lists <img src="/dropdown_icon.png" alt="" style={{width:'8px',height:'8px', filter: 'brightness(0) invert(1)', opacity: 0.7}} />
+                  </span>
                 </button>
 
                 {showLogoutDropdown && (
@@ -722,21 +726,21 @@ export default function Home() {
                 className="navbar-link flex items-end gap-0.5"
                 style={{padding:'4px 8px',position:'relative'}}
               >
-                <ShoppingBag className="w-7 h-7" style={{color:'#FFFFFF'}} />
+                <img src="/cart_icon.png" alt="Cart" style={{width: '38px', height: '28px', objectFit: 'contain'}} />
                 {cart.length > 0 && (
-                  <span style={{position:'absolute',top:'2px',left:'18px',background:'#FF9900',color:'#0F1111',borderRadius:'50%',width:'18px',height:'18px',fontSize:'0.65rem',fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <span style={{position:'absolute',top:'-2px',left:'20px',color:'#E47911',width:'18px',height:'18px',fontSize:'0.85rem',fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center'}}>
                     {cart.length}
                   </span>
                 )}
-                <span style={{fontSize:'0.78rem',fontWeight:700}}>Cart</span>
+                <span style={{fontSize:'0.78rem',fontWeight:700, marginBottom: '2px'}}>Cart</span>
               </button>
             </div>
           </nav>
 
           {/* ── AMAZON SUB-NAV (row 2: dark gray) ── */}
           <div className="amz-subnav">
-            <div className="amz-subnav-item" style={{gap:'6px',fontWeight:700}}>
-              ☰ All
+            <div className="amz-subnav-item" style={{gap:'4px',fontWeight:700}}>
+              <img src="/menu_icon.png" alt="Menu" style={{width: '18px', height: '18px'}} /> All
             </div>
             {/* Mode badge */}
             <div style={{display:'flex',alignItems:'center',marginLeft:'4px',marginRight:'8px'}}>

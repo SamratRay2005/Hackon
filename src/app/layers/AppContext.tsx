@@ -135,7 +135,35 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
   "CF-Mkr-99": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
   "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500",
   "YRDLY-GNTLMN-001": "/yardley-gentleman.webp",
+  
+  // Custom SKUs
+  "HOTHANDS-1": "/product1-1.jpg",
+  "HEX-DUMB-2": "/product1-2.jpg",
+  "SKI-GOG-3": "/product1-3.jpg",
+  "FIRE-BLNK-4": "/product1-4.jpg",
+  "HYDRO-FLSK-5": "/product1-5.jpg",
+  "SKI-HLMT-6": "/product1-6.jpg",
+  "HOTHANDS-7": "/product1-7.jpg",
+  "HOTHANDS-8": "/product1-8.jpg",
+  "IRON-FLSK-9": "/product1-9.jpg",
+  "HOTHANDS-10": "/product1-10.jpg",
+  "CARTER-ONES-1": "/product2-1.jpg",
+  "CARTER-SWIM-2": "/product2-2.jpg",
+  "BABY-GOWN-3": "/product2-3.jpg",
+  "TODDLER-PJ-4": "/product2-4.jpg",
+  "CARTER-THERM-5": "/product2-5.jpg",
+  "AVATAR-BRD-6": "/product2-6.jpg",
+  "BABY-SLEEP-7": "/product2-7.jpg",
+  "PLANNER-2024-8": "/product2-8.jpg",
 };
+
+const hashString = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return Math.abs(hash);
+};
+
+const pickImage = (sku: string, images: string[]) => images[hashString(sku) % images.length];
 
 export const getSKUReferenceImage = (sku: string) => {
   if (SKU_REFERENCE_IMAGES[sku]) return SKU_REFERENCE_IMAGES[sku];
@@ -146,53 +174,87 @@ export const getSKUReferenceImage = (sku: string) => {
     const c = p.category;
 
     if (c === "Apparel") {
-      if (n.includes("jacket") || n.includes("coat") || n.includes("parka") || n.includes("windbreaker") || n.includes("blazer")) return "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500";
-      if (n.includes("hoodie") || n.includes("pullover") || n.includes("sweater") || n.includes("cardigan")) return "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500";
-      if (n.includes("jean") || n.includes("denim") || n.includes("overalls")) return "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500";
-      if (n.includes("pant") || n.includes("chino") || n.includes("jogger") || n.includes("legging") || n.includes("short")) return "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500";
-      if (n.includes("dress") || n.includes("skirt")) return "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500";
+      if (n.includes("jacket") || n.includes("coat") || n.includes("parka") || n.includes("windbreaker") || n.includes("blazer")) {
+        return pickImage(sku, [
+          "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500",
+          "https://images.unsplash.com/photo-1559551409-dadc959f76b8?w=500",
+          "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500",
+          "https://images.unsplash.com/photo-1521223830119-a9a7a67cb8cc?w=500",
+          "https://images.unsplash.com/photo-1544441893-675973e31985?w=500"
+        ]);
+      }
+      if (n.includes("hoodie") || n.includes("pullover") || n.includes("sweater") || n.includes("cardigan")) {
+        return pickImage(sku, [
+          "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500",
+          "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500",
+          "https://images.unsplash.com/photo-1578587018452-892bace94f12?w=500"
+        ]);
+      }
+      if (n.includes("jean") || n.includes("denim") || n.includes("overalls") || n.includes("pant") || n.includes("chino") || n.includes("jogger") || n.includes("legging") || n.includes("short")) {
+        return pickImage(sku, [
+          "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500",
+          "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500",
+          "https://images.unsplash.com/photo-1584865288642-42078afe6942?w=500",
+          "https://images.unsplash.com/photo-1594938291221-94f18cbb5660?w=500"
+        ]);
+      }
+      if (n.includes("dress") || n.includes("skirt")) {
+        return pickImage(sku, [
+          "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500",
+          "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500",
+          "https://images.unsplash.com/photo-1618932260643-ee46255a61bb?w=500"
+        ]);
+      }
       // Fallback for apparel (shirts, tees, polos, etc.)
-      return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
+      return pickImage(sku, [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500",
+        "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=500",
+        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500",
+        "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500"
+      ]);
     }
 
     if (c === "Footwear") {
-      if (n.includes("boot")) return "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500";
-      if (n.includes("sandal") || n.includes("slipper") || n.includes("loafer") || n.includes("oxford") || n.includes("espadril")) return "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500";
-      // Fallback for footwear (sneakers, trainers, running shoes)
-      return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500";
+      return pickImage(sku, [
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",
+        "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500",
+        "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500",
+        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500",
+        "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=500"
+      ]);
     }
 
     if (c === "Electronics") {
-      if (n.includes("monitor") || n.includes("display") || n.includes("screen")) return "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500";
-      if (n.includes("speaker") || n.includes("audio") || n.includes("sound")) return "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500";
-      if (n.includes("headphone") || n.includes("earbud")) return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
-      if (n.includes("keyboard") || n.includes("mouse") || n.includes("webcam")) return "https://images.unsplash.com/photo-1595225476474-87563907a212?w=500";
-      if (n.includes("watch") || n.includes("tracker")) return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500";
-      if (n.includes("camera") || n.includes("drone")) return "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500";
-      if (n.includes("tablet") || n.includes("reader")) return "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500";
-      return "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500";
+      if (n.includes("monitor") || n.includes("display") || n.includes("screen")) return pickImage(sku, ["https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500", "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500", "https://images.unsplash.com/photo-1585792180666-f7347c490ee2?w=500"]);
+      if (n.includes("speaker") || n.includes("audio") || n.includes("sound")) return pickImage(sku, ["https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500", "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500", "https://images.unsplash.com/photo-1589256469067-ea99122bbdc4?w=500"]);
+      if (n.includes("headphone") || n.includes("earbud")) return pickImage(sku, ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500", "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=500", "https://images.unsplash.com/photo-1612222869049-d8ec83637a3c?w=500"]);
+      if (n.includes("keyboard") || n.includes("mouse") || n.includes("webcam")) return pickImage(sku, ["https://images.unsplash.com/photo-1595225476474-87563907a212?w=500", "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500", "https://images.unsplash.com/photo-1615663245857-ac1eeb536fcb?w=500"]);
+      if (n.includes("watch") || n.includes("tracker")) return pickImage(sku, ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500", "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500", "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500"]);
+      if (n.includes("camera") || n.includes("drone")) return pickImage(sku, ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500", "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=500", "https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=500"]);
+      if (n.includes("tablet") || n.includes("reader")) return pickImage(sku, ["https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500", "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=500", "https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?w=500"]);
+      return pickImage(sku, ["https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500", "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=500", "https://images.unsplash.com/photo-1531297122539-ce6fa8ce8f46?w=500"]);
     }
 
     if (c === "Home & Kitchen") {
-      if (n.includes("knife") || n.includes("cutlery")) return "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500";
-      if (n.includes("coffee") || n.includes("espresso") || n.includes("kettle") || n.includes("grinder") || n.includes("press")) return "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500";
-      if (n.includes("blender") || n.includes("mixer") || n.includes("juicer") || n.includes("cooker") || n.includes("toaster") || n.includes("fryer")) return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
-      if (n.includes("pan") || n.includes("pot") || n.includes("skillet") || n.includes("cookware")) return "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500";
-      if (n.includes("vacuum") || n.includes("mop") || n.includes("purifier")) return "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=500";
-      if (n.includes("towel") || n.includes("sheet") || n.includes("duvet") || n.includes("pillow")) return "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500";
-      return "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500";
+      if (n.includes("knife") || n.includes("cutlery")) return pickImage(sku, ["https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500", "https://images.unsplash.com/photo-1575916053805-4f33a1e9411d?w=500"]);
+      if (n.includes("coffee") || n.includes("espresso") || n.includes("kettle") || n.includes("grinder") || n.includes("press")) return pickImage(sku, ["https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500", "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=500", "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500"]);
+      if (n.includes("blender") || n.includes("mixer") || n.includes("juicer") || n.includes("cooker") || n.includes("toaster") || n.includes("fryer")) return pickImage(sku, ["https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500", "https://images.unsplash.com/photo-1578644621257-2e118c8e1a12?w=500", "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=500"]);
+      if (n.includes("pan") || n.includes("pot") || n.includes("skillet") || n.includes("cookware")) return pickImage(sku, ["https://images.unsplash.com/photo-1593618998160-e34014e67546?w=500", "https://images.unsplash.com/photo-1584269600519-112d061b4d13?w=500", "https://images.unsplash.com/photo-1626861214309-844c803cb365?w=500"]);
+      if (n.includes("vacuum") || n.includes("mop") || n.includes("purifier")) return pickImage(sku, ["https://images.unsplash.com/photo-1558317374-067fb5f30001?w=500", "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=500", "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500"]);
+      if (n.includes("towel") || n.includes("sheet") || n.includes("duvet") || n.includes("pillow")) return pickImage(sku, ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500", "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=500", "https://images.unsplash.com/photo-1612502128795-3bc71fcb472e?w=500"]);
+      return pickImage(sku, ["https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500", "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=500", "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500"]);
     }
 
     if (c === "Recreation & Lifestyle") {
-      if (n.includes("backpack") || n.includes("bag") || n.includes("duffel") || n.includes("luggage")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
-      if (n.includes("tent") || n.includes("camp") || n.includes("mat") || n.includes("sleep")) return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
-      if (n.includes("bottle") || n.includes("flask") || n.includes("tumbler") || n.includes("vacuum insulated")) return "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500";
-      if (n.includes("yoga") || n.includes("fitness") || n.includes("roller")) return "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500";
-      return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500";
+      if (n.includes("backpack") || n.includes("bag") || n.includes("duffel") || n.includes("luggage")) return pickImage(sku, ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500", "https://images.unsplash.com/photo-1547949003-9792a18a2601?w=500", "https://images.unsplash.com/photo-1491637639811-60e2756cc1c7?w=500"]);
+      if (n.includes("tent") || n.includes("camp") || n.includes("mat") || n.includes("sleep")) return pickImage(sku, ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500", "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?w=500", "https://images.unsplash.com/photo-1504280390224-b1f486a43d04?w=500"]);
+      if (n.includes("bottle") || n.includes("flask") || n.includes("tumbler") || n.includes("vacuum insulated")) return pickImage(sku, ["https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500", "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=500", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"]);
+      if (n.includes("yoga") || n.includes("fitness") || n.includes("roller")) return pickImage(sku, ["https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=500", "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500"]);
+      return pickImage(sku, ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500", "https://images.unsplash.com/photo-1504280390224-b1f486a43d04?w=500", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"]);
     }
   }
 
-  return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
+  return pickImage(sku, ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500", "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500", "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500"]);
 };
 
 export function getDynamicSizeChart(sku: string) {

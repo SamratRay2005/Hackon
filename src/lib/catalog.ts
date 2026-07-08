@@ -190,6 +190,26 @@ const RAW_PRODUCT_CATALOG = [
   { sku: "STRAP-YOG-147",   name: "Cotton Yoga Stretching Fitness Strap",             price: 12.00,  sizes: ["Standard"] },
   { sku: "ROPE-JMP-148",    name: "Adjustable Speed Ball-Bearing Jump Rope",          price: 15.00,  sizes: ["Standard"] },
   { sku: "MASSAGE-149",     name: "Deep Tissue Percussion Muscle Massage Gun",         price: 99.00,  sizes: ["Standard"] },
+
+  // --- NEW USER PROVIDED PRODUCTS ---
+  { sku: "HOTHANDS-1",      name: "HotHands Hand Warmers (Countertop Display)",       price: 25.00,  sizes: ["Standard"], description: "Retail countertop display box filled with HotHands Hand Warmers packets. The outer packaging is bright orange and white with bold black typography reading 'HOTHANDS HAND WARMERS'. The display features a graphic illustration of a hand holding a heat packet emitting golden light rays. The side panel displays a product photo demonstrating use, accompanied by text highlights: 'Ready to use', 'Air activated', and 'Natural heat'. The individual rectangular packets are stacked neatly inside the open-top cardboard dispenser box." },
+  { sku: "HEX-DUMB-2",      name: "10LB Hexagonal Dumbbells (Pair)",                   price: 45.00,  sizes: ["Standard"], description: "A pair of matching 10-pound hexagonal dumbbells coated in a matte, textured royal blue neoprene or rubber finish. Each dumbbell features the weight denomination '10LB' cleanly printed in crisp white block lettering underlined with a solid white line on the flat outer face of the hex head. The non-slip, contoured grip handles connecting the two anti-roll hexagonal heads are completely covered in the same blue coating." },
+  { sku: "SKI-GOG-3",       name: "Outdoor Master Ski & Snowboard Goggles",            price: 35.00,  sizes: ["Standard"], description: "Professional winter sports ski and snowboard goggles featuring a sleek, glossy black frame and an adjustable thick black elastic strap. The strap displays the white branding text 'OUTDOOR MASTER'. The primary feature is a large, frameless-style spherical mirrored lens that vividly reflects an outdoor alpine winter scene showing a snow-covered mountain peak, a pine tree forest line, a ski lift line, and an active skier navigating down a snowy slope under a bright blue sky." },
+  { sku: "FIRE-BLNK-4",     name: "Prepared Hero Emergency Fire Blanket Kit",          price: 29.00,  sizes: ["Standard"], description: "Emergency safety fire blanket kit by Prepared Hero. It showcases a vibrant red hanging storage pouch with a reinforced silver metal hanging grommet at the top. The front of the pouch displays a white shield logo containing a flame icon, above bold white lettering that reads 'PREPARED HERO FIRE BLANKET' and instruction text 'PULL TAPES TO RELEASE' with dual-hand directional pull icons. Partially pulled out and positioned behind the pouch is the heavy-duty white woven fiberglass blanket featuring dual thick black woven deployment pull straps." },
+  { sku: "HYDRO-FLSK-5",    name: "Hydro Flask 40 oz Vacuum Insulated Tumbler",        price: 40.00,  sizes: ["Standard"], description: "A tall, modern 40 oz vacuum insulated travel tumbler by Hydro Flask finished in a soft, matte pastel powder-coat pink. It features an integrated ergonomic open-style carrying handle, a matching solid pink press-in straw lid, and a durable, flexible pink reusable silicone straw. The center of the tumbler body displays the signature white Hydro Flask human icon logo, while the brand name 'Hydro Flask' is subtly etched in small gray text near the tapered base, which is designed to fit standard car cup holders." },
+  { sku: "SKI-HLMT-6",      name: "Outdoor Master Matte Black Ski Helmet",             price: 55.00,  sizes: ["Standard"], description: "A sleek, low-profile matte black ski and snowboard protective helmet by Outdoor Master. The side of the hard shell features clean white typography reading 'OUTDOOR MASTER'. The design includes integrated top ventilation slots, metallic silver rivet accents, thick padded black fleece ear covers for warmth, an adjustable woven nylon chin strap with a secure plastic buckle, and a rear-mounted goggle strap retention clip." },
+  { sku: "HOTHANDS-7",      name: "HotHands Warmers Variety Pack Box",                 price: 35.00,  sizes: ["Standard"], description: "A comprehensive commercial retail display box for a variety pack of HotHands brand warming packets. The large orange cardboard dispenser contains upright rows of individual 'Hand Warmers' and 'Toe Warmers' packets. The front and side display panels showcase bold black and white branding typography reading 'HOTHANDS WARMERS', a yellow sunburst graphic layout, and callout lists stating 'Ready to use / Air activated / Safe, natural heat' in both English and Spanish alongside 'Long Lasting Heat' graphics." },
+  { sku: "HOTHANDS-8",      name: "HotHands Hand Warmer Value Pack (10 Pairs)",        price: 15.00,  sizes: ["Standard"], description: "Two individual retail pouches of the HotHands Hand Warmer Value Pack positioned side-by-side. Each plastic pouch features an orange and gold sunburst background layout with a bright green horizontal banner at the top reading 'GREAT VALUE! ¡GRAN VALOR!'. The front displays the black 'HOTHANDS' logo above the title 'HAND WARMER VALUE PACK'. It includes an illustration of a hand holding a glowing warming packet, a circular badge declaring 'Up to 10 Hours of Heat', and a bottom footer noting '10 Pairs of Hand Warmers'." },
+  { sku: "IRON-FLSK-9",     name: "Iron Flask Vacuum Insulated Water Bottle Kit",      price: 28.00,  sizes: ["Standard"], description: "A premium black vacuum-insulated stainless steel water bottle kit by Iron Flask. The matte black bottle features a silver square logo containing the letter 'F' and comes with a matching tall, minimalist matte black retail gift box displaying 'IRON °FLASK' written vertically in clean silver font. The setup includes an attached leak-proof straw lid with a flip-up nozzle, a hanging cardboard tag reading '100% LEAK PROOF', and two alternative black interchangeable lids resting on the surface: a flip-lid and a stainless steel screw-cap lid." },
+  { sku: "HOTHANDS-10",     name: "HotHands Toe Warmers with Adhesive",                price: 18.00,  sizes: ["Standard"], description: "An orange open-top counter display box specifically for HotHands Toe Warmers with Adhesive. The front face of the packaging features a large graphic illustration of a brown hiking boot with a cutaway view highlighting an adhesive warming pad glowing yellow on the toe box area. The box text features bold typography stating 'TOE WARMERS WITH ADHESIVE' alongside a circular badge stating 'Up to 8 Hours of Heat' and feature bullets reading 'Ultra thin', 'Ready to use', 'Air activated', and 'Natural heat'." },
+  { sku: "CARTER-ONES-1",   name: "Simple Joys by Carter's Baby 4-Pack Bodysuits",     price: 22.00,  sizes: ["0-3M","3-6M","6-9M"], description: "A 4-pack assortment of infant baby long-sleeve bodysuits (onesies) by Simple Joys by Carter's. The collection includes a solid light heather gray bodysuit, a teal bodysuit with dark navy blue horizontal stripes, a navy blue bodysuit with bright orange horizontal stripes, and a solid deep heather navy blue bodysuit. All features expandable lap shoulders and secure three-snap bottom closures." },
+  { sku: "CARTER-SWIM-2",   name: "Simple Joys by Carter's Toddler Boy Rash Guard Set",price: 20.00,  sizes: ["2T","3T","4T"], description: "A two-piece toddler boy rash guard swim set by Simple Joys by Carter's. The set includes a solid dark navy blue long-sleeve rash guard swim shirt with stylized text on the left chest reading 'SUN SEA SURF' in white, teal, and blue block lettering. The matching swim trunks feature a vibrant tropical leaf print in shades of teal, aqua, and navy on a white background with a flexible elastic waistband and drawstring." },
+  { sku: "BABY-GOWN-3",     name: "Baby Long-Sleeve Sleep Gowns (3-Pack)",             price: 24.00,  sizes: ["0-6M"], description: "A 3-pack assortment of baby long-sleeve sleep gowns. The collection includes a light mint green and white micro-striped gown with a small chest pocket on the left, a solid light heather gray henley-style gown with a three-button front placket, and a white waffle-knit gown featuring an all-over watercolor pattern of tiny green avocado halves. All gowns feature a cinched elastic bottom opening to keep feet covered." },
+  { sku: "TODDLER-PJ-4",    name: "Toddler T-Rex / Crab Short-Sleeve Pajama Sets",     price: 26.00,  sizes: ["2T","3T","4T"], description: "A two-set collection of toddler mix-and-match short-sleeve pajama sets. The set on the left includes a gray raglan t-shirt with black sleeves featuring a large graphic of a smiling green Tyrannosaurus Rex taking a smartphone selfie, paired with matching black pants covered in a green T-Rex pattern. The set on the right features a mint green t-shirt with text reading 'TIME FOR A MIDNIGHT SNACK' surrounding a graphic of a cartoon crab holding a cheeseburger, paired with black pants covered in a pattern of hamburgers, fries, hot dogs, and yellow dinosaurs." },
+  { sku: "CARTER-THERM-5",  name: "Simple Joys by Carter's Toddler Thermal Shirts",    price: 25.00,  sizes: ["2T","3T","4T"], description: "A 3-pack collection of toddler long-sleeve thermal waffle-knit crewneck shirts by Simple Joys by Carter's. The set includes a solid heather gray shirt with classic triangle stitching accents at the collar, a mustard yellow shirt with dark navy blue horizontal stripes, and a solid dark navy blue heather textured shirt. All shirts feature comfortable ribbed knit cuffs." },
+  { sku: "AVATAR-BRD-6",    name: "Avatar The Last Airbender: Crossroads of Destiny",  price: 35.00,  sizes: ["Standard"], description: "The front cover box art for the cooperative adventure board game titled 'AVATAR THE LAST AIRBENDER: CROSSROADS OF DESTINY' by Funko Games and Prospero Hall. The cream-colored square box features a circular artistic graphic frame showcasing the main characters: Aang in the center bending air, flanked by Katara bending water, Sokka holding his boomerang, and Toph bending earth, against a backdrop of the Fire Nation palace. The lower banner features the red official 'AVATAR' logo and a small white crown emblem." },
+  { sku: "BABY-SLEEP-7",    name: "Baby Long-Sleeve Footed Pajamas (2-Pack)",          price: 22.00,  sizes: ["0-3M","3-6M","6-9M"], description: "A 2-pack of infant baby long-sleeve footed pajamas (sleep and play onesies) featuring full-front zipper closures. The sleeper on the left is dark charcoal gray covered in an all-over colorful cartoon dinosaur, palm tree, and volcano pattern. The sleeper on the right features mint green and white horizontal stripes, a small white chest patch that reads 'HEAR ME ROAR', and features cute little green dinosaur fabric scales/claws stitched over the toes." },
+  { sku: "PLANNER-2024-8",  name: "2024 Weekly Planner by Meera Lee Patel",            price: 18.00,  sizes: ["Standard"], description: "A beautiful spiral-bound notebook titled '2024 WEEKLY PLANNER' by artist Meera Lee Patel. The front cover features a warm cream background adorned with symmetrical watercolor folk art illustrations of vibrant yellow butterflies, purple flowers, and orange-patterned leaves. At the center is a large blue heart filled with stars containing the hand-lettered quote: 'EVERY ANSWER IS INSIDE YOU'. The planner is secured with a clean vertical yellow elastic band." },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -295,42 +315,63 @@ export const PRODUCT_CATALOG: Product[] = RAW_PRODUCT_CATALOG.map((raw) => {
     brand = "Stride Dynamics";
     weight = 1.2;
     description = `Step into comfort with the ${raw.name}. Ergonomic support and durable materials for all-day wear.`;
-  } else if (
-    sku.includes("CF-MKR") || sku.includes("SPK-AIR") || sku.includes("BUDS") ||
-    sku.includes("HEADPHN") || sku.includes("KB-") || sku.includes("MOUSE") ||
-    sku.includes("MONITOR") || sku.includes("PWR-") || sku.includes("CHRG-") ||
-    sku.includes("HUB") || sku.includes("MIC") || sku.includes("WEBCAM") ||
-    sku.includes("HDD") || sku.includes("SSD") || sku.includes("CBL") ||
-    sku.includes("ROUTER") || sku.includes("TABLET") || sku.includes("E-READER") ||
-    sku.includes("SOUND-BAR") || sku.includes("TV-") || sku.includes("FIT-BAND") ||
-    sku.includes("SPK-BT")
-  ) {
-    category = "Electronics";
-    brand = "TechNova";
-    weight = sku.includes("MONITOR") || sku.includes("TV") ? 8.5 : 0.8;
-    returnWindowDays = 15;
-    description = `Experience cutting-edge technology with the ${raw.name}. Reliable and engineered for high performance.`;
-  } else if (
-    sku.includes("BLENDER") || sku.includes("TOASTER") || sku.includes("KETTLE") ||
-    sku.includes("MUG") || sku.includes("SKILLET") || sku.includes("KNIFE") ||
-    sku.includes("PAN") || sku.includes("COOK") || sku.includes("FRYER") ||
-    sku.includes("JUICER") || sku.includes("SCALE") || sku.includes("OVEN") ||
-    sku.includes("GRNDR") || sku.includes("SLOW") || sku.includes("MIXER") ||
-    sku.includes("POT") || sku.includes("WAFFLE") || sku.includes("CONTAINR") ||
-    sku.includes("SPICE") || sku.includes("HUMID") || sku.includes("PURIFY") ||
-    sku.includes("VACUUM") || sku.includes("ROBO") || sku.includes("IRON") ||
-    sku.includes("STEAMER") || sku.includes("FAN") || sku.includes("HEAT") ||
-    sku.includes("DIFFUSE") || sku.includes("LBL") || sku.includes("PRESS-FRN")
-  ) {
-    category = "Home & Kitchen";
-    brand = "Culinary Crate";
-    weight = 3.5;
-    description = `Elevate your home with the ${raw.name}. Built for durability and everyday convenience.`;
+  }
+
+  const customDescription = (raw as any).description || "";
+  if (!customDescription) {
+    if (category !== "Other") {
+      // Category and description already set by Apparel/Footwear check above
+    } else if (
+      sku.includes("CF-MKR") || sku.includes("SPK-AIR") || sku.includes("BUDS") ||
+      sku.includes("HEADPHN") || sku.includes("KB-") || sku.includes("MOUSE") ||
+      sku.includes("MONITOR") || sku.includes("PWR-") || sku.includes("CHRG-") ||
+      sku.includes("HUB") || sku.includes("MIC") || sku.includes("WEBCAM") ||
+      sku.includes("HDD") || sku.includes("SSD") || sku.includes("CBL") ||
+      sku.includes("ROUTER") || sku.includes("TABLET") || sku.includes("E-READER") ||
+      sku.includes("SOUND-BAR") || sku.includes("TV-") || sku.includes("FIT-BAND") ||
+      sku.includes("SPK-BT")
+    ) {
+      category = "Electronics";
+      brand = "TechNova";
+      weight = sku.includes("MONITOR") || sku.includes("TV") ? 8.5 : 0.8;
+      returnWindowDays = 15;
+      description = `Experience cutting-edge technology with the ${raw.name}. Reliable and engineered for high performance.`;
+    } else if (
+      sku.includes("BLENDER") || sku.includes("TOASTER") || sku.includes("KETTLE") ||
+      sku.includes("MUG") || sku.includes("SKILLET") || sku.includes("KNIFE") ||
+      sku.includes("PAN") || sku.includes("COOK") || sku.includes("FRYER") ||
+      sku.includes("JUICER") || sku.includes("SCALE") || sku.includes("OVEN") ||
+      sku.includes("GRNDR") || sku.includes("SLOW") || sku.includes("MIXER") ||
+      sku.includes("POT") || sku.includes("WAFFLE") || sku.includes("CONTAINR") ||
+      sku.includes("SPICE") || sku.includes("HUMID") || sku.includes("PURIFY") ||
+      sku.includes("VACUUM") || sku.includes("ROBO") || sku.includes("IRON") ||
+      sku.includes("STEAMER") || sku.includes("FAN") || sku.includes("HEAT") ||
+      sku.includes("DIFFUSE") || sku.includes("LBL") || sku.includes("PRESS-FRN") ||
+      sku.includes("IRON-FLSK")
+    ) {
+      category = "Home & Kitchen";
+      brand = "Culinary Crate";
+      weight = 3.5;
+      description = `Elevate your home with the ${raw.name}. Built for durability and everyday convenience.`;
+    } else {
+      category = "Recreation & Lifestyle";
+      brand = "Outdoor Ascent";
+      weight = 2.0;
+      description = `Adventure awaits with the ${raw.name}. Durable, lightweight, and built for the outdoors.`;
+    }
   } else {
-    category = "Recreation & Lifestyle";
-    brand = "Outdoor Ascent";
-    weight = 2.0;
-    description = `Adventure awaits with the ${raw.name}. Durable, lightweight, and built for the outdoors.`;
+    description = customDescription;
+    // If we have a custom product, categorize it loosely based on sku/name to avoid everything being Recreation
+    if (sku.includes("HOTHANDS") || sku.includes("DUMB") || sku.includes("SKI") || sku.includes("FIRE") || sku.includes("HYDRO") || sku.includes("IRON-FLSK")) {
+      category = "Recreation & Lifestyle";
+      brand = "Vantage Retail";
+    } else if (sku.includes("CARTER") || sku.includes("BABY") || sku.includes("TODDLER")) {
+      category = "Apparel";
+      brand = "Simple Joys";
+    } else {
+      category = "Other";
+      brand = "Vantage Retail";
+    }
   }
 
   const hash = raw.sku.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
