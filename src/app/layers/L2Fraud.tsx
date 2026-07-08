@@ -51,6 +51,7 @@ export default function L2Fraud() {
     setManualReviewQueue,
     processedFraudQueue, 
     setProcessedFraudQueue,
+    setWalletInfo,
   } = useApp() as any;
 
   const [fraudLoading, setFraudLoading] = React.useState(false);
@@ -140,6 +141,16 @@ export default function L2Fraud() {
           };
           setProcessedFraudQueue((prev: any[]) => {
             return [claimObj, ...prev];
+          });
+          
+          // Trust Score Penalty for autonomous block
+          setWalletInfo((prev: any) => {
+            const newScore = Math.max(0, (prev?.trustScore ?? 100) - 20);
+            return {
+              ...prev,
+              trustScore: newScore,
+              returnPrivileges: newScore < 50 ? "BANNED" : "INSTANT_ALLOWED"
+            };
           });
         }
 
@@ -550,6 +561,15 @@ export default function L2Fraud() {
                            setManualReviewQueue((prev: any[]) => prev.filter((c: any) => c.id !== selectedClaim.id)); 
                            setProcessedFraudQueue((prev: any[]) => {
                              return [{...selectedClaim, status: "REJECTED"}, ...prev];
+                           });
+                           // Trust Score Penalty for admin rejection
+                           setWalletInfo((prev: any) => {
+                             const newScore = Math.max(0, (prev?.trustScore ?? 100) - 20);
+                             return {
+                               ...prev,
+                               trustScore: newScore,
+                               returnPrivileges: newScore < 50 ? "BANNED" : "INSTANT_ALLOWED"
+                             };
                            });
                          }
                          setFraudResult((prev: any) => prev ? ({ ...prev, status: "REJECTED" }) : null);
