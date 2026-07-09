@@ -795,12 +795,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="dashboard-container">
+          <div className="dashboard-container w-full !max-w-full px-4 md:px-8">
 
 
 
             {/* ── MAIN CONTENT ── */}
-            <main className="flex flex-col gap-5 min-w-0 min-h-[85vh]">
+            <main className="flex flex-col gap-1 min-w-0 min-h-[85vh]">
 
               {/* ── PRODUCT CARD HAS BEEN MOVED TO INDIVIDUAL LAYERS ── */}
 
@@ -870,7 +870,7 @@ export default function Home() {
                     fontSize: "13px",
                     fontWeight: 600,
                     color: "#007185",
-                    marginBottom: "12px",
+                    marginBottom: "0px",
                     cursor: "pointer",
                     background: "none",
                     border: "none",

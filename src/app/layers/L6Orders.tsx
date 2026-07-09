@@ -428,63 +428,106 @@ export default function L6Orders() {
                     style={{border:"1px solid #D5D9D9", borderRadius:"8px", overflow:"hidden", background:"#FFF"}}
                   >
                     {/* Card Header */}
-                    <div style={{background:"#F0F2F2", padding:"14px 18px", borderBottom:"1px solid #D5D9D9", display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#565959"}}>
+                    <div style={{background:"#F0F2F2", padding:"14px 18px", borderBottom:"1px solid #D5D9D9", display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#333333"}}>
                       <div style={{display:"flex", gap:"32px"}}>
                         <div className="flex flex-col">
-                          <span style={{textTransform:"uppercase"}}>Order Placed</span>
-                          <span style={{color:"#0F1111"}}>{order.purchaseDate}</span>
+                          <span style={{textTransform:"uppercase", fontWeight: 700}}>Order Placed</span>
+                          <span style={{color:"#0F1111", fontWeight: 500}}>{order.purchaseDate}</span>
                         </div>
                         <div className="flex flex-col">
-                          <span style={{textTransform:"uppercase"}}>Total</span>
-                          <span style={{color:"#0F1111"}}>${order.price?.toFixed(2)}</span>
+                          <span style={{textTransform:"uppercase", fontWeight: 700}}>Total</span>
+                          <span style={{color:"#0F1111", fontWeight: 500}}>${order.price?.toFixed(2)}</span>
                         </div>
                         <div className="flex flex-col hidden sm:flex">
-                          <span style={{textTransform:"uppercase"}}>Ship To</span>
-                          <span className="amz-free-link" style={{color:"#007185"}}>{profileUserId || "Customer"} <ChevronDown className="w-3 h-3 inline" /></span>
+                          <span style={{textTransform:"uppercase", fontWeight: 700}}>Ship To</span>
+                          <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{color:"#007185"}}>{profileUserId || "Customer"} <ChevronDown className="w-3 h-3 inline" /></span>
                         </div>
                       </div>
                       <div className="flex flex-col text-right">
-                        <span style={{textTransform:"uppercase"}}>Order # {order.orderId}</span>
-                        <span className="amz-free-link" style={{color:"#007185"}}>View order details</span>
+                        <span style={{textTransform:"uppercase", fontWeight: 700}}>Order # {order.orderId}</span>
+                        <div className="flex items-center gap-1 justify-end mt-1">
+                           <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{color:"#007185"}}>View order details</span>
+                           <span style={{color: "#D5D9D9", padding: "0 4px"}}>|</span>
+                           <span className="cursor-pointer hover:underline hover:text-[#c45500] flex items-center" style={{color:"#007185"}}>Invoice <ChevronDown className="w-3 h-3 ml-0.5 inline" /></span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Card Body */}
                     <div style={{padding:"18px", display:"flex", gap:"16px", flexWrap:"wrap"}}>
-                      <div style={{flexShrink:0}}>
-                        <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{width:"90px", height:"90px", objectFit:"contain"}} />
-                      </div>
-                      
                       <div className="flex flex-col flex-1 min-w-0" style={{minWidth:"200px"}}>
-                        <div className="amz-free-link" style={{fontSize:"14px", fontWeight:700, color:"#007185", lineHeight:"1.4"}}>
-                          {order.name}
-                        </div>
-                        <div style={{fontSize:"12px", color:"#565959", marginTop:"4px"}}>
-                          Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
-                        </div>
                         
+                        {/* Delivery Status */}
                         {returnStatus === "MANUAL_REVIEW" ? (
-                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#B12704", display:"flex", alignItems:"center", gap:"4px"}}>
-                            ⏳ Under Manual Review
-                          </div>
+                          <>
+                            <div style={{fontSize: "18px", fontWeight: 700, color: "#B12704", marginBottom: "2px"}}>
+                              Return Under Manual Review
+                            </div>
+                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
+                              We are reviewing your request. This may take up to 48 hours.
+                            </div>
+                          </>
                         ) : returnStatus === "APPROVED" ? (
-                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#067D62", display:"flex", alignItems:"center", gap:"4px"}}>
-                            Return Initiated
-                          </div>
+                          <>
+                            <div style={{fontSize: "18px", fontWeight: 700, color: "#067D62", marginBottom: "2px"}}>
+                              Return Initiated
+                            </div>
+                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
+                              Please hand over the item to the delivery agent.
+                            </div>
+                          </>
                         ) : returnStatus === "REJECTED" ? (
-                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#B12704", display:"flex", alignItems:"center", gap:"4px"}}>
-                            ❌ Return Denied
-                          </div>
+                          <>
+                            <div style={{fontSize: "18px", fontWeight: 700, color: "#B12704", marginBottom: "2px"}}>
+                              Return Denied
+                            </div>
+                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
+                              Your return request could not be approved.
+                            </div>
+                          </>
                         ) : isReturned ? (
-                          <div style={{marginTop:"8px", fontSize:"13px", fontWeight:700, color:"#C7511F"}}>
-                            Return in progress
+                          <>
+                            <div style={{fontSize: "18px", fontWeight: 700, color: "#C7511F", marginBottom: "2px"}}>
+                              Return in progress
+                            </div>
+                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
+                              Your refund is being processed.
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{fontSize: "18px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>
+                              Delivered
+                            </div>
+                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
+                              Package was handed to a receptionist
+                            </div>
+                          </>
+                        )}
+                        
+                        <div className="flex items-start gap-4">
+                          <div style={{flexShrink:0}}>
+                            <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{width:"80px", height:"80px", objectFit:"contain"}} />
                           </div>
-                        ) : null}
+                          <div className="flex flex-col">
+                            <div className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize:"14px", color:"#007185", lineHeight:"1.4", fontWeight: 500}}>
+                              {order.name}
+                            </div>
+                            <div style={{fontSize:"12px", color:"#333333", marginTop:"4px", marginBottom: "8px", fontWeight: 500}}>
+                              Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
+                            </div>
+                            <button style={{border: "1px solid #888C8C", borderRadius: "100px", padding: "3px 10px", fontSize: "12px", background: "#FFF", width: "fit-content", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", color: "#0F1111", fontWeight: 500}}>
+                              View your item
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Card Footer (Actions) */}
-                      <div className="flex flex-col gap-2" style={{width:"220px", flexShrink:0}}>
-                        <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Track package</button>
+                      <div className="flex flex-col gap-2" style={{width:"240px", flexShrink:0}}>
+                        <button style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7CA00]">
+                          Track package
+                        </button>
                         
                         {!isReturned && (
                           hasManual(order.sku) ? (
@@ -492,16 +535,16 @@ export default function L6Orders() {
                               <button
                                 onClick={() => handleDIM(order)}
                                 disabled={isExpired}
-                                className="btn btn-secondary"
-                                style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
+                                style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500}}
+                                className="hover:bg-[#F7F8F8]"
                               >
                                 Get product support
                               </button>
                               <button
                                 onClick={() => setReasonOrder(order)}
                                 disabled={isExpired}
-                                className="btn btn-secondary"
-                                style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
+                                style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500}}
+                                className="hover:bg-[#F7F8F8]"
                               >
                                 Return or replace items
                               </button>
@@ -510,16 +553,17 @@ export default function L6Orders() {
                             <button
                               onClick={() => setReasonOrder(order)}
                               disabled={isExpired}
-                              className="btn btn-secondary"
-                              style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%", opacity: isExpired ? 0.5 : 1}}
+                              style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500}}
+                              className="hover:bg-[#F7F8F8]"
                             >
                               Return or replace items
                             </button>
                           )
                         )}
                         
-                        <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Leave seller feedback</button>
-                        <button className="btn btn-secondary" style={{padding:"6px", fontSize:"13px", textAlign:"center", width:"100%"}}>Write a product review</button>
+                        <button style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7F8F8]">Leave seller feedback</button>
+                        <button style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7F8F8]">Leave delivery feedback</button>
+                        <button style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7F8F8]">Write a product review</button>
                       </div>
                     </div>
                   </div>

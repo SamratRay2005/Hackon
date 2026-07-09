@@ -477,6 +477,164 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
     );
   }
 
+  if (checkoutStep === "confirmed") {
+    const displayOrderId = `407-${Math.floor(Math.random() * 10000000)}-${Math.floor(Math.random() * 10000000)}`;
+    const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const totalDiscount = voucherDiscount + cashbackDiscount;
+    
+    return (
+      <div className="font-sans w-full" style={{ padding: "0 10px" }}>
+        
+        <div style={{ display: "flex", flexWrap: "nowrap", gap: "24px", width: "100%" }}>
+          {/* LEFT COLUMN */}
+          <div style={{ flex: "1 1 auto", display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 }}>
+            
+            {/* Box 1: Thank You */}
+            <div style={{border: "1px solid #78c067", borderRadius: "8px", padding: "16px", background: "#FFF"}}>
+              <div className="flex items-center gap-3 mb-2">
+                <div style={{width: "28px", height: "28px", borderRadius: "50%", background: "#067D62", display: "flex", alignItems: "center", justifyContent: "center"}}>
+                   <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <h2 style={{fontSize: "20px", color: "#067D62", fontWeight: 700, margin: 0}}>Thank you, your order has been placed.</h2>
+              </div>
+              <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px", marginLeft: "40px"}}>
+                We've sent you an email confirmation. <span style={{color: "#067D62"}}>New</span>
+              </div>
+              
+              <div style={{marginLeft: "40px"}}>
+                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Order Number: {displayOrderId}</div>
+                <div className="flex gap-20 mb-4">
+                   <div>
+                     <div style={{fontSize: "14px", color: "#565959", marginBottom: "2px"}}>Order Date</div>
+                     <div style={{fontSize: "14px", color: "#0F1111"}}>{orderDate}</div>
+                   </div>
+                   <div>
+                     <div style={{fontSize: "14px", color: "#565959", marginBottom: "2px"}}>Total</div>
+                     <div style={{fontSize: "14px", color: "#0F1111"}}>${orderTotal.toFixed(2)}</div>
+                   </div>
+                </div>
+                <div style={{fontSize: "14px", color: "#0F1111"}}>
+                  You can check your order status in <span onClick={() => { handleDone(); window.location.hash = "#orders"; }} className="cursor-pointer hover:underline" style={{color: "#007185"}}>Your Orders</span>.
+                </div>
+              </div>
+            </div>
+
+            {/* Box 2: Item and Delivery */}
+            <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF"}}>
+               <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "16px"}}>
+                 Your item has been placed. We'll send a confirmation when it ships.
+               </div>
+               
+               <div className="flex flex-col sm:flex-row gap-8 mb-6">
+                 {/* Product Info */}
+                 <div className="flex-1 flex gap-4">
+                    {shoppingBag.length > 0 && (
+                      <>
+                        <img src={getSKUReferenceImage(shoppingBag[0].sku)} alt="" style={{width: "70px", height: "70px", objectFit: "contain"}} />
+                        <div>
+                          <div style={{fontSize: "14px", color: "#0F1111"}}>{shoppingBag[0].name}</div>
+                          <div style={{fontSize: "14px", color: "#B12704", fontWeight: 700, marginTop: "2px"}}>${shoppingBag[0].price.toFixed(2)}</div>
+                          <div style={{fontSize: "12px", color: "#565959", marginTop: "2px"}}>Sold by: Amazon Pre-loved Marketplace</div>
+                        </div>
+                      </>
+                    )}
+                 </div>
+                 
+                 {/* Delivery Info */}
+                 <div className="w-full sm:w-[250px]">
+                   <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>Delivery to:</div>
+                   <div style={{fontSize: "14px", color: "#0F1111", lineHeight: "1.4"}}>
+                     {profileUserId || "Shravani Wange"}<br/>
+                     123 Demo Street, Suite 400<br/>
+                     Seattle, WA 98109<br/>
+                     United States
+                   </div>
+                   <div style={{fontSize: "14px", color: "#007185", marginTop: "4px", cursor: "pointer"}} className="hover:underline">Change delivery address</div>
+                 </div>
+               </div>
+
+               {/* Buttons */}
+               <div className="flex gap-4">
+                 <button onClick={() => { handleDone(); window.location.hash = "#orders"; }} style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "8px", padding: "6px 0", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", width: "180px", textAlign: "center"}} className="hover:bg-[#F7CA00]">
+                   View or manage order
+                 </button>
+                 <button onClick={() => { handleDone(); window.location.hash = "#"; }} style={{background: "#FFF", color: "#0F1111", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "6px 0", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", width: "180px", textAlign: "center"}} className="hover:bg-[#F7F8F8]">
+                   Continue shopping
+                 </button>
+               </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div style={{ width: "320px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* Prime Box */}
+            <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px 16px", background: "#FFF"}}>
+              <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Want faster delivery?</div>
+              <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>Get One-Day Delivery on millions of items with</div>
+              <img src="/prime-logo-2.png" alt="Prime" style={{height: "20px", marginBottom: "12px", mixBlendMode: "multiply"}} />
+              <button onClick={(e) => e.preventDefault()} style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "8px", padding: "6px", fontSize: "14px", width: "100%", textAlign: "center", boxShadow: "0 1px 2px rgba(15,17,17,0.15)"}} className="hover:bg-[#F7CA00]">
+                Join Prime
+              </button>
+            </div>
+            
+            {/* Order Summary */}
+            <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF"}}>
+              <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Order Summary</div>
+              
+              <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
+                <span>Items:</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
+                <span>Delivery:</span>
+                <span>FREE</span>
+              </div>
+              <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
+                <span>Total:</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
+                <span>Promotion Applied:</span>
+                <span>-${totalDiscount.toFixed(2)}</span>
+              </div>
+              
+              <div style={{borderTop: "1px solid #D5D9D9", margin: "12px 0 10px 0"}} />
+              
+              <div className="flex justify-between items-center" style={{marginBottom: "4px"}}>
+                <span style={{fontSize: "16px", fontWeight: 700, color: "#0F1111"}}>Order Total:</span>
+                <span style={{fontSize: "18px", fontWeight: 700, color: "#B12704"}}>${orderTotal.toFixed(2)}</span>
+              </div>
+              <div style={{fontSize: "12px", color: "#565959"}}>Inclusive of all taxes</div>
+            </div>
+
+            {/* Amazon Pay Box */}
+            <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF", display: "flex", gap: "12px", alignItems: "flex-start"}}>
+              <img src="/amazon-pay-logo-2.png" alt="Amazon Pay" style={{width: "60px", objectFit: "contain", mixBlendMode: "multiply"}} />
+              <div style={{fontSize: "12px", color: "#0F1111", lineHeight: "1.4"}}>
+                <span style={{fontWeight: 700}}>You saved ${totalDiscount.toFixed(2)}</span> on this order with Amazon Pay balance.<br/>
+                <span className="cursor-pointer hover:underline hover:text-[#007185]" style={{color: "#007185"}}>View Amazon Pay balance</span>
+              </div>
+            </div>
+
+            {/* Need help? */}
+            <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF"}}>
+              <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Need help?</div>
+              <div className="flex flex-col gap-2">
+                <span className="cursor-pointer hover:underline hover:text-[#007185]" style={{fontSize: "14px", color: "#007185"}}>How do I check my order status?</span>
+                <span className="cursor-pointer hover:underline hover:text-[#007185]" style={{fontSize: "14px", color: "#007185"}}>Can I change or cancel my order?</span>
+                <span className="cursor-pointer hover:underline hover:text-[#007185]" style={{fontSize: "14px", color: "#007185"}}>How do I return an item?</span>
+                <span className="cursor-pointer hover:underline hover:text-[#007185]" style={{fontSize: "14px", color: "#007185"}}>View more help topics</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card flex flex-col gap-5">
       <div className="section-title-bar">
@@ -725,26 +883,6 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
         </div>
       )}
 
-      {/* ── CONFIRMED STEP ── */}
-      {/* ── CONFIRMED STEP ── */}
-      {checkoutStep === "confirmed" && (
-        <div className="flex flex-col items-center gap-5 py-16 w-full max-w-xl mx-auto bg-white border border-[#D5D9D9] rounded mt-8">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center border-[4px] border-[#007600]">
-            <CheckCircle className="w-12 h-12 text-[#007600]" />
-          </div>
-          <div className="text-center px-4">
-            <h4 className="font-extrabold text-[#0F1111] text-[28px]">Order placed, thank you!</h4>
-            <p className="text-[15px] text-[#565959] mt-2">Confirmation will be sent to your email.</p>
-          </div>
-          <button
-            style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "100px", padding: "10px 40px", fontSize: "14px", fontWeight: 700, marginTop: "16px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)"}}
-            onClick={handleDone}
-            className="hover:bg-[#F7CA00]"
-          >
-            Continue Shopping
-          </button>
-        </div>
-      )}
     </div>
   );
 }
