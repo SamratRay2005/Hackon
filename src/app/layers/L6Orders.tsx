@@ -19,6 +19,9 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronLeft,
+  Truck,
+  CreditCard,
+  ChevronRight
 } from "lucide-react";
 import { useApp, getSKUReferenceImage } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -151,68 +154,70 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
   };
 
   return (
-    <div className="flex flex-col w-full max-w-2xl mx-auto mt-4">
-      <div className="flex flex-col mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#0F1111] text-white flex items-center justify-center font-bold text-lg leading-none">3</div>
-          <h2 className="text-xl font-bold text-[#0F1111]">Choose a Reason</h2>
-        </div>
-        <p className="text-[#0F1111] ml-11 mt-1 text-[15px]">User selects the reason for return from a list.</p>
-      </div>
+    <div className="font-sans w-full bg-white min-h-screen">
+      <h1 style={{fontSize: "28px", fontWeight: 700, color: "#0F1111", marginBottom: "20px", marginTop: "0"}}>Choose items to return</h1>
 
-      <div className="border border-slate-200 rounded-[12px] bg-white p-6 shadow-sm flex flex-col gap-4 ml-11">
-        <button onClick={onBack} className="text-[14px] font-bold text-[#0F1111] flex items-center hover:underline self-start mb-2">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back
-        </button>
+      <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "24px", background: "#FFF", display: "flex", gap: "24px", marginBottom: "24px", maxWidth: "800px"}}>
+        <img src={getSKUReferenceImage(order?.sku)} alt={order?.name} style={{width: "100px", height: "100px", objectFit: "contain", flexShrink: 0}} />
         
-        <h3 className="text-lg font-bold text-[#0F1111] mb-2">Why are you returning this?</h3>
-        
-        <div className="flex flex-col gap-4">
-          {COMMON_REASONS.map((reason) => (
-            <label
-              key={reason.id}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <div className={`w-[20px] h-[20px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${
-                selectedReasonId === reason.id ? "border-[#007185]" : "border-slate-400 group-hover:border-[#007185]"
-              }`}>
-                {selectedReasonId === reason.id && <div className="w-[10px] h-[10px] bg-[#007185] rounded-full" />}
-              </div>
-              <span className="text-[15px] text-[#0F1111] font-[400]">
-                {reason.label}
-              </span>
-              <input
-                type="radio"
-                name="return_reason"
-                value={reason.id}
-                checked={selectedReasonId === reason.id}
-                onChange={() => {
-                  setSelectedReasonId(reason.id);
-                  setError("");
-                }}
-                className="hidden"
-              />
-            </label>
-          ))}
-        </div>
-
-        {selectedReasonId === "other" && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
-            <textarea
-              value={reasonText}
-              onChange={(e) => setReasonText(e.target.value)}
-              placeholder="Please describe why you are returning this..."
-              className="w-full border border-slate-300 rounded-[8px] p-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007185] focus:border-transparent min-h-[80px] resize-none"
-            />
+        <div style={{ flex: 1 }}>
+          <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "6px"}}>{order?.name}</div>
+          <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "24px"}}>Qty: 1</div>
+          
+          <h3 style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Why are you returning this?</h3>
+          
+          <div className="flex flex-col gap-4">
+            {COMMON_REASONS.map((reason) => (
+              <label
+                key={reason.id}
+                className="flex items-center gap-3 cursor-pointer group"
+              >
+                <div className={`w-[20px] h-[20px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${
+                  selectedReasonId === reason.id ? "border-[#007185]" : "border-slate-400 group-hover:border-[#007185]"
+                }`}>
+                  {selectedReasonId === reason.id && <div className="w-[10px] h-[10px] bg-[#007185] rounded-full" />}
+                </div>
+                <span className="text-[15px] text-[#0F1111] font-[400]">
+                  {reason.label}
+                </span>
+                <input
+                  type="radio"
+                  name="return_reason"
+                  value={reason.id}
+                  checked={selectedReasonId === reason.id}
+                  onChange={() => {
+                    setSelectedReasonId(reason.id);
+                    setError("");
+                  }}
+                  className="hidden"
+                />
+              </label>
+            ))}
           </div>
-        )}
 
-        {error && <div className="text-xs text-[#C7511F] font-semibold bg-rose-50 p-2 rounded-lg mt-2">{error}</div>}
-        
+          {selectedReasonId === "other" && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-4">
+              <textarea
+                value={reasonText}
+                onChange={(e) => setReasonText(e.target.value)}
+                placeholder="Please describe why you are returning this..."
+                className="w-full border border-slate-300 rounded-[8px] p-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007185] focus:border-transparent min-h-[80px] resize-none"
+              />
+            </div>
+          )}
+
+          {error && <div className="text-xs text-[#C7511F] font-semibold bg-rose-50 p-2 rounded-lg mt-4">{error}</div>}
+        </div>
+      </div>
+      
+      <div style={{maxWidth: "800px", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+        <button onClick={onBack} className="text-[#007185] text-[14px] hover:underline hover:text-[#C7511F]">
+          Cancel return
+        </button>
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] w-full py-[10px] rounded-[8px] text-[14px] font-[400] shadow-sm transition-colors mt-4"
+          className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] px-12 py-[8px] rounded-[8px] text-[14px] font-[400] shadow-sm transition-colors"
         >
           {loading ? <span className="spinner border-slate-900 border-t-transparent w-4 h-4 mx-auto block" /> : "Continue"}
         </button>
@@ -260,6 +265,162 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Return Success View ──────────────────────────────────────────
+function ReturnSuccessView({ order, onContinueShopping }: { order: any, onContinueShopping: () => void }) {
+  const returnId = `408-${Math.floor(Math.random()*10000000)}-${Math.floor(Math.random()*10000000)}`;
+  const orderDate = order?.purchaseDate || new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  
+  return (
+    <div className="font-sans w-full bg-white min-h-screen">
+      <h1 style={{fontSize: "28px", fontWeight: 700, color: "#0F1111", marginBottom: "8px", marginTop: "0"}}>Return initiated</h1>
+      <p style={{fontSize: "14px", color: "#0F1111", marginBottom: "16px"}}>
+        Your return request has been successfully initiated. Please check your email for return confirmation and next steps.
+      </p>
+
+      {/* Progress Bar */}
+      <div className="relative mb-6 max-w-3xl" style={{ margin: "0 20px 20px 20px" }}>
+        <div className="absolute top-[14px] left-[20px] right-[20px] h-[3px] bg-[#D5D9D9] z-0"></div>
+        <div className="absolute top-[14px] left-[20px] h-[3px] bg-[#067D62] z-0" style={{ width: "33%" }}></div>
+        
+        <div className="relative z-10 flex justify-between">
+          <div className="flex flex-col items-center">
+            <div className="w-[30px] h-[30px] rounded-full bg-[#067D62] text-white flex items-center justify-center mb-2">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>1<br/>Initiated</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-[30px] h-[30px] rounded-full bg-[#067D62] text-white flex items-center justify-center font-bold mb-2">
+              2
+            </div>
+            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>Pick up / Drop off</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-[30px] h-[30px] rounded-full bg-[#EAEDED] text-[#565959] flex items-center justify-center font-bold mb-2 border border-[#D5D9D9]">
+              3
+            </div>
+            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>In transit</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-[30px] h-[30px] rounded-full bg-[#EAEDED] text-[#565959] flex items-center justify-center font-bold mb-2 border border-[#D5D9D9]">
+              4
+            </div>
+            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>Refunded</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "nowrap", gap: "24px", width: "100%", alignItems: "flex-start" }}>
+        {/* Left Column */}
+        <div style={{ flex: "1 1 auto", display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 }}>
+          
+          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF", display: "flex", gap: "24px"}}>
+            <img src={getSKUReferenceImage(order?.sku)} alt={order?.name} style={{width: "80px", height: "80px", objectFit: "contain"}} />
+            <div>
+              <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "6px"}}>{order?.name}</div>
+              <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px"}}>Qty: 1</div>
+              
+              <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>Reason for return</div>
+              <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px"}}>Product not working as expected</div>
+              
+              <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>Refund method</div>
+              <div style={{fontSize: "14px", color: "#0F1111"}}>Original Payment Method</div>
+            </div>
+          </div>
+
+          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF"}}>
+            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>What happens next?</div>
+            
+            <div style={{display: "flex", justifyContent: "space-between", gap: "16px", marginBottom: "8px"}}>
+              <div style={{flex: 1}}>
+                <Package className="w-8 h-8 text-[#0F1111] mb-2" strokeWidth={1.5} />
+                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Pick up / Drop off</div>
+                <div style={{fontSize: "13px", color: "#0F1111"}}>We will pick up the item or you can drop it off at the nearest Amazon Drop-off location.</div>
+              </div>
+              
+              <div style={{display: "flex", alignItems: "center", color: "#D5D9D9", paddingBottom: "12px"}}><ChevronRight className="w-5 h-5" /></div>
+              
+              <div style={{flex: 1}}>
+                <Truck className="w-8 h-8 text-[#0F1111] mb-2" strokeWidth={1.5} />
+                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Item in transit</div>
+                <div style={{fontSize: "13px", color: "#0F1111"}}>Once we receive the item, it will go through a quick check.</div>
+              </div>
+              
+              <div style={{display: "flex", alignItems: "center", color: "#D5D9D9", paddingBottom: "12px"}}><ChevronRight className="w-5 h-5" /></div>
+              
+              <div style={{flex: 1}}>
+                <CreditCard className="w-8 h-8 text-[#0F1111] mb-2" strokeWidth={1.5} />
+                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Refund</div>
+                <div style={{fontSize: "13px", color: "#0F1111"}}>Your refund will be initiated within 2-3 business days.</div>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{marginTop: "0px", display: "flex", justifyContent: "center"}}>
+            <button onClick={onContinueShopping} style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "8px", padding: "8px 0", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", width: "240px", textAlign: "center"}} className="hover:bg-[#F7CA00]">
+              Continue Shopping
+            </button>
+          </div>
+          
+        </div>
+
+        {/* Right Column */}
+        <div style={{ width: "320px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
+          
+          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF"}}>
+            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "16px"}}>Return Details</div>
+            
+            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "8px"}}>
+              <span>Return ID</span>
+              <span>{returnId}</span>
+            </div>
+            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "8px"}}>
+              <span>Order ID</span>
+              <span>{order?.orderId}</span>
+            </div>
+            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "16px"}}>
+              <span>Order Date</span>
+              <span>{orderDate}</span>
+            </div>
+            
+            <div className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>View return policy</div>
+          </div>
+
+          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF"}}>
+            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Refund summary</div>
+            
+            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "8px"}}>
+              <span>Item subtotal</span>
+              <span>${order?.price?.toFixed(2) || "0.00"}</span>
+            </div>
+            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px"}}>
+              <span>Delivery charges</span>
+              <span>$4.00</span>
+            </div>
+            
+            <div style={{borderTop: "1px solid #D5D9D9", margin: "0 -12px 12px -12px"}} />
+            
+            <div className="flex justify-between items-center">
+              <span style={{fontSize: "16px", fontWeight: 700, color: "#0F1111"}}>Refund amount</span>
+              <span style={{fontSize: "18px", fontWeight: 700, color: "#067D62"}}>${((order?.price || 0) + 4.00).toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF"}}>
+            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Need help?</div>
+            <div className="flex flex-col gap-3">
+              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>View return policy</span>
+              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>Contact Customer Service</span>
+              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>Frequently asked questions</span>
+            </div>
+          </div>
+          
+        </div>
+      </div>
     </div>
   );
 }
@@ -380,9 +541,11 @@ export default function L6Orders() {
 
   return (
     <div style={{display:"flex", flexDirection:"column", gap:"20px"}}>
-      <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
-        <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Your Orders</h2>
-      </div>
+      {!showReturnSuccess && (
+        <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+          <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Your Orders</h2>
+        </div>
+      )}
 
       {reasonOrder ? (
         <ReturnReasonView
@@ -397,6 +560,11 @@ export default function L6Orders() {
               routeToL2Fraud(reasonOrder, claimType as any);
             }
           }}
+        />
+      ) : showReturnSuccess ? (
+        <ReturnSuccessView 
+          order={inspectQueue && inspectQueue.length > 0 ? orders.find((o:any) => o.orderId === inspectQueue[inspectQueue.length - 1].orderId) || orders[0] : orders[0]} 
+          onContinueShopping={() => { setShowReturnSuccess(false); setActiveTab("dashboard"); }} 
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -585,27 +753,6 @@ export default function L6Orders() {
           }}
           onClose={() => setGetHelpOrder(null)}
         />
-      )}
-
-      {/* Return Success Modal */}
-      {showReturnSuccess && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
-              <CheckCircle className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-extrabold text-slate-800">Return Initiated!</h3>
-            <p className="text-sm text-slate-600">
-              Your return has been approved and is now processing.
-            </p>
-            <button
-              className="btn btn-primary w-full py-3 mt-2 text-sm font-bold"
-              onClick={closeReturnSuccess}
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );

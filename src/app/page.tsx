@@ -787,8 +787,30 @@ export default function Home() {
                 </button>
               ))
             }
-            {/* Mode badge */}
-            <div style={{display:'flex',alignItems:'center',marginLeft:'auto',marginRight:'8px'}}>
+            {/* Mode badge and Back Button */}
+            <div style={{display:'flex',alignItems:'center',marginLeft:'auto',marginRight:'8px', gap: '16px'}}>
+              {activeTab !== "dashboard" && (
+                <button
+                  onClick={() => setActiveTab("dashboard")}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#fff",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                  className="hover:text-[#FF9900] group"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "translateX(0)", transition: "transform 0.15s" }} className="group-hover:-translate-x-1">
+                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                  </svg>
+                  Back to Home
+                </button>
+              )}
               <span style={{background: globalMode==='admin'?'#FF9900':'#007600',color:'#0F1111',fontSize:'0.65rem',fontWeight:900,padding:'2px 8px',borderRadius:'3px',textTransform:'uppercase',letterSpacing:'0.05em'}}>
                 {globalMode === 'admin' ? '🔧 Admin Mode' : '🛍️ Customer Mode'}
               </span>
@@ -859,31 +881,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* ── BACK TO HOME ── */}
-              {activeTab !== "dashboard" && (
-                <button
-                  onClick={() => setActiveTab("dashboard")}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "#007185",
-                    marginBottom: "0px",
-                    cursor: "pointer",
-                    background: "none",
-                    border: "none",
-                    padding: "4px 0",
-                  }}
-                  className="hover:text-[#c45500] group"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "translateX(0)", transition: "transform 0.15s" }} className="group-hover:-translate-x-1">
-                    <path d="M19 12H5M12 5l-7 7 7 7"/>
-                  </svg>
-                  Back to Home
-                </button>
-              )}
+              {/* ── BACK TO HOME (MOVED TO SUBNAV) ── */}
 
               {/* ── LAYER PANELS ── */}
               {activeTab === "dashboard" && <L0Dashboard />}
