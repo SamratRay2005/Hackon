@@ -443,15 +443,15 @@ export function WebcamCapture({ onCapture, overlayType, compact }: WebcamCapture
       ) : (
         <div className="flex flex-col gap-2 w-full">
           {error && <p className="text-[10px] text-rose-500 font-medium bg-rose-50 border border-rose-100 px-2.5 py-1.5 rounded-lg">{error}</p>}
-          <div className={`flex gap-2 w-full ${compact ? "" : "flex-col sm:flex-row"}`}>
-            <button type="button" className="flex-1 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-2 rounded-full shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={startCamera}>
+          <div className={`flex gap-2 w-full ${compact ? "" : "flex-col sm:flex-row"}`} style={{ width: "100%" }}>
+            <button type="button" style={{ flex: 1, padding: "8px", fontSize: "12px" }} className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold rounded-full shadow-sm flex items-center justify-center gap-1.5 transition-all" onClick={startCamera}>
               <Camera className="w-3.5 h-3.5" /> Camera
             </button>
-            <label className="flex-1 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-2 rounded-full shadow-sm text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+            <label style={{ flex: 1, padding: "8px", fontSize: "12px" }} className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold rounded-full shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all">
               <Upload className="w-3.5 h-3.5" /> Upload
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </label>
-            <button type="button" className="flex-1 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-2 rounded-full shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={loadDemo}>
+            <button type="button" style={{ flex: 1, padding: "8px", fontSize: "12px" }} className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold rounded-full shadow-sm flex items-center justify-center gap-1.5 transition-all" onClick={loadDemo}>
               <Zap className="w-3.5 h-3.5" /> Demo
             </button>
           </div>
@@ -669,6 +669,8 @@ export interface AppContextType {
   // Global return success modal state
   showReturnSuccess: boolean;
   setShowReturnSuccess: (v: boolean) => void;
+  reasonOrder: any;
+  setReasonOrder: (v: any) => void;
 
   // Dark Store Resale (L4 → Marketplace pipeline)
   resaleListings: Array<{

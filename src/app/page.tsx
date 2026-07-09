@@ -103,6 +103,7 @@ export default function Home() {
   const [gradingQueueId, setGradingQueueId] = useState("");
   const [ledgerRecords, setLedgerRecords] = useState<Array<any>>([]);
   const [showReturnSuccess, setShowReturnSuccess] = useState(false);
+  const [reasonOrder, setReasonOrder] = useState<any>(null);
 
   // L5 Logistics
   const [logisticsSku, setLogisticsSku] = useState("DENIM-JKT-001");
@@ -460,6 +461,7 @@ export default function Home() {
     showCheckoutModal, setShowCheckoutModal,
     checkoutStep, setCheckoutStep,
     showReturnSuccess, setShowReturnSuccess,
+    reasonOrder, setReasonOrder,
     cart, setCart,
     showBracketingModal, setShowBracketingModal,
     searchQuery, setSearchQuery,
@@ -728,7 +730,7 @@ export default function Home() {
 
               {/* Returns & Orders */}
               <button 
-                onClick={() => setActiveTab("orders")}
+                onClick={() => { setActiveTab("orders"); setShowReturnSuccess(false); setReasonOrder(null); }}
                 className="navbar-link hidden sm:flex flex-col" 
                 style={{lineHeight:'1.1',padding:'4px 8px'}}
               >
@@ -775,7 +777,7 @@ export default function Home() {
             {navItems
               .filter(item => globalMode === 'user'
                 ? false
-                : ['dashboard', 'fraud-mitigation', 'grading'].includes(item.id)
+                : ['fraud-mitigation', 'grading'].includes(item.id)
               )
               .map(item => (
                 <button
@@ -789,9 +791,9 @@ export default function Home() {
             }
             {/* Mode badge and Back Button */}
             <div style={{display:'flex',alignItems:'center',marginLeft:'auto',marginRight:'8px', gap: '16px'}}>
-              {activeTab !== "dashboard" && (
+              {globalMode === 'user' && activeTab !== "dashboard" && (
                 <button
-                  onClick={() => setActiveTab("dashboard")}
+                  onClick={() => { setActiveTab("dashboard"); setShowReturnSuccess(false); setReasonOrder(null); }}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",

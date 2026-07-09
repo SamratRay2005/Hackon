@@ -21,7 +21,10 @@ import {
   ChevronLeft,
   Truck,
   CreditCard,
-  ChevronRight
+  ChevronRight,
+  FileText,
+  ShieldCheck,
+  Lock
 } from "lucide-react";
 import { useApp, getSKUReferenceImage } from "./AppContext";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
@@ -42,49 +45,88 @@ function GetHelpModal({ orderName, onConfirmDIM, onProceedToReason, onClose }: G
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden max-w-3xl w-full animate-in fade-in zoom-in-95 duration-200 relative"
+        className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-[440px] w-full animate-in fade-in zoom-in-95 duration-200 relative flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#F0F2F2] border-b border-[#D5D9D9] px-6 py-4 flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-[#0F1111] flex items-center gap-4">
-            <img src="/nova_icon.png" alt="Nova" className="w-16 h-16 object-contain" />
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors z-20"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* TOP SECTION */}
+        <div className="pt-10 px-8 pb-8 flex flex-col items-center text-center">
+          {/* Top Graphic */}
+          <div className="flex justify-center items-center gap-4 mb-6 mt-2">
+            <div className="text-[40px]">📦</div>
+            <img src="/nova_icon.png" alt="Nova" className="w-20 h-20 object-contain drop-shadow-md z-10" />
+            <div className="w-14 h-14 bg-[#709B82] rounded-full flex items-center justify-center text-white shadow-inner">
+              <Wrench className="w-7 h-7" />
+            </div>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-[26px] font-bold text-[#0F1111]">
             Want to try fixing it first?
           </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-slate-800 transition-colors p-2 -mr-2"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
 
-        <div className="p-8 flex flex-col gap-6 text-left">
-          <div>
-            <p className="text-base text-slate-600 font-medium">
-              Quick AI troubleshooting
-            </p>
+        {/* FULL BLEED STATS ROW */}
+        <div className="flex justify-between items-center bg-white border-y border-slate-200 py-4 px-4 w-full">
+          <div className="flex flex-col items-center gap-1.5 flex-1">
+            <div className="w-9 h-9 bg-[#E8F3EA] text-[#067D62] rounded-full flex items-center justify-center">
+              <FileText className="w-4 h-4" />
+            </div>
+            <div className="text-center leading-tight">
+              <div className="text-[11px] font-bold text-[#0F1111]">Step-by-step</div>
+              <div className="text-[10px] text-slate-500">instructions</div>
+            </div>
           </div>
 
-          <div>
-            <p className="text-[15px] text-slate-700 leading-relaxed">
-              Our AI repair assistant has the official manual for your{" "}
-              <strong>{orderName}</strong> and can walk you through a fix step-by-step.
-            </p>
+          <div className="w-px h-10 bg-slate-200 shrink-0 mx-1"></div>
+
+          <div className="flex flex-col items-center gap-1.5 flex-1">
+            <div className="w-9 h-9 bg-[#EBF0FA] text-[#007185] rounded-full flex items-center justify-center">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div className="text-center leading-tight">
+              <div className="text-[11px] font-bold text-[#0F1111]">Saves time</div>
+              <div className="text-[10px] text-slate-500">and effort</div>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={onConfirmDIM}
-              className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
-            >
-              Yes, get AI repair help!
-            </button>
-            <button
-              onClick={onProceedToReason}
-              className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
-            >
-              No, proceed to return
-            </button>
+          <div className="w-px h-10 bg-slate-200 shrink-0 mx-1"></div>
+
+          <div className="flex flex-col items-center gap-1.5 flex-1">
+            <div className="w-9 h-9 bg-[#FFF3E5] text-[#C45500] rounded-full flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="text-center leading-tight">
+              <div className="text-[11px] font-bold text-[#0F1111]">90% issues</div>
+              <div className="text-[10px] text-slate-500">resolved w/o return</div>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM SECTION */}
+        <div className="pb-10 pt-20 flex flex-col items-center gap-3 text-center">
+          <button
+            onClick={onConfirmDIM}
+            className="bg-[#FFD814] hover:bg-[#F7CA00] text-[#0F1111] w-[340px] h-[40px] rounded-lg text-[14px] font-bold shadow-sm transition-all flex items-center justify-center gap-2"
+          >
+            Try AI Troubleshooting <ChevronRight className="w-4 h-4 opacity-70" />
+          </button>
+          <button
+            onClick={onProceedToReason}
+            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 w-[340px] h-[40px] rounded-lg text-[14px] font-bold shadow-sm transition-all flex items-center justify-center"
+          >
+            No, continue with return
+          </button>
+
+          {/* Footer */}
+          <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-[11px]">
+            <Lock className="w-3 h-3" /> Your information and photos are secure and encrypted.
           </div>
         </div>
       </div>
@@ -119,7 +161,7 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
 
   const handleSubmit = async () => {
     const choice = COMMON_REASONS.find(r => r.id === selectedReasonId);
-    
+
     if (choice?.route !== "api") {
       if (choice?.id === "defective") {
         const manual = db.getManualBySku(order.sku);
@@ -154,30 +196,38 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
   };
 
   return (
-    <div className="font-sans w-full bg-white min-h-screen">
-      <h1 style={{fontSize: "28px", fontWeight: 700, color: "#0F1111", marginBottom: "20px", marginTop: "0"}}>Choose items to return</h1>
+    <div className="font-sans w-full bg-white" style={{ minHeight: "calc(100vh - 88px)", padding: "24px 32px", display: "flex", flexDirection: "column" }}>
+      <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#0F1111", marginBottom: "4px", marginTop: "0" }}>Why are you returning this?</h1>
+      <p style={{ fontSize: "13px", fontWeight: 600, color: "#565959", marginBottom: "16px" }}>Your feedback helps us improve our products and services.</p>
 
-      <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "24px", background: "#FFF", display: "flex", gap: "24px", marginBottom: "24px", maxWidth: "800px"}}>
-        <img src={getSKUReferenceImage(order?.sku)} alt={order?.name} style={{width: "100px", height: "100px", objectFit: "contain", flexShrink: 0}} />
-        
-        <div style={{ flex: 1 }}>
-          <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "6px"}}>{order?.name}</div>
-          <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "24px"}}>Qty: 1</div>
-          
-          <h3 style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Why are you returning this?</h3>
-          
-          <div className="flex flex-col gap-4">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", width: "100%", marginBottom: "20px" }}>
+
+        {/* Left Box: Product Details */}
+        <div style={{ flex: "0 0 340px", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF", display: "flex", gap: "12px", alignSelf: "flex-start" }}>
+          <img src={getSKUReferenceImage(order?.sku)} alt={order?.name} style={{ width: "70px", height: "70px", objectFit: "contain", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "6px" }}>{order?.name}</div>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "#565959", marginBottom: "4px" }}>Qty: 1</div>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "#565959", marginBottom: "6px" }}>Sold by: Appario Retail Private Ltd</div>
+            <div style={{ fontSize: "14px", color: "#B12704", fontWeight: 700 }}>${order?.price?.toFixed(2) || "0.00"}</div>
+          </div>
+        </div>
+
+        {/* Right Box: Return Reason Selection */}
+        <div style={{ flex: "1 1 540px", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "20px", background: "#FFF" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0F1111", marginBottom: "12px" }}>Please select a reason for return</h3>
+
+          <div className="flex flex-col gap-2" style={{ marginBottom: "24px" }}>
             {COMMON_REASONS.map((reason) => (
               <label
                 key={reason.id}
                 className="flex items-center gap-3 cursor-pointer group"
               >
-                <div className={`w-[20px] h-[20px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${
-                  selectedReasonId === reason.id ? "border-[#007185]" : "border-slate-400 group-hover:border-[#007185]"
-                }`}>
+                <div className={`w-[20px] h-[20px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${selectedReasonId === reason.id ? "border-[#007185]" : "border-[#888c8c] group-hover:border-[#007185]"
+                  }`}>
                   {selectedReasonId === reason.id && <div className="w-[10px] h-[10px] bg-[#007185] rounded-full" />}
                 </div>
-                <span className="text-[15px] text-[#0F1111] font-[400]">
+                <span className="text-[13.5px] text-[#0F1111] font-bold">
                   {reason.label}
                 </span>
                 <input
@@ -195,32 +245,39 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
             ))}
           </div>
 
-          {selectedReasonId === "other" && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-4">
-              <textarea
-                value={reasonText}
-                onChange={(e) => setReasonText(e.target.value)}
-                placeholder="Please describe why you are returning this..."
-                className="w-full border border-slate-300 rounded-[8px] p-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007185] focus:border-transparent min-h-[80px] resize-none"
-              />
-            </div>
-          )}
+          <h3 style={{ fontSize: "14px", fontWeight: 800, color: "#0F1111", marginBottom: "6px" }}>Comments (optional)</h3>
+          <textarea
+            value={reasonText}
+            onChange={(e) => setReasonText(e.target.value)}
+            placeholder="Please share more details"
+            className="w-full border border-[#D5D9D9] rounded-[4px] p-2 text-[13px] font-semibold focus:outline-none focus:ring-2 focus:ring-[#007185] focus:border-transparent min-h-[60px] resize-none"
+            style={{ boxShadow: "0 1px 2px rgba(15,17,17,0.15) inset" }}
+          />
 
           {error && <div className="text-xs text-[#C7511F] font-semibold bg-rose-50 p-2 rounded-lg mt-4">{error}</div>}
         </div>
       </div>
-      
-      <div style={{maxWidth: "800px", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-        <button onClick={onBack} className="text-[#007185] text-[14px] hover:underline hover:text-[#C7511F]">
-          Cancel return
+
+      {/* Bottom Separator & Buttons */}
+      <div style={{ borderTop: "1px solid #D5D9D9", paddingTop: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
+        <button onClick={onBack} style={{ background: "#FFF", color: "#0F1111", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "6px 20px", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)" }} className="hover:bg-[#F7FAFA]">
+          Cancel
         </button>
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] px-12 py-[8px] rounded-[8px] text-[14px] font-[400] shadow-sm transition-colors"
-        >
-          {loading ? <span className="spinner border-slate-900 border-t-transparent w-4 h-4 mx-auto block" /> : "Continue"}
-        </button>
+
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button onClick={onBack} style={{ background: "#FFF", color: "#0F1111", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "6px 20px", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)" }} className="hover:bg-[#F7FAFA]">
+            Previous
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            style={{ background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "8px", padding: "6px 20px", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", minWidth: "120px" }}
+            className="hover:bg-[#F7CA00]"
+          >
+            {loading ? <span className="spinner border-slate-900 border-t-transparent w-4 h-4 mx-auto block" /> : "Continue"}
+          </button>
+        </div>
       </div>
 
       {/* Chatbot Interstitial Modal */}
@@ -242,19 +299,19 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
 
               <div>
                 <p className="text-[15px] text-slate-700 leading-relaxed">
-                  Many common issues with <strong>{order.name}</strong> can be fixed in a few minutes. 
+                  Many common issues with <strong>{order.name}</strong> can be fixed in a few minutes.
                   Would you like to chat with <strong>Nova</strong>, our tech support assistant, before proceeding with the return?
                 </p>
               </div>
 
               <div className="flex flex-col gap-3">
-                <button 
+                <button
                   onClick={() => onRouteDecision("deflection")}
                   className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
                 >
                   Yes, chat with Nova
                 </button>
-                <button 
+                <button
                   onClick={() => onRouteDecision("defective", "damaged_product")}
                   className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 w-full h-11 rounded-md text-[15px] font-bold shadow-sm hover:shadow transition-all flex items-center justify-center"
                 >
@@ -271,13 +328,13 @@ function ReturnReasonView({ order, onBack, onRouteDecision }: { order: any, onBa
 
 // ── Return Success View ──────────────────────────────────────────
 function ReturnSuccessView({ order, onContinueShopping }: { order: any, onContinueShopping: () => void }) {
-  const returnId = `408-${Math.floor(Math.random()*10000000)}-${Math.floor(Math.random()*10000000)}`;
+  const returnId = `408-${Math.floor(Math.random() * 10000000)}-${Math.floor(Math.random() * 10000000)}`;
   const orderDate = order?.purchaseDate || new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-  
+
   return (
-    <div className="font-sans w-full bg-white min-h-screen">
-      <h1 style={{fontSize: "28px", fontWeight: 700, color: "#0F1111", marginBottom: "8px", marginTop: "0"}}>Return initiated</h1>
-      <p style={{fontSize: "14px", color: "#0F1111", marginBottom: "16px"}}>
+    <div className="font-sans w-full bg-white" style={{ minHeight: "calc(100vh - 88px)", padding: "20px 32px", display: "flex", flexDirection: "column" }}>
+      <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#0F1111", marginBottom: "8px", marginTop: "0" }}>Return initiated</h1>
+      <p style={{ fontSize: "14px", color: "#0F1111", marginBottom: "16px" }}>
         Your return request has been successfully initiated. Please check your email for return confirmation and next steps.
       </p>
 
@@ -285,31 +342,31 @@ function ReturnSuccessView({ order, onContinueShopping }: { order: any, onContin
       <div className="relative mb-6 max-w-3xl" style={{ margin: "0 20px 20px 20px" }}>
         <div className="absolute top-[14px] left-[20px] right-[20px] h-[3px] bg-[#D5D9D9] z-0"></div>
         <div className="absolute top-[14px] left-[20px] h-[3px] bg-[#067D62] z-0" style={{ width: "33%" }}></div>
-        
+
         <div className="relative z-10 flex justify-between">
           <div className="flex flex-col items-center">
             <div className="w-[30px] h-[30px] rounded-full bg-[#067D62] text-white flex items-center justify-center mb-2">
               <CheckCircle className="w-5 h-5" />
             </div>
-            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>1<br/>Initiated</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111" }}>1<br />Initiated</div>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-[30px] h-[30px] rounded-full bg-[#067D62] text-white flex items-center justify-center font-bold mb-2">
               2
             </div>
-            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>Pick up / Drop off</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111" }}>Pick up / Drop off</div>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-[30px] h-[30px] rounded-full bg-[#EAEDED] text-[#565959] flex items-center justify-center font-bold mb-2 border border-[#D5D9D9]">
               3
             </div>
-            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>In transit</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111" }}>In transit</div>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-[30px] h-[30px] rounded-full bg-[#EAEDED] text-[#565959] flex items-center justify-center font-bold mb-2 border border-[#D5D9D9]">
               4
             </div>
-            <div style={{fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111"}}>Refunded</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, textAlign: "center", color: "#0F1111" }}>Refunded</div>
           </div>
         </div>
       </div>
@@ -317,108 +374,108 @@ function ReturnSuccessView({ order, onContinueShopping }: { order: any, onContin
       <div style={{ display: "flex", flexWrap: "nowrap", gap: "24px", width: "100%", alignItems: "flex-start" }}>
         {/* Left Column */}
         <div style={{ flex: "1 1 auto", display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 }}>
-          
-          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF", display: "flex", gap: "24px"}}>
-            <img src={getSKUReferenceImage(order?.sku)} alt={order?.name} style={{width: "80px", height: "80px", objectFit: "contain"}} />
+
+          <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF", display: "flex", gap: "24px" }}>
+            <img src={getSKUReferenceImage(order?.sku)} alt={order?.name} style={{ width: "80px", height: "80px", objectFit: "contain" }} />
             <div>
-              <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "6px"}}>{order?.name}</div>
-              <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px"}}>Qty: 1</div>
-              
-              <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>Reason for return</div>
-              <div style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px"}}>Product not working as expected</div>
-              
-              <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>Refund method</div>
-              <div style={{fontSize: "14px", color: "#0F1111"}}>Original Payment Method</div>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "6px" }}>{order?.name}</div>
+              <div style={{ fontSize: "14px", color: "#0F1111", marginBottom: "12px" }}>Qty: 1</div>
+
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px" }}>Reason for return</div>
+              <div style={{ fontSize: "14px", color: "#0F1111", marginBottom: "12px" }}>Product not working as expected</div>
+
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "2px" }}>Refund method</div>
+              <div style={{ fontSize: "14px", color: "#0F1111" }}>Original Payment Method</div>
             </div>
           </div>
 
-          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF"}}>
-            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>What happens next?</div>
-            
-            <div style={{display: "flex", justifyContent: "space-between", gap: "16px", marginBottom: "8px"}}>
-              <div style={{flex: 1}}>
+          <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px" }}>What happens next?</div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginBottom: "8px" }}>
+              <div style={{ flex: 1 }}>
                 <Package className="w-8 h-8 text-[#0F1111] mb-2" strokeWidth={1.5} />
-                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Pick up / Drop off</div>
-                <div style={{fontSize: "13px", color: "#0F1111"}}>We will pick up the item or you can drop it off at the nearest Amazon Drop-off location.</div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>Pick up / Drop off</div>
+                <div style={{ fontSize: "13px", color: "#0F1111" }}>We will pick up the item or you can drop it off at the nearest Amazon Drop-off location.</div>
               </div>
-              
-              <div style={{display: "flex", alignItems: "center", color: "#D5D9D9", paddingBottom: "12px"}}><ChevronRight className="w-5 h-5" /></div>
-              
-              <div style={{flex: 1}}>
+
+              <div style={{ display: "flex", alignItems: "center", color: "#D5D9D9", paddingBottom: "12px" }}><ChevronRight className="w-5 h-5" /></div>
+
+              <div style={{ flex: 1 }}>
                 <Truck className="w-8 h-8 text-[#0F1111] mb-2" strokeWidth={1.5} />
-                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Item in transit</div>
-                <div style={{fontSize: "13px", color: "#0F1111"}}>Once we receive the item, it will go through a quick check.</div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>Item in transit</div>
+                <div style={{ fontSize: "13px", color: "#0F1111" }}>Once we receive the item, it will go through a quick check.</div>
               </div>
-              
-              <div style={{display: "flex", alignItems: "center", color: "#D5D9D9", paddingBottom: "12px"}}><ChevronRight className="w-5 h-5" /></div>
-              
-              <div style={{flex: 1}}>
+
+              <div style={{ display: "flex", alignItems: "center", color: "#D5D9D9", paddingBottom: "12px" }}><ChevronRight className="w-5 h-5" /></div>
+
+              <div style={{ flex: 1 }}>
                 <CreditCard className="w-8 h-8 text-[#0F1111] mb-2" strokeWidth={1.5} />
-                <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px"}}>Refund</div>
-                <div style={{fontSize: "13px", color: "#0F1111"}}>Your refund will be initiated within 2-3 business days.</div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>Refund</div>
+                <div style={{ fontSize: "13px", color: "#0F1111" }}>Your refund will be initiated within 2-3 business days.</div>
               </div>
             </div>
           </div>
-          
-          <div style={{marginTop: "0px", display: "flex", justifyContent: "center"}}>
-            <button onClick={onContinueShopping} style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "8px", padding: "8px 0", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", width: "240px", textAlign: "center"}} className="hover:bg-[#F7CA00]">
+
+          <div style={{ marginTop: "0px", display: "flex", justifyContent: "center" }}>
+            <button onClick={onContinueShopping} style={{ background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "8px", padding: "8px 0", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", width: "240px", textAlign: "center" }} className="hover:bg-[#F7CA00]">
               Continue Shopping
             </button>
           </div>
-          
+
         </div>
 
         {/* Right Column */}
         <div style={{ width: "320px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
-          
-          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF"}}>
-            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "16px"}}>Return Details</div>
-            
-            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "8px"}}>
+
+          <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "16px" }}>Return Details</div>
+
+            <div className="flex justify-between" style={{ fontSize: "14px", color: "#0F1111", marginBottom: "8px" }}>
               <span>Return ID</span>
               <span>{returnId}</span>
             </div>
-            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "8px"}}>
+            <div className="flex justify-between" style={{ fontSize: "14px", color: "#0F1111", marginBottom: "8px" }}>
               <span>Order ID</span>
               <span>{order?.orderId}</span>
             </div>
-            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "16px"}}>
+            <div className="flex justify-between" style={{ fontSize: "14px", color: "#0F1111", marginBottom: "16px" }}>
               <span>Order Date</span>
               <span>{orderDate}</span>
             </div>
-            
-            <div className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>View return policy</div>
+
+            <div className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ fontSize: "14px", color: "#007185" }}>View return policy</div>
           </div>
 
-          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF"}}>
-            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Refund summary</div>
-            
-            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "8px"}}>
+          <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px" }}>Refund summary</div>
+
+            <div className="flex justify-between" style={{ fontSize: "14px", color: "#0F1111", marginBottom: "8px" }}>
               <span>Item subtotal</span>
               <span>${order?.price?.toFixed(2) || "0.00"}</span>
             </div>
-            <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "12px"}}>
+            <div className="flex justify-between" style={{ fontSize: "14px", color: "#0F1111", marginBottom: "12px" }}>
               <span>Delivery charges</span>
               <span>$4.00</span>
             </div>
-            
-            <div style={{borderTop: "1px solid #D5D9D9", margin: "0 -12px 12px -12px"}} />
-            
+
+            <div style={{ borderTop: "1px solid #D5D9D9", margin: "0 -12px 12px -12px" }} />
+
             <div className="flex justify-between items-center">
-              <span style={{fontSize: "16px", fontWeight: 700, color: "#0F1111"}}>Refund amount</span>
-              <span style={{fontSize: "18px", fontWeight: 700, color: "#067D62"}}>${((order?.price || 0) + 4.00).toFixed(2)}</span>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111" }}>Refund amount</span>
+              <span style={{ fontSize: "18px", fontWeight: 700, color: "#067D62" }}>${((order?.price || 0) + 4.00).toFixed(2)}</span>
             </div>
           </div>
 
-          <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF"}}>
-            <div style={{fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Need help?</div>
+          <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px", background: "#FFF" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "12px" }}>Need help?</div>
             <div className="flex flex-col gap-3">
-              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>View return policy</span>
-              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>Contact Customer Service</span>
-              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize: "14px", color: "#007185"}}>Frequently asked questions</span>
+              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ fontSize: "14px", color: "#007185" }}>View return policy</span>
+              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ fontSize: "14px", color: "#007185" }}>Contact Customer Service</span>
+              <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ fontSize: "14px", color: "#007185" }}>Frequently asked questions</span>
             </div>
           </div>
-          
+
         </div>
       </div>
     </div>
@@ -454,10 +511,11 @@ export default function L6Orders() {
     ledgerRecords,
     showReturnSuccess,
     setShowReturnSuccess,
+    reasonOrder,
+    setReasonOrder,
   } = useApp() as any;
 
   const [getHelpOrder, setGetHelpOrder] = React.useState<any>(null);
-  const [reasonOrder, setReasonOrder] = React.useState<any>(null);
   const [returnReason, setReturnReason] = React.useState("");
 
   const orders: any[] = walletInfo?.orders ?? [];
@@ -513,7 +571,6 @@ export default function L6Orders() {
     setInspectQueue((prev: any[]) => {
       if (prev.find(item => item.orderId === order.orderId)) return prev;
       return [...prev, {
-        id: Math.random().toString(36).substr(2, 9),
         orderId: order.orderId,
         sku: order.sku,
         itemName: order.name,
@@ -521,7 +578,7 @@ export default function L6Orders() {
         timestamp: new Date().toISOString()
       }];
     });
-    
+
     // Instead of alert, show our nice modal
     setShowReturnSuccess(true);
   };
@@ -540,178 +597,199 @@ export default function L6Orders() {
   };
 
   return (
-    <div style={{display:"flex", flexDirection:"column", gap:"20px"}}>
-      {!showReturnSuccess && (
-        <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
-          <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Your Orders</h2>
+    <>
+      {/* Fixed full-screen overlay for return reason and return success screens */}
+      {(reasonOrder || showReturnSuccess) && (
+        <div style={{
+          position: "fixed",
+          top: "98px",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "#fff",
+          zIndex: 50,
+          overflowY: "auto",
+          padding: "0",
+        }}>
+          {reasonOrder ? (
+            <ReturnReasonView
+              order={reasonOrder}
+              onBack={() => setReasonOrder(null)}
+              onRouteDecision={(classification, claimType) => {
+                if (classification === "vibe_mismatch") {
+                  routeToL5DarkStore(reasonOrder);
+                } else if (classification === "deflection") {
+                  handleDIM(reasonOrder);
+                } else {
+                  routeToL2Fraud(reasonOrder, claimType as any);
+                }
+                setReasonOrder(null);
+              }}
+            />
+          ) : showReturnSuccess ? (
+            <ReturnSuccessView
+              order={inspectQueue && inspectQueue.length > 0 ? orders.find((o: any) => o.orderId === inspectQueue[inspectQueue.length - 1].orderId) || orders[0] : orders[0]}
+              onContinueShopping={() => { setShowReturnSuccess(false); setActiveTab("dashboard"); }}
+            />
+          ) : null}
         </div>
       )}
 
-      {reasonOrder ? (
-        <ReturnReasonView
-          order={reasonOrder}
-          onBack={() => setReasonOrder(null)}
-          onRouteDecision={(classification, claimType) => {
-            if (classification === "vibe_mismatch") {
-              routeToL5DarkStore(reasonOrder);
-            } else if (classification === "deflection") {
-              handleDIM(reasonOrder);
-            } else {
-              routeToL2Fraud(reasonOrder, claimType as any);
-            }
-          }}
-        />
-      ) : showReturnSuccess ? (
-        <ReturnSuccessView 
-          order={inspectQueue && inspectQueue.length > 0 ? orders.find((o:any) => o.orderId === inspectQueue[inspectQueue.length - 1].orderId) || orders[0] : orders[0]} 
-          onContinueShopping={() => { setShowReturnSuccess(false); setActiveTab("dashboard"); }} 
-        />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {orders.length === 0 ? (
-            <div style={{padding:"20px", display:"flex", gap:"20px", background:"#FFF", border:"1px solid #DDD", borderRadius:"4px"}}>
-              <div style={{flex:1}}>
-                <h2 style={{fontSize:"1.2rem", fontWeight:700, marginBottom:"8px"}}>You have no orders.</h2>
+      {/* Normal orders list (always rendered underneath) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {!showReturnSuccess && !reasonOrder && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+            <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111" }}>Your Orders</h2>
+          </div>
+        )}
+
+        {/* placeholder so list still renders */}
+        {!(reasonOrder || showReturnSuccess) && (
+          <div className="flex flex-col gap-4">
+            {orders.length === 0 ? (
+              <div style={{ padding: "20px", display: "flex", gap: "20px", background: "#FFF", border: "1px solid #DDD", borderRadius: "4px" }}>
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "8px" }}>You have no orders.</h2>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {orders.map((order: any) => {
-                const daysLeft = getDaysRemaining(order);
-                const isExpired = daysLeft <= 0;
-                const manualItem = manualReviewQueue?.find((i: any) => i.orderId === order.orderId);
-                const processedItem = processedFraudQueue?.find((i: any) => i.orderId === order.orderId);
-                const inspectItem = inspectQueue?.find((i: any) => i.orderId === order.orderId);
-                
-                let returnStatus = null;
-                if (manualItem) returnStatus = "MANUAL_REVIEW";
-                else if (processedItem) returnStatus = processedItem.status;
-                else if (inspectItem) returnStatus = "APPROVED";
-                
-                const isReturned = !!returnStatus || inspectItem;
+            ) : (
+              <div className="flex flex-col gap-4">
+                {orders.map((order: any) => {
+                  const daysLeft = getDaysRemaining(order);
+                  const isExpired = daysLeft <= 0;
+                  const manualItem = manualReviewQueue?.find((i: any) => i.orderId === order.orderId);
+                  const processedItem = processedFraudQueue?.find((i: any) => i.orderId === order.orderId);
+                  const inspectItem = inspectQueue?.find((i: any) => i.orderId === order.orderId);
 
-                return (
-                  <div
-                    key={order.orderId || order.sku + Math.random()}
-                    style={{border:"1px solid #D5D9D9", borderRadius:"8px", overflow:"hidden", background:"#FFF"}}
-                  >
-                    {/* Card Header */}
-                    <div style={{background:"#F0F2F2", padding:"14px 18px", borderBottom:"1px solid #D5D9D9", display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#333333"}}>
-                      <div style={{display:"flex", gap:"32px"}}>
-                        <div className="flex flex-col">
-                          <span style={{textTransform:"uppercase", fontWeight: 700}}>Order Placed</span>
-                          <span style={{color:"#0F1111", fontWeight: 500}}>{order.purchaseDate}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span style={{textTransform:"uppercase", fontWeight: 700}}>Total</span>
-                          <span style={{color:"#0F1111", fontWeight: 500}}>${order.price?.toFixed(2)}</span>
-                        </div>
-                        <div className="flex flex-col hidden sm:flex">
-                          <span style={{textTransform:"uppercase", fontWeight: 700}}>Ship To</span>
-                          <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{color:"#007185"}}>{profileUserId || "Customer"} <ChevronDown className="w-3 h-3 inline" /></span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col text-right">
-                        <span style={{textTransform:"uppercase", fontWeight: 700}}>Order # {order.orderId}</span>
-                        <div className="flex items-center gap-1 justify-end mt-1">
-                           <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{color:"#007185"}}>View order details</span>
-                           <span style={{color: "#D5D9D9", padding: "0 4px"}}>|</span>
-                           <span className="cursor-pointer hover:underline hover:text-[#c45500] flex items-center" style={{color:"#007185"}}>Invoice <ChevronDown className="w-3 h-3 ml-0.5 inline" /></span>
-                        </div>
-                      </div>
-                    </div>
+                  let returnStatus = null;
+                  if (manualItem) returnStatus = "MANUAL_REVIEW";
+                  else if (processedItem) returnStatus = processedItem.status;
+                  else if (inspectItem) returnStatus = "APPROVED";
 
-                    {/* Card Body */}
-                    <div style={{padding:"18px", display:"flex", gap:"16px", flexWrap:"wrap"}}>
-                      <div className="flex flex-col flex-1 min-w-0" style={{minWidth:"200px"}}>
-                        
-                        {/* Delivery Status */}
-                        {returnStatus === "MANUAL_REVIEW" ? (
-                          <>
-                            <div style={{fontSize: "18px", fontWeight: 700, color: "#B12704", marginBottom: "2px"}}>
-                              Return Under Manual Review
-                            </div>
-                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
-                              We are reviewing your request. This may take up to 48 hours.
-                            </div>
-                          </>
-                        ) : returnStatus === "APPROVED" ? (
-                          <>
-                            <div style={{fontSize: "18px", fontWeight: 700, color: "#067D62", marginBottom: "2px"}}>
-                              Return Initiated
-                            </div>
-                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
-                              Please hand over the item to the delivery agent.
-                            </div>
-                          </>
-                        ) : returnStatus === "REJECTED" ? (
-                          <>
-                            <div style={{fontSize: "18px", fontWeight: 700, color: "#B12704", marginBottom: "2px"}}>
-                              Return Denied
-                            </div>
-                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
-                              Your return request could not be approved.
-                            </div>
-                          </>
-                        ) : isReturned ? (
-                          <>
-                            <div style={{fontSize: "18px", fontWeight: 700, color: "#C7511F", marginBottom: "2px"}}>
-                              Return in progress
-                            </div>
-                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
-                              Your refund is being processed.
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div style={{fontSize: "18px", fontWeight: 700, color: "#0F1111", marginBottom: "2px"}}>
-                              Delivered
-                            </div>
-                            <div style={{fontSize: "13px", color: "#333333", marginBottom: "16px"}}>
-                              Package was handed to a receptionist
-                            </div>
-                          </>
-                        )}
-                        
-                        <div className="flex items-start gap-4">
-                          <div style={{flexShrink:0}}>
-                            <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{width:"80px", height:"80px", objectFit:"contain"}} />
+                  const isReturned = !!returnStatus || inspectItem;
+
+                  return (
+                    <div
+                      key={order.orderId || order.sku + Math.random()}
+                      style={{ border: "1px solid #D5D9D9", borderRadius: "8px", overflow: "hidden", background: "#FFF" }}
+                    >
+                      {/* Card Header */}
+                      <div style={{ background: "#F0F2F2", padding: "14px 18px", borderBottom: "1px solid #D5D9D9", display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#333333" }}>
+                        <div style={{ display: "flex", gap: "32px" }}>
+                          <div className="flex flex-col">
+                            <span style={{ textTransform: "uppercase", fontWeight: 700 }}>Order Placed</span>
+                            <span style={{ color: "#0F1111", fontWeight: 500 }}>{order.purchaseDate}</span>
                           </div>
                           <div className="flex flex-col">
-                            <div className="cursor-pointer hover:underline hover:text-[#c45500]" style={{fontSize:"14px", color:"#007185", lineHeight:"1.4", fontWeight: 500}}>
-                              {order.name}
-                            </div>
-                            <div style={{fontSize:"12px", color:"#333333", marginTop:"4px", marginBottom: "8px", fontWeight: 500}}>
-                              Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
-                            </div>
-                            <button style={{border: "1px solid #888C8C", borderRadius: "100px", padding: "3px 10px", fontSize: "12px", background: "#FFF", width: "fit-content", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", color: "#0F1111", fontWeight: 500}}>
-                              View your item
-                            </button>
+                            <span style={{ textTransform: "uppercase", fontWeight: 700 }}>Total</span>
+                            <span style={{ color: "#0F1111", fontWeight: 500 }}>${order.price?.toFixed(2)}</span>
+                          </div>
+                          <div className="flex flex-col hidden sm:flex">
+                            <span style={{ textTransform: "uppercase", fontWeight: 700 }}>Ship To</span>
+                            <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ color: "#007185" }}>{profileUserId || "Customer"} <ChevronDown className="w-3 h-3 inline" /></span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col text-right">
+                          <span style={{ textTransform: "uppercase", fontWeight: 700 }}>Order # {order.orderId}</span>
+                          <div className="flex items-center gap-1 justify-end mt-1">
+                            <span className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ color: "#007185" }}>View order details</span>
+                            <span style={{ color: "#D5D9D9", padding: "0 4px" }}>|</span>
+                            <span className="cursor-pointer hover:underline hover:text-[#c45500] flex items-center" style={{ color: "#007185" }}>Invoice <ChevronDown className="w-3 h-3 ml-0.5 inline" /></span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Card Footer (Actions) */}
-                      <div className="flex flex-col gap-2" style={{width:"240px", flexShrink:0}}>
-                        <button style={{background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7CA00]">
-                          Track package
-                        </button>
-                        
-                        {!isReturned && (
+                      {/* Card Body */}
+                      <div style={{ padding: "18px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                        <div className="flex flex-col flex-1 min-w-0" style={{ minWidth: "200px" }}>
+
+                          {/* Delivery Status */}
+                          {returnStatus === "MANUAL_REVIEW" ? (
+                            <>
+                              <div style={{ fontSize: "18px", fontWeight: 700, color: "#B12704", marginBottom: "2px" }}>
+                                Return Under Manual Review
+                              </div>
+                              <div style={{ fontSize: "13px", color: "#333333", marginBottom: "16px" }}>
+                                We are reviewing your request. This may take up to 48 hours.
+                              </div>
+                            </>
+                          ) : returnStatus === "APPROVED" ? (
+                            <>
+                              <div style={{ fontSize: "18px", fontWeight: 700, color: "#067D62", marginBottom: "2px" }}>
+                                Return Initiated
+                              </div>
+                              <div style={{ fontSize: "13px", color: "#333333", marginBottom: "16px" }}>
+                                Please hand over the item to the delivery agent.
+                              </div>
+                            </>
+                          ) : returnStatus === "REJECTED" ? (
+                            <>
+                              <div style={{ fontSize: "18px", fontWeight: 700, color: "#B12704", marginBottom: "2px" }}>
+                                Return Denied
+                              </div>
+                              <div style={{ fontSize: "13px", color: "#333333", marginBottom: "16px" }}>
+                                Your return request could not be approved.
+                              </div>
+                            </>
+                          ) : isReturned ? (
+                            <>
+                              <div style={{ fontSize: "18px", fontWeight: 700, color: "#C7511F", marginBottom: "2px" }}>
+                                Return in progress
+                              </div>
+                              <div style={{ fontSize: "13px", color: "#333333", marginBottom: "16px" }}>
+                                Your refund is being processed.
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: "18px", fontWeight: 700, color: "#0F1111", marginBottom: "2px" }}>
+                                Delivered
+                              </div>
+                              <div style={{ fontSize: "13px", color: "#333333", marginBottom: "16px" }}>
+                                Package was handed to a receptionist
+                              </div>
+                            </>
+                          )}
+
+                          <div className="flex items-start gap-4">
+                            <div style={{ flexShrink: 0 }}>
+                              <img src={getSKUReferenceImage(order.sku)} alt={order.name} style={{ width: "80px", height: "80px", objectFit: "contain" }} />
+                            </div>
+                            <div className="flex flex-col">
+                              <div className="cursor-pointer hover:underline hover:text-[#c45500]" style={{ fontSize: "14px", color: "#007185", lineHeight: "1.4", fontWeight: 500 }}>
+                                {order.name}
+                              </div>
+                              <div style={{ fontSize: "12px", color: "#333333", marginTop: "4px", marginBottom: "8px", fontWeight: 500 }}>
+                                Return window {isExpired ? "closed on" : "closes"} {new Date(new Date(order.purchaseDate).getTime() + (order.returnWindowDays || 30) * 86400000).toLocaleDateString()}
+                              </div>
+                              <button style={{ border: "1px solid #888C8C", borderRadius: "100px", padding: "3px 10px", fontSize: "12px", background: "#FFF", width: "fit-content", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", color: "#0F1111", fontWeight: 500 }}>
+                                View your item
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Footer (Actions) */}
+                        <div className="flex flex-col gap-2" style={{ width: "240px", flexShrink: 0 }}>
+                          <button style={{ background: "#FFD814", color: "#0F1111", border: "1px solid #FCD200", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500 }} className="hover:bg-[#F7CA00]">
+                            Track package
+                          </button>
+
+                          {!isReturned && (
                           hasManual(order.sku) ? (
                             <>
                               <button
                                 onClick={() => handleDIM(order)}
                                 disabled={isExpired}
-                                style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500}}
+                                style={{ background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500 }}
                                 className="hover:bg-[#F7F8F8]"
                               >
                                 Get product support
                               </button>
                               <button
-                                onClick={() => setReasonOrder(order)}
+                                onClick={() => setGetHelpOrder(order)}
                                 disabled={isExpired}
-                                style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500}}
+                                style={{ background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500 }}
                                 className="hover:bg-[#F7F8F8]"
                               >
                                 Return or replace items
@@ -721,39 +799,40 @@ export default function L6Orders() {
                             <button
                               onClick={() => setReasonOrder(order)}
                               disabled={isExpired}
-                              style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500}}
+                              style={{ background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", opacity: isExpired ? 0.5 : 1, fontWeight: 500 }}
                               className="hover:bg-[#F7F8F8]"
                             >
                               Return or replace items
                             </button>
                           )
-                        )}
-                        
-                        <button style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7F8F8]">Leave seller feedback</button>
-                        <button style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7F8F8]">Leave delivery feedback</button>
-                        <button style={{background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500}} className="hover:bg-[#F7F8F8]">Write a product review</button>
+                          )}
+
+                          <button style={{ background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500 }} className="hover:bg-[#F7F8F8]">Leave seller feedback</button>
+                          <button style={{ background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500 }} className="hover:bg-[#F7F8F8]">Leave delivery feedback</button>
+                          <button style={{ background: "#FFF", color: "#0F1111", border: "1px solid #888C8C", borderRadius: "100px", padding: "6px", fontSize: "13px", textAlign: "center", width: "100%", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500 }} className="hover:bg-[#F7F8F8]">Write a product review</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Get Help (DIM) Modal */}
-      {getHelpOrder && (
-        <GetHelpModal
-          orderName={getHelpOrder.name}
-          onConfirmDIM={() => handleDIM(getHelpOrder)}
-          onProceedToReason={() => {
-            setGetHelpOrder(null);
-            setReasonOrder(getHelpOrder);
-          }}
-          onClose={() => setGetHelpOrder(null)}
-        />
-      )}
-    </div>
+        {/* Get Help (DIM) Modal */}
+        {getHelpOrder && (
+          <GetHelpModal
+            orderName={getHelpOrder.name}
+            onConfirmDIM={() => handleDIM(getHelpOrder)}
+            onProceedToReason={() => {
+              setGetHelpOrder(null);
+              setReasonOrder(getHelpOrder);
+            }}
+            onClose={() => setGetHelpOrder(null)}
+          />
+        )}
+      </div>
+    </>
   );
 }

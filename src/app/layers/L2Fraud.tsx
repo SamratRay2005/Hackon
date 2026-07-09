@@ -11,6 +11,7 @@
 import React from "react";
 import {
   Shield,
+  ShieldCheck,
   Camera,
   Package,
   AlertTriangle,
@@ -197,134 +198,208 @@ export default function L2Fraud() {
 
   // ─── Consumer UI ───────────────────────────────────────────────
   if (!isAdminMode) {
+    const resultCard = fraudResult ? (
+      <div style={{
+        display: "flex", alignItems: "flex-start", gap: "12px", padding: "16px",
+        background: fraudResult.shouldRetake ? "#FFFBF0" : (fraudResult.status === "REJECTED" || fraudResult.recommendedAction === "BLOCK") ? "#FFF5F5" : (fraudResult.status === "APPROVED" || fraudResult.riskScore <= 40) ? "#F0FAF4" : "#FFF7F0",
+        border: fraudResult.shouldRetake ? "1px solid #FCD200" : (fraudResult.status === "REJECTED" || fraudResult.recommendedAction === "BLOCK") ? "1px solid #F5B5AD" : (fraudResult.status === "APPROVED" || fraudResult.riskScore <= 40) ? "1px solid #84C2A6" : "1px solid #F3D2C4",
+        borderRadius: "8px", width: "100%", boxSizing: "border-box", marginTop: "8px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+      }}>
+        {fraudResult.shouldRetake ? (<>
+          <AlertTriangle style={{ width: "24px", height: "24px", color: "#FF9900", flexShrink: 0, marginTop: "2px" }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "15px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>Photo Retake Required</div>
+            <div style={{ fontSize: "13px", color: "#565959", marginBottom: "12px" }}>{fraudResult.retakeReason || "Please provide a clearer photo of the item."}</div>
+            <button style={{ background: "#FFF", color: "#0F1111", border: "1px solid #D5D9D9", borderRadius: "64px", padding: "6px 16px", fontSize: "12px", fontWeight: 600, cursor: "pointer", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }} onClick={() => { setFraudImage(null); setFraudResult(null); }}>Retake Photo</button>
+          </div>
+        </>) : fraudResult.status === "REJECTED" || fraudResult.recommendedAction === "BLOCK" ? (<>
+          <AlertTriangle style={{ width: "24px", height: "24px", color: "#dc2626", flexShrink: 0, marginTop: "2px" }} />
+          <div><div style={{ fontSize: "15px", fontWeight: 700, color: "#dc2626", marginBottom: "2px" }}>Return Denied</div><div style={{ fontSize: "13px", color: "#565959", lineHeight: "1.4" }}>Your request for <strong>{fraudItemName}</strong> was rejected due to policy violations.</div></div>
+        </>) : (fraudResult.status === "APPROVED" || fraudResult.riskScore <= 40) ? (<>
+          <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#067D62", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px" }}>
+            <span style={{ color: "#FFF", fontSize: "14px", fontWeight: 700 }}>✓</span>
+          </div>
+          <div><div style={{ fontSize: "15px", fontWeight: 700, color: "#067D62", marginBottom: "2px" }}>Return Approved!</div><div style={{ fontSize: "13px", color: "#565959", lineHeight: "1.4" }}>Your return for <strong>{fraudItemName}</strong> has been verified.<br />A prepaid shipping label has been sent to <strong>{profileEmail}</strong>.</div></div>
+        </>) : (<>
+          <Shield style={{ width: "24px", height: "24px", color: "#C7511F", flexShrink: 0, marginTop: "2px" }} />
+          <div><div style={{ fontSize: "15px", fontWeight: 700, color: "#0F1111", marginBottom: "2px" }}>Manual Review Required</div><div style={{ fontSize: "13px", color: "#565959", lineHeight: "1.4" }}>Our team will reach out to <strong>{profileEmail}</strong> shortly.</div></div>
+        </>)}
+      </div>
+    ) : null;
+
+    const GreenCheckCircle = () => (
+      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#067D62", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <span style={{ color: "#FFF", fontSize: "12px", fontWeight: 700 }}>✓</span>
+      </div>
+    );
+
+    const OrangeNumberCircle = ({ num }: { num: number }) => (
+      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#FF9900", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <span style={{ color: "#FFF", fontSize: "12px", fontWeight: 700 }}>{num}</span>
+      </div>
+    );
+
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#FFF", padding: "20px", border: "1px solid #DDD", borderRadius: "4px" }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111", margin: 0 }}>Verify Your Return</h2>
-          <span style={{ fontSize: "12px", background: "#067D62", color: "#FFF", padding: "2px 8px", borderRadius: "4px" }}>AI Verified</span>
-        </div>
-        <div style={{ background: "#F0FAF4", border: "1px solid #067D62", padding: "12px 16px", borderRadius: "4px", fontSize: "13px", color: "#0F1111", lineHeight: "1.5" }}>
-          📸 To process your return, please upload a photo of the item and briefly describe the issue. Our AI verifies your claim in under 2 seconds.
-        </div>
-
-        {/* Two-column desktop grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", alignItems: "start" }}>
-
-          {/* LEFT COLUMN — Photo Upload */}
-          <div style={{ border: "1px solid #E8E8E8", borderRadius: "8px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: fraudImage ? "#067D62" : "#FF9900", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ color: "#FFF", fontSize: "11px", fontWeight: 700 }}>{fraudImage ? "✓" : "1"}</span>
-              </div>
-              <div>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "#0F1111" }}>Upload Evidence Photo</span>
-                <span style={{ display: "block", fontSize: "11px", color: "#565959" }}>Photo of item & close-up of defect</span>
-              </div>
-            </div>
-
-            {/* Photo preview */}
-            <div style={{ border: fraudImage ? "2px solid #067D62" : "2px dashed #D5D9D9", borderRadius: "6px", overflow: "hidden", background: "#F7F8F8", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {fraudImage ? (
-                <img src={fraudImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} alt="Claim evidence" />
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", padding: "24px", textAlign: "center" }}>
-                  <ImageIcon style={{ width: "32px", height: "32px", color: "#C8CBCF" }} />
-                  <span style={{ fontSize: "12px", color: "#565959", fontWeight: 500 }}>No photo uploaded yet</span>
-                  <span style={{ fontSize: "11px", color: "#8D9098" }}>Use Camera, Upload, or Demo below</span>
-                </div>
-              )}
-            </div>
-
-            <WebcamCapture
-              onCapture={(base64: string) => { setFraudImage(base64); setFraudImageName("uploaded_claim_evidence.jpg"); setFraudResult(null); }}
-              overlayType="damage"
-            />
-            <button
-              style={{ background: "transparent", border: "1px solid #D5D9D9", borderRadius: "4px", padding: "7px 12px", fontSize: "12px", color: "#565959", cursor: "pointer", width: "100%" }}
-              onClick={handleFraudDemoClick}
-            >
-              Load Sample Photo #{(fraudDemoCycle % 3) + 1}
-            </button>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#F5F5F5", overflowY: "auto", overflowX: "hidden" }}>
+        
+        <div style={{ maxWidth: "1200px", width: "100%", margin: "0 auto", padding: "20px", display: "flex", flexDirection: "column", gap: "16px", background: "#FFF", minHeight: "100%" }}>
+          
+          {/* Header Title */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingBottom: "10px" }}>
+            <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111", margin: 0 }}>Verify Your Return</h2>
+            <span style={{ fontSize: "13px", background: "#067D62", color: "#FFF", padding: "4px 10px", borderRadius: "6px", fontWeight: 700 }}>AI Verified</span>
           </div>
 
-          {/* RIGHT COLUMN — Description + Submit */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Top Full Width Green Info Box */}
+          <div style={{ background: "#F0FAF4", border: "1px solid #067D62", borderRadius: "4px", padding: "16px", display: "flex", alignItems: "flex-start", gap: "12px" }}>
+            <ShieldCheck style={{ width: "24px", height: "24px", color: "#067D62", flexShrink: 0, marginTop: "2px" }} />
+            <div style={{ color: "#0F1111", fontSize: "14px", lineHeight: "1.5" }}>
+              <strong>We use AI to verify your claim and help process your return faster.</strong><br/>
+              Please upload a clear, original photo of the item showing the issue. Our AI verifies your claim in under 2 seconds.
+            </div>
+          </div>
 
-            {/* Step 2 */}
-            <div style={{ border: "1px solid #E8E8E8", borderRadius: "8px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: userDescription.trim() ? "#067D62" : "#FF9900", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ color: "#FFF", fontSize: "11px", fontWeight: 700 }}>{userDescription.trim() ? "✓" : "2"}</span>
-                </div>
+          {/* 2-Column Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginTop: "8px" }}>
+            
+            {/* LEFT COLUMN */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {fraudImage ? <GreenCheckCircle /> : <OrangeNumberCircle num={1} />}
                 <div>
-                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#0F1111" }}>Describe the Issue</span>
-                  <span style={{ display: "block", fontSize: "11px", color: "#565959" }}>Context the AI cannot see from the photo alone</span>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "#0F1111" }}>Upload Evidence Photo</span>
+                  <span style={{ display: "block", fontSize: "12px", color: "#565959", marginTop: "2px" }}>Photo of item &amp; close-up of defect</span>
                 </div>
               </div>
-              <textarea
-                value={userDescription}
-                onChange={(e) => setUserDescription(e.target.value)}
-                placeholder={"Examples:\n• \"Received blue instead of black.\"\n• \"The zipper is broken on the front pocket.\"\n• \"Only one earbud was in the box — missing the right one.\"\n• \"Left shoe is size 8, right shoe is size 9.\""}
-                style={{
-                  width: "100%", boxSizing: "border-box", minHeight: "140px", padding: "10px 12px", fontSize: "13px",
-                  border: "1px solid #D5D9D9", borderRadius: "6px", resize: "vertical", fontFamily: "inherit",
-                  color: "#0F1111", background: "#FFF", lineHeight: 1.5, outline: "none"
-                }}
-              />
-              <div style={{ fontSize: "11px", color: "#8D9098" }}>
-                {userDescription.trim().length}/500 — More detail helps us process your return faster.
+
+              <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div style={{ background: "#F7F8F8", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderBottom: fraudImage ? "1px solid #D5D9D9" : "none" }}>
+                  {fraudImage ? (
+                    <img src={fraudImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Claim evidence" />
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", color: "#565959" }}>
+                      <ImageIcon style={{ width: "32px", height: "32px", color: "#C8CBCF" }} />
+                      <span style={{ fontSize: "14px", fontWeight: 500 }}>No photo uploaded yet</span>
+                    </div>
+                  )}
+                </div>
+                
+                {fraudImage && (
+                  <div style={{ background: "#F0FAF4", borderBottom: "1px solid #D5D9D9", padding: "12px 16px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "#067D62", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ color: "#FFF", fontSize: "10px", fontWeight: 700 }}>✓</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#067D62" }}>Photo uploaded successfully</div>
+                      <div style={{ fontSize: "11px", color: "#565959" }}>Looks good! Your photo is clear and in focus.</div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ padding: "16px", background: "#FFF" }}>
+                  <WebcamCapture
+                    onCapture={(base64: string) => { setFraudImage(base64); setFraudImageName("uploaded_claim_evidence.jpg"); setFraudResult(null); }}
+                    overlayType="damage"
+                  />
+                  <button
+                    style={{ marginTop: "12px", background: "transparent", border: "1px solid #D5D9D9", borderRadius: "64px", padding: "8px", fontSize: "12px", color: "#565959", cursor: "pointer", width: "100%", fontWeight: 600 }}
+                    onClick={handleFraudDemoClick}
+                  >
+                    Load Sample Photo #{(fraudDemoCycle % 3) + 1}
+                  </button>
+                  <div style={{ textAlign: "center", marginTop: "16px", fontSize: "12px", color: "#565959" }}>
+                    JPG, JPEG or PNG only. Max size 10MB.
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Step 3 — Result or Submit */}
-            {fraudResult ? (
-              <div style={{ border: "1px solid #E8E8E8", borderRadius: "8px", padding: "24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                {fraudResult.shouldRetake ? (
-                  <>
-                    <AlertTriangle style={{ width: "36px", height: "36px", color: "#FF9900" }} />
-                    <h3 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#0F1111" }}>Photo Retake Required</h3>
-                    <p style={{ fontSize: "13px", color: "#565959", margin: 0, lineHeight: 1.5 }}>{fraudResult.retakeReason || "Please provide a clearer photo of the item."}</p>
-                    <button style={{ background: "#FF9900", color: "#111", border: "none", borderRadius: "4px", padding: "9px 22px", fontSize: "13px", fontWeight: 700, cursor: "pointer" }} onClick={() => { setFraudImage(null); setFraudResult(null); }}>Retake Photo</button>
-                  </>
-                ) : fraudResult.status === "REJECTED" ? (
-                  <>
-                    <AlertTriangle style={{ width: "36px", height: "36px", color: "#dc2626" }} />
-                    <h3 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#dc2626" }}>Return Denied</h3>
-                    <p style={{ fontSize: "13px", color: "#565959", margin: 0, lineHeight: 1.5 }}>Your return request for <strong>{fraudItemName}</strong> has been rejected by our team due to policy violations.</p>
-                  </>
-                ) : (fraudResult.status === "APPROVED" || fraudResult.riskScore <= 40) ? (
-                  <>
-                    <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "#E6F4F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Package style={{ width: "22px", height: "22px", color: "#067D62" }} />
-                    </div>
-                    <h3 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#0F1111" }}>Return Approved!</h3>
-                    <p style={{ fontSize: "13px", color: "#565959", margin: 0, lineHeight: 1.5 }}>Your return for <strong>{fraudItemName}</strong> has been verified. A prepaid shipping label has been sent to <strong>{profileEmail}</strong>.</p>
-                  </>
-                ) : (
-                  <>
-                    <Shield style={{ width: "36px", height: "36px", color: "#C7511F" }} />
-                    <h3 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#0F1111" }}>Manual Review Required</h3>
-                    <p style={{ fontSize: "13px", color: "#565959", margin: 0, lineHeight: 1.5 }}>Our team will review your claim and reach out to <strong>{profileEmail}</strong> shortly.</p>
-                  </>
-                )}
+            {/* RIGHT COLUMN */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              
+              {/* Step 2 — Product Reference */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  {fraudImage ? <GreenCheckCircle /> : <OrangeNumberCircle num={2} />}
+                  <div>
+                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#0F1111" }}>Product Reference (From Amazon Catalogue)</span>
+                    <span style={{ display: "block", fontSize: "12px", color: "#565959", marginTop: "2px" }}>This is how the product looks when new</span>
+                  </div>
+                </div>
+                
+                <div style={{ border: "1px solid #F0F2F2", borderRadius: "8px", background: "#F7F8F8", padding: "16px", display: "flex", gap: "16px", alignItems: "center" }}>
+                  <img src={getSKUReferenceImage(fraudSku)} alt={fraudItemName} style={{ width: "80px", height: "80px", objectFit: "contain", flexShrink: 0, border: "1px solid #E8E8E8", borderRadius: "4px", background: "#FFF", padding: "4px" }} />
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "6px" }}>{fraudItemName}</div>
+                    <div style={{ fontSize: "13px", color: "#565959", marginBottom: "4px" }}>Order ID: {fraudOrderId || "N/A"}</div>
+                    <div style={{ fontSize: "13px", color: "#565959", marginBottom: "4px" }}>Delivered on: 12 May 2025</div>
+                    <div style={{ fontSize: "13px", color: "#007185", fontWeight: 600, cursor: "pointer" }}>View Product Details &rsaquo;</div>
+                  </div>
+                </div>
+                
+                <div style={{ background: "#EEF4FF", border: "1px solid #C8D8F0", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#1a3a6b", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "#1a3a6b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#FFF", fontSize: "12px", fontWeight: "bold" }}>i</div>
+                  <span>Compare your uploaded photo with the original product image.<br/>Make sure the issue is clearly visible.</span>
+                </div>
               </div>
-            ) : (
-              <button
-                disabled={!fraudImage || fraudLoading}
-                onClick={triggerFraudCheck}
-                style={{ width: "100%", background: (!fraudImage || fraudLoading) ? "#E8E8E8" : "#FF9900", color: (!fraudImage || fraudLoading) ? "#8D9098" : "#0F1111", border: "none", borderRadius: "4px", padding: "14px 0", fontSize: "14px", fontWeight: 700, cursor: (!fraudImage || fraudLoading) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background 0.2s" }}
-              >
-                {fraudLoading ? (
-                  <><span className="spinner" style={{ borderColor: "#8D9098", borderTopColor: "transparent" }} /> Verifying your return...</>
-                ) : (
-                  <><Shield style={{ width: "16px", height: "16px" }} /> Submit & Verify Return</>
-                )}
-              </button>
-            )}
-            {!fraudResult && !fraudImage && (
-              <p style={{ fontSize: "11px", color: "#8D9098", textAlign: "center", margin: 0 }}>Upload a photo on the left to enable submission.</p>
-            )}
+
+              {/* Step 3 — Describe the Issue */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  {userDescription.trim() ? <GreenCheckCircle /> : <OrangeNumberCircle num={3} />}
+                  <div>
+                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#0F1111" }}>Describe the Issue</span>
+                    <span style={{ display: "block", fontSize: "12px", color: "#565959", marginTop: "2px" }}>Context the AI cannot see from the photo alone</span>
+                  </div>
+                </div>
+                
+                <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", flex: 1, display: "flex", flexDirection: "column" }}>
+                  <textarea
+                    value={userDescription}
+                    onChange={(e) => setUserDescription(e.target.value)}
+                    placeholder={"E.g. Received blue instead of red, stain on front side, torn pocket, etc."}
+                    style={{
+                      flex: 1, width: "100%", boxSizing: "border-box", minHeight: "100px", padding: "0", fontSize: "14px",
+                      border: "none", resize: "none", fontFamily: "inherit",
+                      color: "#0F1111", background: "transparent", lineHeight: 1.5, outline: "none"
+                    }}
+                  />
+                  <div style={{ fontSize: "12px", color: "#8D9098", textAlign: "right", marginTop: "8px" }}>{userDescription.trim().length}/500</div>
+                </div>
+              </div>
+
+              {/* Submit Area in Right Column */}
+              <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                <button
+                  disabled={!fraudImage || fraudLoading}
+                  onClick={triggerFraudCheck}
+                  style={{
+                    width: "100%",
+                    background: (!fraudImage || fraudLoading) ? "#E8E8E8" : "#FFD814",
+                    color: (!fraudImage || fraudLoading) ? "#8D9098" : "#0F1111",
+                    border: (!fraudImage || fraudLoading) ? "none" : "1px solid #FCD200",
+                    borderRadius: "64px", padding: "8px", fontSize: "12px", fontWeight: 600,
+                    cursor: (!fraudImage || fraudLoading) ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background 0.2s",
+                    boxShadow: (!fraudImage || fraudLoading) ? "none" : "0 2px 5px rgba(0,0,0,0.05)"
+                  }}
+                >
+                  {fraudLoading ? (
+                    <><span className="spinner" style={{ borderColor: "#8D9098", borderTopColor: "transparent" }} /> Verifying...</>
+                  ) : (
+                    "Submit & Verify Return"
+                  )}
+                </button>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", color: "#565959", fontSize: "12px" }}>
+                  <Shield style={{ width: "12px", height: "12px" }} /> Secure and encrypted
+                </div>
+
+                {/* Result Card inline */}
+                {resultCard}
+              </div>
+
+            </div>
           </div>
         </div>
       </div>

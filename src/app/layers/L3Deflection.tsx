@@ -12,6 +12,9 @@ import {
   CheckCircle,
   ExternalLink,
   AlertTriangle,
+  Package,
+  Plus,
+  ChevronRight,
 } from "lucide-react";
 import {
   useApp,
@@ -19,6 +22,43 @@ import {
   getSKUReferenceImage,
 } from "./AppContext";
 import { db } from "@/lib/services";
+
+// ── Amazon-style circular logo (dark circle + 'a' + orange smile + green dot) ──
+function NovaLogo({ size = 46 }: { size?: number }) {
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      {/* Dark circle */}
+      <div style={{
+        width: size, height: size, borderRadius: "50%",
+        background: "#1a1a1a",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+        position: "relative", overflow: "hidden"
+      }}>
+        {/* 'a' letter */}
+        <span style={{
+          fontSize: size * 0.46, fontWeight: 900, color: "#fff",
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          lineHeight: 1, marginTop: "2px", letterSpacing: "-1px"
+        }}>a</span>
+        {/* Orange smile/arrow */}
+        <svg width={size * 0.58} height={size * 0.18} viewBox="0 0 30 9" style={{ marginTop: "-2px" }}>
+          <path d="M1 4 Q7 9 15 6 Q22 3 29 5" stroke="#FF9900" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
+          <path d="M25 3 L29 5 L25.5 7.5" stroke="#FF9900" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      {/* Green online dot */}
+      <span style={{
+        position: "absolute", bottom: 1, right: 1,
+        width: size * 0.22, height: size * 0.22,
+        background: "#16a34a", borderRadius: "50%",
+        border: `${size * 0.04}px solid #fff`,
+        display: "block"
+      }} />
+    </div>
+  );
+}
 
 export default function L3Deflection() {
   const {
@@ -38,24 +78,38 @@ export default function L3Deflection() {
     fetchWalletInfo,
     setInspectQueue,
     setShowReturnSuccess,
+    setReasonOrder,
+    setSelectedProductSku,
+    setFraudSku,
+    setFraudOrderId,
+    setFraudItemName,
+    setRefundBaseAmount,
+    setFraudClaimType,
+    setFraudImage,
+    setFraudResult,
+    setUserDescription,
   } = useApp() as any;
 
   const [chatInput, setChatInput] = React.useState(_chatInput || "");
   const [chatLoading, setChatLoading] = React.useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Look up manual for the current product to check warranty void status
+  const order = walletInfo?.orders?.find((o: any) => o.sku === deflectSku);
   const manual = deflectSku ? db.getManualBySku(deflectSku) : null;
   const warrantyVoidWarning = manual?.warrantyVoidOnSelfRepair === true;
 
-  // Clear chat history whenever the user switches to a different product
-  useEffect(() => {
-    setChatMessages([]);
-  }, [deflectSku]);
+  // Compute a readable delivery date (purchase + ~5 days)
+  const deliveryDate = React.useMemo(() => {
+    if (!order?.purchaseDate) return null;
+    try {
+      const d = new Date(order.purchaseDate);
+      d.setDate(d.getDate() + 5);
+      return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+    } catch { return null; }
+  }, [order?.purchaseDate]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  useEffect(() => { setChatMessages([]); }, [deflectSku]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
   const handleSendChatMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -65,22 +119,15 @@ export default function L3Deflection() {
     setChatInput("");
     setChatLoading(true);
     try {
-      const order = walletInfo.orders?.find((o: any) => o.sku === deflectSku);
       const purchaseDate = order?.purchaseDate || "2026-06-01";
       const returnWindowDays = order?.returnWindowDays || 30;
-
       const res = await fetch("/api/chat-deflection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...chatMessages.map((m: any) => ({ role: m.role, content: m.content })), { role: "user", content: userMsg }],
-          productName: deflectProduct,
-          reasonCode: deflectReason,
-          guides: ifixitGuides,
-          userId: profileUserId,
-          purchaseDate,
-          returnWindowDays,
-          sku: deflectSku,
+          productName: deflectProduct, reasonCode: deflectReason, guides: ifixitGuides,
+          userId: profileUserId, purchaseDate, returnWindowDays, sku: deflectSku,
         })
       });
       if (res.ok) {
@@ -113,171 +160,287 @@ export default function L3Deflection() {
   const resolveDeflection = async () => {
     try {
       await fetch("/api/deflection-log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: profileUserId, productName: deflectProduct, sku: deflectSku, reasonCode: deflectReason, deflected: true })
       });
       fetchWalletInfo();
     } catch { }
     setMetrics((prev: any) => ({
-      ...prev,
-      totalProcessed: prev.totalProcessed + 1,
+      ...prev, totalProcessed: prev.totalProcessed + 1,
       deflectedRate: Math.round(((prev.totalProcessed * prev.deflectedRate / 100) + 1) / (prev.totalProcessed + 1) * 100)
     }));
-    setChatMessages((prev: any) => [...prev, { role: "bot", content: "🎉 **Deflection Successful!** Your return has been cancelled. Thank you for choosing to repair — you've helped reduce unnecessary waste and carbon emissions!" }]);
-    try {
-      const confetti = (window as any).confetti;
-      if (confetti) confetti({ colors: ["#10b981", "#6366f1"], particleCount: 100, spread: 70 });
-    } catch { }
+    setChatMessages((prev: any) => [...prev, { role: "bot", content: "🎉 **Issue Resolved!** Your return has been cancelled. Thank you for choosing to repair — you've helped reduce unnecessary waste!" }]);
+    try { const c = (window as any).confetti; if (c) c({ colors: ["#10b981", "#6366f1"], particleCount: 100, spread: 70 }); } catch { }
+    
+    // Redirect to My Orders
+    setTimeout(() => setActiveTab("orders"), 2000);
   };
 
+  const handleStillReturn = () => {
+    // User already indicated it's defective via the deflection flow.
+    // Skip Return Reasons and route directly to Verify Return (L2 Fraud).
+    if (order) {
+      setSelectedProductSku(order.sku);
+      setFraudSku(order.sku);
+      setFraudOrderId(order.orderId);
+      setFraudItemName(order.name);
+      setRefundBaseAmount(order.price);
+      setFraudClaimType("damaged_product");
+      setFraudImage(null);
+      setFraudResult(null);
+      setUserDescription("");
+      
+      setActiveTab("fraud-mitigation");
+    }
+  };
+
+  const now = new Date();
+  const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")} ${now.getHours() >= 12 ? "PM" : "AM"}`;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px", background: "#FFF", padding: "20px", border: "1px solid #DDD", borderRadius: "4px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-        <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111" }}>Chat with Nova — AI Tech Support</h2>
-        <span style={{ background: "#c45500", color: "white", padding: "3px 8px", fontSize: "12px", fontWeight: "bold", borderRadius: "0px" }}>AI Assistant</span>
+    <div style={{
+      position: "fixed", top: "98px", left: 0, right: 0, bottom: 0,
+      display: "flex", flexDirection: "column",
+      background: "#f7f8fa", fontFamily: "'Inter', sans-serif",
+      zIndex: 50, overflow: "hidden"
+    }}>
+
+      {/* ── HEADER ── */}
+      <div style={{
+        background: "#fff", padding: "10px 20px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0, borderBottom: "1px solid #D5D9D9",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.08)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <NovaLogo size={48} />
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "17px", fontWeight: 800, color: "#0F1111" }}>Nova — AI Tech Support</span>
+              <span style={{ background: "#FF9900", color: "#0F1111", fontSize: "10px", fontWeight: 900, padding: "2px 8px", borderRadius: "3px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Beta</span>
+            </div>
+            <div style={{ fontSize: "12px", color: "#565959", fontWeight: 600, marginTop: "1px" }}>Get step-by-step help to fix your device issues</div>
+          </div>
+        </div>
+        {warrantyVoidWarning && (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "#fff8f0", border: "1px solid #FF9900", borderRadius: "6px", padding: "6px 12px" }}>
+            <AlertTriangle style={{ width: "14px", height: "14px", color: "#C45500", flexShrink: 0 }} />
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#C45500" }}>Self-repair may void your {manual!.warrantyDays}-day warranty</span>
+          </div>
+        )}
       </div>
 
-      {/* Selected Product Context */}
-      {deflectProduct && deflectSku && (
-        <div style={{ border: "1px solid #e7e7e7" }} className="p-4 rounded-lg bg-white flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm">
-          <div className="w-24 h-24 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0">
-            <img src={getSKUReferenceImage(deflectSku)} className="w-full h-full object-contain" alt={deflectProduct} />
-          </div>
-          <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Troubleshooting Product</span>
-              <span className="mini-badge info text-[9px] font-mono font-bold">SKU: {deflectSku}</span>
-            </div>
-            <h3 className="text-sm font-bold text-slate-800">{deflectProduct}</h3>
-          </div>
-        </div>
-      )}
+      {/* ── BODY ── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
-      {/* Warranty void warning banner */}
-      {warrantyVoidWarning && (
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-bold text-amber-800">
-              ⚠️ WARNING: Attempting to fix this yourself will void your {manual!.warrantyDays}-day warranty.
-            </p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              Consider contacting the manufacturer's authorised service centre to preserve your warranty coverage.
-            </p>
-          </div>
-        </div>
-      )}
+        {/* ── LEFT SIDEBAR (wider) ── */}
+        <div style={{ width: "400px", flexShrink: 0, background: "#fff", borderRight: "1px solid #D5D9D9", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "18px 16px" }}>
 
-      <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] gap-4">
-        {/* Guides panel */}
-        <div className="flex flex-col gap-3">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">iFixit Repair Guides</div>
-          {ifixitGuides.length === 0 ? (
-            <div className="text-[11px] text-slate-400 italic py-4 text-center bg-slate-50 border border-slate-100 rounded-xl">
-              Guides load automatically based on the selected product.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {ifixitGuides.map((guide: any) => (
-                <a key={guide.id} href={guide.url} target="_blank" rel="noopener noreferrer" className="block bg-white hover:bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px] leading-relaxed transition-all group" style={{ textDecoration: 'none' }}>
-                  <span className="font-bold text-slate-800 block mb-1">{guide.title}</span>
-                  {guide.summary && <span className="text-slate-500 block mb-2 text-[11px] leading-relaxed">{guide.summary.slice(0, 80)}...</span>}
-                  <span style={{ color: "#007185", textDecoration: "none" }} className="text-[12px] flex items-center gap-1 font-medium hover:underline">
-                    View Guide <ExternalLink className="w-3 h-3" />
-                  </span>
-                </a>
-              ))}
-            </div>
-          )}
+            {/* Your Product */}
 
-
-        </div>
-
-        {/* Chat window */}
-        <div className="bg-white border border-slate-200 rounded-lg flex flex-col h-[450px] overflow-hidden shadow-sm">
-          <div style={{ backgroundColor: "#f0f2f2", borderBottom: "1px solid #d5d9d9", display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px" }} className="flex-shrink-0 justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <img src="/nova_icon.png" alt="Nova" className="w-9 h-9 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-white rounded-full bg-emerald-500" />
-              </div>
-              <span className="text-sm font-bold text-slate-800">Nova</span>
-            </div>
-            <span className="text-[11px] text-slate-500 font-medium truncate max-w-[120px]" title={deflectProduct}>{deflectProduct}</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50/50">
-            {chatMessages.map((msg: any, index: number) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'}`}>
-                  <div className="whitespace-pre-wrap">{renderMarkdown(msg.content)}</div>
+            {deflectSku && (
+              <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", marginBottom: "14px", overflow: "hidden" }}>
+                {/* Large product image */}
+                <div style={{ background: "#f7f8fa", padding: "20px", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "280px" }}>
+                  <img
+                    src={getSKUReferenceImage(deflectSku)}
+                    alt={deflectProduct}
+                    style={{ width: "240px", height: "240px", objectFit: "contain" }}
+                  />
+                </div>
+                {/* Product info */}
+                <div style={{ padding: "14px 16px", borderTop: "1px solid #D5D9D9" }}>
+                  <div style={{ fontSize: "15px", fontWeight: 800, color: "#0F1111", marginBottom: "8px", lineHeight: "1.3" }}>
+                    {deflectProduct || "Your Product"}
+                  </div>
+                  {order?.orderId && (
+                    <div style={{ fontSize: "12px", color: "#565959", fontWeight: 600, marginBottom: "3px" }}>
+                      Order ID: {order.orderId}
+                    </div>
+                  )}
+                  {deliveryDate && (
+                    <div style={{ fontSize: "12px", color: "#565959", fontWeight: 600, marginBottom: "3px" }}>
+                      Delivered on {deliveryDate}
+                    </div>
+                  )}
+                  {order?.purchaseDate && (
+                    <div style={{ fontSize: "12px", color: "#565959", fontWeight: 600 }}>
+                      Ordered on {order.purchaseDate}
+                    </div>
+                  )}
                 </div>
               </div>
+            )}
+
+            {/* Reported Issue */}
+            {deflectReason && (
+              <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px 14px", marginBottom: "12px", background: "#fff" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 800, color: "#0F1111" }}>Reported Issue</span>
+                  <button
+                    onClick={() => setDeflectReason("")}
+                    style={{ fontSize: "12px", fontWeight: 700, color: "#007185", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    className="hover:text-[#C7511F]"
+                  >Edit</button>
+                </div>
+                <div style={{ fontSize: "13px", color: "#0F1111", fontWeight: 600 }}>{deflectReason}</div>
+              </div>
+            )}
+
+            {/* Tip */}
+            <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px 14px", marginBottom: "12px", background: "#fffbf0" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                <span style={{ fontSize: "18px", flexShrink: 0 }}>💡</span>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: 800, color: "#0F1111", marginBottom: "4px" }}>Tip</div>
+                  <div style={{ fontSize: "12px", color: "#0F1111", fontWeight: 600, lineHeight: "1.6" }}>
+                    Try the recommended steps below. <span style={{ fontWeight: 900, color: "#007600" }}>90%</span> of similar issues are resolved without return.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* iFixit Guides */}
+            {ifixitGuides.length > 0 && (
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 800, color: "#565959", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>iFixit Repair Guides</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {ifixitGuides.map((guide: any) => (
+                    <a key={guide.id} href={guide.url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "block", background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "10px 12px", textDecoration: "none" }}
+                      className="hover:bg-[#f7f8fa] transition-colors">
+                      <span style={{ fontSize: "12px", fontWeight: 800, color: "#0F1111", display: "block", marginBottom: "3px", lineHeight: "1.3" }}>{guide.title}</span>
+                      {guide.summary && <span style={{ fontSize: "11px", color: "#565959", fontWeight: 500 }}>{guide.summary.slice(0, 70)}...</span>}
+                      <span style={{ color: "#007185", fontSize: "11px", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px", marginTop: "4px" }}>
+                        View Guide <ExternalLink style={{ width: "10px", height: "10px" }} />
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Need more help */}
+            <div style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "12px 14px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 800, color: "#0F1111", marginBottom: "3px" }}>Need more help?</div>
+                <div style={{ fontSize: "12px", color: "#565959", fontWeight: 600, lineHeight: "1.5" }}>If the issue continues, you can choose to return the product.</div>
+              </div>
+              <Package style={{ width: "34px", height: "34px", color: "#D5D9D9", flexShrink: 0, marginLeft: "10px" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── CHAT PANEL ── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff" }}>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: "18px", background: "#f7f8fa" }}>
+            
+            {/* Default welcome message */}
+            {chatMessages.length === 0 && (
+              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", maxWidth: "72%" }}>
+                <NovaLogo size={36} />
+                <div>
+                  <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "0 12px 12px 12px", padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#0F1111", lineHeight: "1.7", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                    Hi! I'm Nova, your AI Tech Support assistant.<br />
+                    I can help you fix issues with your <strong>{deflectProduct || "product"}</strong>.<br />
+                    What seems to be the problem?
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#999", fontWeight: 500, marginTop: "5px", paddingLeft: "4px" }}>{timeStr}</div>
+                </div>
+              </div>
+            )}
+
+            {chatMessages.map((msg: any, index: number) => (
+              <div key={index} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                {msg.role === "bot" && (
+                  <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", maxWidth: "72%" }}>
+                    <NovaLogo size={36} />
+                    <div>
+                      <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "0 12px 12px 12px", padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#0F1111", lineHeight: "1.7", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                        <div className="whitespace-pre-wrap">{renderMarkdown(msg.content)}</div>
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#999", fontWeight: 500, marginTop: "5px", paddingLeft: "4px" }}>{timeStr}</div>
+                    </div>
+                  </div>
+                )}
+                {msg.role === "user" && (
+                  <div style={{ maxWidth: "60%" }}>
+                    <div style={{ background: "#e8f4f8", borderRadius: "12px 0 12px 12px", padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#0F1111", lineHeight: "1.7" }}>
+                      {msg.content}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#999", fontWeight: 500, marginTop: "5px", textAlign: "right", paddingRight: "4px" }}>{timeStr} ✓✓</div>
+                  </div>
+                )}
+              </div>
             ))}
+
             {chatLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <NovaLogo size={36} />
+                <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "0 12px 12px 12px", padding: "14px 18px", display: "flex", alignItems: "center", gap: "5px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                  {[0, 150, 300].map((delay) => (
+                    <div key={delay} style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#0F1111", animationDelay: `${delay}ms` }} className="animate-bounce" />
+                  ))}
                 </div>
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          <div className="mt-auto flex flex-col flex-shrink-0">
-            <div className="flex gap-3 px-4 py-3 bg-slate-50 border-t border-slate-200">
-              <button 
-                style={{ background: "#FFA41C", color: "#0F1111", borderRadius: "4px" }}
-                className="flex-1 py-2 text-[13px] font-bold shadow-sm hover:bg-[#F7CA00] flex items-center justify-center transition-colors" 
-                onClick={resolveDeflection}
-              >
-                Resolved! Cancel Return
+          {/* ── INPUT BAR ── */}
+          <div style={{ flexShrink: 0, background: "#fff", borderTop: "1px solid #D5D9D9" }}>
+            <form onSubmit={handleSendChatMessage} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px" }}>
+              <button type="button" style={{ background: "none", border: "none", cursor: "pointer", color: "#565959", padding: "4px", flexShrink: 0 }}>
+                <Plus style={{ width: "22px", height: "22px" }} />
               </button>
-              <button 
-                style={{ background: "#FFF", color: "#0F1111", borderRadius: "4px", border: "1px solid #a88734" }}
-                className="flex-1 py-2 text-[13px] font-bold shadow-sm hover:bg-slate-50 flex items-center justify-center transition-colors" 
-                onClick={() => {
-                setChatMessages((prev: any) => [...prev, { role: "bot", content: "Return Initiated." }]);
-                
-                setInspectQueue((prev: any) => {
-                  if (prev.some((q: any) => q.orderId === deflectOrderId)) return prev;
-                  return [...prev, {
-                    id: Math.random().toString(36).substring(7),
-                    orderId: deflectOrderId,
-                    sku: deflectSku,
-                    itemName: deflectProduct,
-                    source: "vibe",
-                    timestamp: new Date().toISOString()
-                  }];
-                });
-                setShowReturnSuccess(true);
-                setTimeout(() => setActiveTab("orders"), 1500);
-              }}>
-                Still Return
-              </button>
-            </div>
-
-            <form onSubmit={handleSendChatMessage} className="flex gap-3 px-4 py-3 bg-white border-t border-slate-200 items-center">
               <input
                 type="text"
-                className="flex-1 bg-white border border-[#a6a6a6] rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-[#e77600] focus:shadow-[0_0_3px_2px_rgba(228,121,17,0.5)] transition-all h-10"
+                style={{ flex: 1, background: "#fff", border: "1px solid #D5D9D9", borderRadius: "24px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, color: "#0F1111", outline: "none", transition: "border-color 0.15s" }}
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
-                placeholder="Describe your issue..."
+                placeholder="Type a message..."
                 disabled={chatLoading}
+                onFocus={e => (e.target.style.borderColor = "#FF9900")}
+                onBlur={e => (e.target.style.borderColor = "#D5D9D9")}
               />
-              <button 
-                type="submit" 
-                style={{ background: "#FFD814", border: "1px solid #a88734", borderRadius: "4px", padding: "0 20px", fontSize: "14px" }}
-                className="h-10 font-bold text-[#0F1111] hover:bg-[#F7CA00] transition-colors" 
+              <button
+                type="submit"
                 disabled={chatLoading || !chatInput.trim()}
+                style={{ width: "44px", height: "44px", borderRadius: "50%", background: chatInput.trim() ? "#FF9900" : "#D5D9D9", border: "none", cursor: chatInput.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}
               >
-                Send
+                <ChevronRight style={{ width: "20px", height: "20px", color: "#0F1111" }} />
               </button>
             </form>
+
+            {/* ── BOTTOM ACTION BUTTONS ── */}
+            <div style={{ display: "flex", borderTop: "1px solid #D5D9D9" }}>
+              <button
+                onClick={resolveDeflection}
+                style={{ flex: 1, padding: "14px 12px", background: "#fff", border: "none", borderRight: "1px solid #D5D9D9", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}
+                className="hover:bg-[#f0fff4] transition-colors"
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle style={{ width: "20px", height: "20px", color: "#16a34a" }} />
+                  <span style={{ fontSize: "14px", fontWeight: 800, color: "#15803d" }}>Issue Resolved</span>
+                </div>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "#565959" }}>My issue is fixed</span>
+              </button>
+
+              <button
+                onClick={handleStillReturn}
+                style={{ flex: 1, padding: "14px 12px", background: "#fff", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}
+                className="hover:bg-[#fffbf0] transition-colors"
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Package style={{ width: "20px", height: "20px", color: "#FF9900" }} />
+                  <span style={{ fontSize: "14px", fontWeight: 800, color: "#C45500" }}>Still Not Working</span>
+                </div>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "#565959" }}>I want to return this product</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

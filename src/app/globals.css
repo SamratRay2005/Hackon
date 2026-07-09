@@ -214,6 +214,9 @@ input, button, select, textarea { font-family: var(--font-sans); }
   height: 38px;
   overflow-x: auto;
   scrollbar-width: none;
+  position: sticky;
+  top: 60px;
+  z-index: 90;
 }
 .amz-subnav::-webkit-scrollbar { display: none; }
 .amz-subnav-item {
