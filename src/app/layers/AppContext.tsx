@@ -432,10 +432,10 @@ export function WebcamCapture({ onCapture, overlayType, compact }: WebcamCapture
             </div>
           )}
           <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-            <button type="button" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1.5 px-4 rounded-full shadow-lg text-[11px] flex items-center gap-1.5 transition-all" onClick={captureSnapshot}>
+            <button type="button" className="bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-1.5 px-4 rounded-full shadow-lg text-[11px] flex items-center gap-1.5 transition-all" onClick={captureSnapshot}>
               <Camera className="w-3.5 h-3.5" /> Snap
             </button>
-            <button type="button" className="bg-white/90 hover:bg-white text-slate-800 font-bold py-1.5 px-4 rounded-full shadow-lg text-[11px] transition-all" onClick={stopCamera}>
+            <button type="button" className="bg-white hover:bg-[#F7F8F8] border border-[#D5D9D9] text-[#0F1111] font-bold py-1.5 px-4 rounded-full shadow-lg text-[11px] transition-all" onClick={stopCamera}>
               Cancel
             </button>
           </div>
@@ -444,14 +444,14 @@ export function WebcamCapture({ onCapture, overlayType, compact }: WebcamCapture
         <div className="flex flex-col gap-2 w-full">
           {error && <p className="text-[10px] text-rose-500 font-medium bg-rose-50 border border-rose-100 px-2.5 py-1.5 rounded-lg">{error}</p>}
           <div className={`flex gap-2 w-full ${compact ? "" : "flex-col sm:flex-row"}`}>
-            <button type="button" className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2 rounded-xl border border-indigo-200 shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={startCamera}>
+            <button type="button" className="flex-1 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-2 rounded-full shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={startCamera}>
               <Camera className="w-3.5 h-3.5" /> Camera
             </button>
-            <label className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-2 rounded-xl border border-slate-200 shadow-sm text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+            <label className="flex-1 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-2 rounded-full shadow-sm text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all">
               <Upload className="w-3.5 h-3.5" /> Upload
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </label>
-            <button type="button" className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold py-2 rounded-xl border border-amber-200 shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={loadDemo}>
+            <button type="button" className="flex-1 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] font-bold py-2 rounded-full shadow-sm text-xs flex items-center justify-center gap-1.5 transition-all" onClick={loadDemo}>
               <Zap className="w-3.5 h-3.5" /> Demo
             </button>
           </div>
@@ -535,7 +535,7 @@ export function HeroCarousel({ onShopNow }: { onShopNow: (sku: string) => void }
         </div>
         <div className="hero-slide-image-col" style={{ background: `linear-gradient(135deg, ${slide.theme.accentColor}08, ${slide.theme.accentColor}14)` }}>
           <div className="absolute w-72 h-72 rounded-full opacity-10 blur-3xl" style={{ background: slide.theme.accentColor, right: "-3rem", top: "50%", transform: "translateY(-50%)" }} />
-          <img src={slide.image} alt={slide.product.name} className="w-full h-full object-cover" style={{ position: "relative", zIndex: 1 }} />
+          <img src={slide.image} alt={slide.product.name} className="w-full h-full object-contain" style={{ position: "relative", zIndex: 1, objectPosition: "center" }} />
           <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-100 rounded-xl px-3 py-2 shadow-md flex items-center gap-2" style={{ zIndex: 2 }}>
             <div className="w-2 h-2 rounded-full" style={{ background: slide.theme.accentColor }} />
             <span className="text-xs font-bold text-slate-700">{slide.product.brand}</span>
@@ -544,7 +544,6 @@ export function HeroCarousel({ onShopNow }: { onShopNow: (sku: string) => void }
           </div>
         </div>
       </div>
-      <div className="carousel-counter">{currentSlide + 1} / {slides.length}</div>
       <button className="carousel-arrow prev" onClick={handlePrev} aria-label="Previous slide"><ChevronLeft className="w-4 h-4" /></button>
       <button className="carousel-arrow next" onClick={handleNext} aria-label="Next slide"><ChevronRight className="w-4 h-4" /></button>
       <div className="carousel-dots">

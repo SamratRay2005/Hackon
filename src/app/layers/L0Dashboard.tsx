@@ -15,7 +15,12 @@ import {
   Zap,
   X,
   Info,
-  Shirt
+  Shirt,
+  Star,
+  ChevronDown,
+  Camera,
+  Upload,
+  ScanLine,
 } from "lucide-react";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 import {
@@ -41,10 +46,11 @@ export default function L0Dashboard() {
 
   const [shopTab, setShopTab] = React.useState<"catalog" | "preloved">("catalog");
   const [selectedProductDetails, setSelectedProductDetails] = React.useState<any>(null);
-  const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = React.useState<string>("");
 
   // Catalog State
   const [localCatalogSearch, setLocalCatalogSearch] = React.useState("");
+  const [quickAddProduct, setQuickAddProduct] = React.useState<any>(null);
 
   const filteredCatalog = PRODUCT_CATALOG.filter(p => {
     const activeSearch = searchQuery || localCatalogSearch;
@@ -107,7 +113,7 @@ export default function L0Dashboard() {
       ...item,
       isPreloved
     });
-    setSelectedSize(null);
+    setSelectedSize("");
   };
 
   const handleAddToCart = () => {
@@ -128,11 +134,39 @@ export default function L0Dashboard() {
     ]);
     
     setSelectedProductDetails(null);
-    setSelectedSize(null);
+    setSelectedSize("");
     try {
       const confetti = (window as any).confetti;
       if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } });
     } catch {}
+    setActiveTab("cart");
+  };
+
+  const handleQuickAdd = (p: any, isPreloved: boolean = false) => {
+    const needsSize = (p.category === "Apparel" || p.category === "Footwear") && p.sizes && p.sizes.length > 0;
+    if (needsSize) {
+      const catalogInfo = PRODUCT_CATALOG.find(x => x.sku === p.sku) || p;
+      setQuickAddProduct({ ...catalogInfo, ...p, isPreloved });
+      setSelectedSize("");
+    } else {
+      setShoppingBag((prev: any) => [
+        ...prev,
+        {
+          id: Math.random().toString(36).substr(2, 9),
+          sku: p.sku,
+          name: p.name,
+          price: p.price,
+          grade: isPreloved ? (p.grade || "B") : "A",
+          originalPrice: p.originalPrice || p.price,
+          isPreloved: !!isPreloved,
+        }
+      ]);
+      try {
+        const confetti = (window as any).confetti;
+        if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } });
+      } catch {}
+      setActiveTab("cart");
+    }
   };
 
   return (
@@ -214,8 +248,16 @@ export default function L0Dashboard() {
                   <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(p, false)}>{p.name}</h3>
                   <div className="flex items-center gap-2">
                      <div className="flex items-center gap-1">
-                       <span className="text-[#DE7921] text-base leading-none">★★★★☆</span> 
-                       <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                       <span className="text-[#007185] text-sm">{(p.reviewScore || 4.1).toFixed(1)}</span>
+                       <div className="flex text-[#DE7921] text-sm leading-none">
+                         <Star className="w-4 h-4 fill-current stroke-current" />
+                         <Star className="w-4 h-4 fill-current stroke-current" />
+                         <Star className="w-4 h-4 fill-current stroke-current" />
+                         <Star className="w-4 h-4 fill-current stroke-current" />
+                         <Star className="w-4 h-4" />
+                       </div>
+                       <ChevronDown className="w-3 h-3 text-[#565959]" />
+                       <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">({(p.reviewCount || Math.random() * 5 + 1).toFixed(1)}k)</span>
                      </div>
                      <span className="bg-[#232F3E] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Prime</span>
                   </div>
@@ -234,10 +276,10 @@ export default function L0Dashboard() {
                   </div>
                   
                   <button
-                    className="w-full mt-auto h-10 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#a88734] text-[#111] rounded shadow-sm text-sm transition-colors flex items-center justify-center"
-                    onClick={() => openProductDetails(p, false)}
+                    className="w-full mt-auto h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-sm text-sm transition-colors flex items-center justify-center font-medium"
+                    onClick={() => handleQuickAdd(p, false)}
                   >
-                    View Details
+                    Add to cart
                   </button>
                 </div>
               </div>
@@ -340,8 +382,16 @@ export default function L0Dashboard() {
                         <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
                         <div className="flex items-center gap-2">
                            <div className="flex items-center gap-1">
-                             <span className="text-[#DE7921] text-base leading-none">★★★★☆</span> 
-                             <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                             <span className="text-[#007185] text-sm">{(item.reviewScore || 4.1).toFixed(1)}</span>
+                             <div className="flex text-[#DE7921] text-sm leading-none">
+                               <Star className="w-4 h-4 fill-current stroke-current" />
+                               <Star className="w-4 h-4 fill-current stroke-current" />
+                               <Star className="w-4 h-4 fill-current stroke-current" />
+                               <Star className="w-4 h-4 fill-current stroke-current" />
+                               <Star className="w-4 h-4" />
+                             </div>
+                             <ChevronDown className="w-3 h-3 text-[#565959]" />
+                             <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(item.reviewCount || Math.random() * 5 + 1).toFixed(1)}k</span>
                            </div>
                            <span className="bg-[#007185] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Certified</span>
                         </div>
@@ -366,10 +416,10 @@ export default function L0Dashboard() {
                           )}
                         </div>
                         <button
-                          className="w-full mt-auto h-10 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#a88734] text-[#111] rounded shadow-sm text-sm transition-colors flex items-center justify-center"
-                          onClick={() => openProductDetails(item, true)}
+                          className="w-full mt-auto h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-sm text-sm transition-colors flex items-center justify-center font-medium"
+                          onClick={() => handleQuickAdd(item, true)}
                         >
-                          View Details
+                          Add to cart
                         </button>
                       </div>
                     </div>
@@ -412,8 +462,16 @@ export default function L0Dashboard() {
 
                     <div className="flex items-center gap-2">
                        <div className="flex items-center gap-1">
-                         <span className="text-[#DE7921] text-base leading-none">★★★★☆</span> 
-                         <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(Math.random() * 5 + 1).toFixed(1)}k</span>
+                         <span className="text-[#007185] text-sm">{(item.reviewScore || 4.1).toFixed(1)}</span>
+                         <div className="flex text-[#DE7921] text-sm leading-none">
+                           <Star className="w-4 h-4 fill-current stroke-current" />
+                           <Star className="w-4 h-4 fill-current stroke-current" />
+                           <Star className="w-4 h-4 fill-current stroke-current" />
+                           <Star className="w-4 h-4 fill-current stroke-current" />
+                           <Star className="w-4 h-4" />
+                         </div>
+                         <ChevronDown className="w-3 h-3 text-[#565959]" />
+                         <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(item.reviewCount || Math.random() * 5 + 1).toFixed(1)}k</span>
                        </div>
                        <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Local</span>
                     </div>
@@ -442,10 +500,10 @@ export default function L0Dashboard() {
                     </div>
 
                     <button
-                      className="w-full mt-auto h-10 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#a88734] text-[#111] rounded shadow-sm text-sm transition-colors flex items-center justify-center"
-                      onClick={() => openProductDetails(item, true)}
+                      className="w-full mt-auto h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-sm text-sm transition-colors flex items-center justify-center font-medium"
+                      onClick={() => handleQuickAdd(item, true)}
                     >
-                      View Details
+                      Add to cart
                     </button>
                   </div>
                 </div>
@@ -591,14 +649,159 @@ export default function L0Dashboard() {
                 >
                   {(selectedProductDetails.category === "Apparel" || selectedProductDetails.category === "Footwear") && !selectedSize 
                     ? "Select a Size to Add to Cart" 
-                    : "Add to Cart"}
+                      : "Add to Cart"}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Quick Add Modal */}
+      {quickAddProduct && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[520px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-[15px] font-bold text-[#0F1111]">Select Size & Add to Cart</h2>
+              <button onClick={() => setQuickAddProduct(null)} className="text-gray-400 hover:text-black transition-colors p-1 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Product Info */}
+            <div className="flex gap-5 px-6 py-5 bg-[#FAFAFA] border-b border-gray-100">
+              <div className="w-[100px] h-[100px] flex-shrink-0 bg-white border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                <img src={getSKUReferenceImage(quickAddProduct.sku)} alt={quickAddProduct.name} className="w-full h-full object-contain" />
+              </div>
+              <div className="flex flex-col justify-center flex-1 gap-1">
+                <h3 className="text-[15px] font-bold text-[#0F1111] leading-snug line-clamp-2">{quickAddProduct.name}</h3>
+                <div className="text-[13px] text-[#565959]">
+                  Colour: <span className="font-semibold text-[#0F1111]">{quickAddProduct.colors?.[0] || "Default"}</span>
+                </div>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-[12px] text-[#B12704] leading-none">$</span>
+                  <span className="text-[24px] text-[#B12704] font-medium leading-none">{Math.floor(quickAddProduct.price)}</span>
+                  <span className="text-[12px] text-[#B12704]">.{(quickAddProduct.price % 1).toFixed(2).substring(2)}</span>
+                  <span className="text-[12px] text-[#007600] font-medium ml-2">FREE Returns</span>
+                </div>
+                <div className="text-[12px] text-[#565959]">Prime <span className="text-[#007185] font-medium">FREE Delivery</span> Today</div>
+                <div className="text-[12px] text-[#007185] hover:underline cursor-pointer font-medium mt-0.5">See all item details</div>
+              </div>
+            </div>
+
+            {/* Size + AI Body */}
+            <div className="px-6 py-5 flex flex-col gap-4">
+
+              {/* Size label */}
+              <div className="flex items-center justify-between">
+                <div className="text-[13px] font-bold text-[#0F1111]">
+                  Size:&nbsp;
+                  {selectedSize
+                    ? <span className="text-[#007185]">{selectedSize} selected ✓</span>
+                    : <span className="font-normal text-[#565959]">please select</span>
+                  }
+                </div>
+              </div>
+
+              {/* Size Buttons */}
+              <div id="quick-add-sizes" className="flex flex-wrap gap-2 p-2 rounded-lg transition-all">
+                {quickAddProduct.sizes.map((s: string) => (
+                  <button
+                    key={s}
+                    onClick={() => setSelectedSize(s === selectedSize ? "" : s)}
+                    className={`min-w-[54px] h-11 px-4 rounded-md border text-[14px] transition-all flex items-center justify-center ${
+                      selectedSize === s
+                        ? 'border-[#007185] ring-1 ring-[#007185] bg-[#F0F8FA] text-[#0F1111] font-bold shadow-sm'
+                        : 'border-[#D5D9D9] bg-white text-[#0F1111] hover:border-[#007185] hover:bg-[#F7FAFA] font-medium'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+
+              {!selectedSize && (
+                <div className="text-[12px] text-[#565959]">👆 Tap a size, or use AI to find your perfect fit below</div>
+              )}
+
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-[#E3E6E6]" />
+                <span className="text-[11px] text-[#888C8C] uppercase tracking-widest font-bold">or</span>
+                <div className="flex-1 border-t border-[#E3E6E6]" />
+              </div>
+
+              {/* AI Scanner Row */}
+              <button
+                onClick={() => { setQuickAddProduct(null); routeToSizing(quickAddProduct.sku); }}
+                className="flex items-center gap-3 w-full py-3 px-4 rounded-lg border border-[#D5D9D9] bg-white hover:bg-[#F7F8F8] text-left transition-all group"
+              >
+                <div className="w-9 h-9 rounded-full bg-[#F0F8FA] border border-[#BEE3F0] flex items-center justify-center flex-shrink-0 group-hover:bg-[#E0F4F8] transition-colors">
+                  <Zap className="w-4 h-4 text-[#007185]" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[13px] font-bold text-[#0F1111]">Use AI Body Scanner</div>
+                  <div className="text-[12px] text-[#565959]">Get your perfect size from a selfie — 68% fewer returns</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-[#888C8C] -rotate-90 flex-shrink-0" />
+              </button>
+
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 px-6 py-4 border-t border-gray-100 bg-[#FAFAFA]">
+              <button
+                onClick={() => setQuickAddProduct(null)}
+                className="flex-1 py-2.5 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] rounded-full text-[13px] font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!selectedSize) {
+                    // Flash the size section to prompt user
+                    const sizeSection = document.getElementById("quick-add-sizes");
+                    if (sizeSection) {
+                      sizeSection.style.transition = "background 0.1s";
+                      sizeSection.style.background = "#FFF3CD";
+                      setTimeout(() => { sizeSection.style.background = ""; }, 600);
+                    }
+                    return;
+                  }
+                  setShoppingBag((prev: any) => [
+                    ...prev,
+                    {
+                      id: Math.random().toString(36).substr(2, 9),
+                      sku: quickAddProduct.sku,
+                      name: quickAddProduct.name,
+                      price: quickAddProduct.price,
+                      grade: quickAddProduct.isPreloved ? (quickAddProduct.grade || "B") : "A",
+                      originalPrice: quickAddProduct.originalPrice || quickAddProduct.price,
+                      size: selectedSize,
+                      isPreloved: !!quickAddProduct.isPreloved,
+                    }
+                  ]);
+                  setQuickAddProduct(null);
+                  try {
+                    const confetti = (window as any).confetti;
+                    if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } });
+                  } catch {}
+                  setActiveTab("cart");
+                }}
+                className="flex-[2] py-2.5 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] rounded-full text-[13px] font-bold transition-colors"
+              >
+                {selectedSize ? `Add Size ${selectedSize} to Cart` : "Add to cart"}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+
 

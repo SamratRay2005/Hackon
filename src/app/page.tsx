@@ -423,7 +423,8 @@ export default function Home() {
     { id: "grading", icon: Camera, label: "Inspect Item", subtitle: "Grade condition" },
     { id: "logistics", icon: Truck, label: "Arrange Shipping", subtitle: "Eco-route optimizer" },
     { id: "orders", icon: ShoppingBag, label: "My Orders", subtitle: "Purchase history" },
-    { id: "cart", icon: Wallet, label: "My Cart & Rewards", subtitle: "Bag, cashback & vouchers" },
+    { id: "cart", icon: ShoppingCart, label: "Shopping Cart", subtitle: "Your bag" },
+    { id: "rewards", icon: Wallet, label: "My Rewards", subtitle: "Cashback & vouchers" },
   ];
 
   // ── CONTEXT VALUE ──
@@ -534,7 +535,7 @@ export default function Home() {
             <span>{authMode === "signin" ? "New to ReLoop?" : "Already have an account?"}</span>
             <div style={{flex:1,height:'1px',background:'#DDD'}} />
           </div>
-          <button onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setAuthError(null); }}
+          <button type="button" onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setAuthError(null); }}
             style={{width:'100%',padding:'7px',fontSize:'0.82rem',background:'linear-gradient(to bottom,#f7f8fa,#e7e9ec)',border:'1px solid #ADB1B8',borderRadius:'3px',cursor:'pointer',color:'#0F1111'}}>
             {authMode === "signin" ? "Create your ReLoop account" : "Sign in to your account"}
           </button>
@@ -563,7 +564,7 @@ export default function Home() {
 
           {/* ── AMAZON NAVBAR (row 1: dark navy) ── */}
           <nav className="navbar" style={{gap:'0.5rem'}}>
-            <a href="#" className="navbar-logo" style={{padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none'}}>
+            <a href="#" className="navbar-logo" onClick={(e) => { e.preventDefault(); setActiveTab("dashboard"); }} style={{padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none'}}>
               <img src="/amazon_logo.png" alt="Amazon" style={{ height: '26px', objectFit: 'contain', marginTop: '4px' }} />
               <div style={{height: '18px', width: '1px', background: 'rgba(255, 255, 255, 0.4)', margin: '0 4px', marginTop: '2px'}} />
               <span style={{color: '#fff', fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '2px'}}>
@@ -587,7 +588,7 @@ export default function Home() {
               <input
                 type="text"
                 className="amz-search-input"
-                placeholder="Search Amazon & Pre-Loved"
+                placeholder="Search Amazon.in"
                 value={searchQuery}
                 onChange={e => {
                   setSearchQuery(e.target.value);
@@ -667,28 +668,15 @@ export default function Home() {
 
             {/* Right controls */}
             <div className="flex items-center gap-1">
-              {/* Architecture X-Ray */}
-              <button
-                onClick={() => setShowXRayModal(true)}
-                className="navbar-link hidden lg:flex items-center gap-1"
-                style={{flexDirection:'column',lineHeight:'1.1',padding:'4px 8px'}}
+              {/* My Rewards */}
+              <button 
+                onClick={() => setActiveTab("rewards")}
+                className="navbar-link hidden sm:flex flex-col" 
+                style={{lineHeight:'1.1',padding:'4px 8px'}}
               >
-                <span style={{fontSize:'0.65rem',color:'#ccc'}}>Explore</span>
-                <span style={{fontSize:'0.78rem',fontWeight:700}}>Architecture</span>
+                <span style={{fontSize:'0.65rem',color:'#ccc'}}>My</span>
+                <span style={{fontSize:'0.78rem',fontWeight:700}}>Rewards</span>
               </button>
-
-              {/* Green Credits */}
-              <div className="navbar-link hidden sm:flex flex-col" style={{lineHeight:'1.1',padding:'4px 8px',cursor:'default'}}>
-                <span style={{fontSize:'0.65rem',color:'#ccc'}}>🌿 Credits</span>
-                <span style={{fontSize:'0.78rem',fontWeight:700,color:'#FF9900'}}>{Math.round((walletInfo.cashbackBalance ?? 0) * 100)}</span>
-              </div>
-
-              {/* Returns & Orders */}
-              <div className="navbar-link hidden sm:flex flex-col" style={{lineHeight:'1.1',padding:'4px 8px',cursor:'default'}}>
-                <span style={{fontSize:'0.65rem',color:'#ccc'}}>Returns</span>
-                <span style={{fontSize:'0.78rem',fontWeight:700}}>& Orders</span>
-              </div>
-
               {/* Account + mode toggle */}
               <div className="relative">
                 <button
@@ -727,6 +715,7 @@ export default function Home() {
                         Your Account
                       </button>
                       <button
+                        type="button"
                         onClick={handleLogout}
                         style={{display:'block',width:'100%',textAlign:'left',padding:'6px 0',fontSize:'0.82rem',color:'#B12704',background:'none',border:'none',cursor:'pointer',fontWeight:600}}
                       >
@@ -736,6 +725,16 @@ export default function Home() {
                   </div>
                 )}
               </div>
+
+              {/* Returns & Orders */}
+              <button 
+                onClick={() => setActiveTab("orders")}
+                className="navbar-link hidden sm:flex flex-col" 
+                style={{lineHeight:'1.1',padding:'4px 8px'}}
+              >
+                <span style={{fontSize:'0.65rem',color:'#ccc'}}>Returns</span>
+                <span style={{fontSize:'0.78rem',fontWeight:700}}>& Orders</span>
+              </button>
 
               {/* Cart */}
               <button
@@ -773,15 +772,9 @@ export default function Home() {
             <div className="amz-subnav-item" style={{gap:'4px',fontWeight:700}}>
               <img src="/menu_icon.png" alt="Menu" style={{width: '18px', height: '18px'}} /> All
             </div>
-            {/* Mode badge */}
-            <div style={{display:'flex',alignItems:'center',marginLeft:'4px',marginRight:'8px'}}>
-              <span style={{background: globalMode==='admin'?'#FF9900':'#007600',color:'#0F1111',fontSize:'0.65rem',fontWeight:900,padding:'2px 8px',borderRadius:'3px',textTransform:'uppercase',letterSpacing:'0.05em'}}>
-                {globalMode === 'admin' ? '🔧 Admin Mode' : '🛍️ Customer Mode'}
-              </span>
-            </div>
             {navItems
               .filter(item => globalMode === 'user'
-                ? ['dashboard','fraud-mitigation','orders','cart'].includes(item.id)
+                ? false
                 : ['dashboard', 'fraud-mitigation', 'grading'].includes(item.id)
               )
               .map(item => (
@@ -794,45 +787,11 @@ export default function Home() {
                 </button>
               ))
             }
-            <div style={{position:'relative', marginLeft:'8px'}}>
-              <button
-                onClick={() => setShowProfileConfig(!showProfileConfig)}
-                className="amz-subnav-item"
-                style={{gap:'4px'}}
-              >
-                ⚙️ Config <ChevronDown style={{width:'12px',height:'12px',transform:showProfileConfig?'rotate(180deg)':'none',transition:'transform 0.2s'}} />
-              </button>
-              {showProfileConfig && (
-                <div style={{position:'absolute', top:'100%', left:0, background:'#FFF', color:'#0F1111', padding:'16px', borderRadius:'4px', border:'1px solid #DDD', boxShadow:'0 4px 12px rgba(0,0,0,0.15)', minWidth:'250px', zIndex:100}}>
-                  <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px', borderBottom:'1px solid #DDD', paddingBottom:'8px'}}>
-                    <div style={{width:'36px',height:'36px',borderRadius:'50%',background:'#232F3E',display:'flex',alignItems:'center',justifyContent:'center',color:'#FF9900',fontSize:'1rem',fontWeight:900,flexShrink:0}}>
-                      {profileUserId.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{fontSize:'0.85rem',fontWeight:700}}>{profileUserId}</div>
-                      <div style={{fontSize:'0.75rem',color:'#565959'}}>📍 ZIP {profileZip}</div>
-                    </div>
-                  </div>
-                  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                    {[
-                      { label: "User ID", value: profileUserId, setter: setProfileUserId, type: "text" },
-                      { label: "Email", value: profileEmail, setter: setProfileEmail, type: "email" },
-                      { label: "IP Address", value: profileIp, setter: setProfileIp, type: "text" },
-                      { label: "Zipcode", value: profileZip, setter: (v: string) => { setProfileZip(v); }, type: "text" },
-                      { label: "Prior Returns", value: String(profilePriorReturns), setter: (v: string) => setProfilePriorReturns(parseInt(v) || 0), type: "number" },
-                    ].map(field => (
-                      <div key={field.label}>
-                        <label style={{fontSize:'0.75rem',fontWeight:700,color:'#565959',display:'block',marginBottom:'2px'}}>{field.label}</label>
-                        <input type={field.type} value={field.value} onChange={e => field.setter(e.target.value)} style={{padding:'4px 8px',fontSize:'0.85rem',border:'1px solid #a0a0a0',borderRadius:'3px',width:'100%'}} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="amz-subnav-item" onClick={() => setShowXRayModal(true)} style={{marginLeft:'auto',cursor:'pointer',color:'#FF9900'}}>
-              ⚡ Architecture X-Ray
+            {/* Mode badge */}
+            <div style={{display:'flex',alignItems:'center',marginLeft:'auto',marginRight:'8px'}}>
+              <span style={{background: globalMode==='admin'?'#FF9900':'#007600',color:'#0F1111',fontSize:'0.65rem',fontWeight:900,padding:'2px 8px',borderRadius:'3px',textTransform:'uppercase',letterSpacing:'0.05em'}}>
+                {globalMode === 'admin' ? '🔧 Admin Mode' : '🛍️ Customer Mode'}
+              </span>
             </div>
           </div>
 
@@ -881,22 +840,50 @@ export default function Home() {
               )}
 
               {/* ── METRICS STRIP ── */}
-              <div className="metrics-card-strip">
-                {[
-                  { icon: ShoppingBag, color: "indigo", label: "Processed Audits", value: metrics.totalProcessed.toString() },
-                  { icon: TrendingDown, color: "emerald", label: "Return Deflection", value: `${metrics.deflectedRate}%` },
-                  { icon: Compass, color: "amber", label: "P2P Route Matches", value: metrics.p2pMatched.toString() },
-                  { icon: ShieldCheck, color: "rose", label: "Fraud Blocked", value: `${metrics.fraudAttemptsBlocked} blocked` },
-                ].map(({ icon: Icon, color, label, value }) => (
-                  <div key={label} className="metric-strip-card">
-                    <div className={`metric-strip-icon-box ${color}`}><Icon className="w-5 h-5" /></div>
-                    <div>
-                      <div style={{fontSize:'0.68rem',color:'#565959',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
-                      <div style={{fontSize:'1rem',fontWeight:800,color:'#0F1111'}}>{value}</div>
+              {globalMode === 'admin' && (
+                <div className="metrics-card-strip">
+                  {[
+                    { icon: ShoppingBag, color: "indigo", label: "Processed Audits", value: metrics.totalProcessed.toString() },
+                    { icon: TrendingDown, color: "emerald", label: "Return Deflection", value: `${metrics.deflectedRate}%` },
+                    { icon: Compass, color: "amber", label: "P2P Route Matches", value: metrics.p2pMatched.toString() },
+                    { icon: ShieldCheck, color: "rose", label: "Fraud Blocked", value: `${metrics.fraudAttemptsBlocked} blocked` },
+                  ].map(({ icon: Icon, color, label, value }) => (
+                    <div key={label} className="metric-strip-card">
+                      <div className={`metric-strip-icon-box ${color}`}><Icon className="w-5 h-5" /></div>
+                      <div>
+                        <div style={{fontSize:'0.68rem',color:'#565959',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
+                        <div style={{fontSize:'1rem',fontWeight:800,color:'#0F1111'}}>{value}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── BACK TO HOME ── */}
+              {activeTab !== "dashboard" && (
+                <button
+                  onClick={() => setActiveTab("dashboard")}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#007185",
+                    marginBottom: "12px",
+                    cursor: "pointer",
+                    background: "none",
+                    border: "none",
+                    padding: "4px 0",
+                  }}
+                  className="hover:text-[#c45500] group"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "translateX(0)", transition: "transform 0.15s" }} className="group-hover:-translate-x-1">
+                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                  </svg>
+                  Back to Home
+                </button>
+              )}
 
               {/* ── LAYER PANELS ── */}
               {activeTab === "dashboard" && <L0Dashboard />}
@@ -907,6 +894,7 @@ export default function Home() {
               {activeTab === "logistics" && <L5Logistics />}
               {activeTab === "orders" && <L6Orders />}
               {activeTab === "cart" && <L7Cart />}
+              {activeTab === "rewards" && <L7Cart showOnlyRewards={true} />}
 
             </main>
           </div>

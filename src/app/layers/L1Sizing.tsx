@@ -1,10 +1,9 @@
 "use client";
 
 /**
- * L1Sizing.tsx — Find My Size Tab
- * ──────────────────────────────────
- * Owns: Selfie size scan, size chart display, bracketing explainer.
- * API: /api/size-assist (POST)
+ * L1Sizing.tsx — Find My Size Tab (Redesigned)
+ * ──────────────────────────────────────────────
+ * Premium retail-style AI size recommender.
  */
 
 import React from "react";
@@ -15,6 +14,13 @@ import {
   Search,
   Shirt,
   X,
+  Zap,
+  Ruler,
+  ChevronRight,
+  ScanLine,
+  ArrowRight,
+  ShoppingBag,
+  User,
 } from "lucide-react";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 import {
@@ -49,12 +55,13 @@ export default function L1Sizing() {
   const [sizingLoading, setSizingLoading] = React.useState(false);
   const [heightInches, setHeightInches] = React.useState<number | "">("");
   const [acceptedSize, setAcceptedSize] = React.useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = React.useState<string>("");
   const selectedProduct = PRODUCT_CATALOG.find(x => x.sku === selectedProductSku);
   const isApparelOrFootwear = !!(selectedProduct && (selectedProduct.category === "Apparel" || selectedProduct.category === "Footwear"));
 
   const handleAddSizeToCart = (size: string) => {
     if (!selectedProduct) return;
-    const isActuallyBracketing = cart.some(item => item.sku === selectedProduct.sku && item.size !== size);
+    const isActuallyBracketing = cart.some((item: any) => item.sku === selectedProduct.sku && item.size !== size);
     setCart((prev: any[]) => [...prev, { id: Math.random().toString(36).slice(2), sku: selectedProduct.sku, name: selectedProduct.name, size, price: selectedProduct.price }]);
     if (isActuallyBracketing) setShowBracketingModal(true);
   };
@@ -64,9 +71,9 @@ export default function L1Sizing() {
     if (!sizingImage) return;
     setSizingLoading(true);
     const skuCounts: Record<string, number> = {};
-    cart.forEach(item => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
+    cart.forEach((item: any) => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
     const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
-    const bracketedSizes = cart.filter(item => item.sku === bracketedSku).map(item => item.size);
+    const bracketedSizes = cart.filter((item: any) => item.sku === bracketedSku).map((item: any) => item.size);
     try {
       const res = await fetch("/api/size-assist", {
         method: "POST",
@@ -86,16 +93,16 @@ export default function L1Sizing() {
 
   const applySizeRecommendation = (recommendedSize: string) => {
     setAcceptedSize(recommendedSize);
+    setSelectedSize(recommendedSize);
   };
 
   const handleAddToCart = () => {
     if (!acceptedSize) return;
     const skuCounts: Record<string, number> = {};
-    cart.forEach(item => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
+    cart.forEach((item: any) => { skuCounts[item.sku] = (skuCounts[item.sku] || 0) + 1; });
     const bracketedSku = Object.keys(skuCounts).find(sku => skuCounts[sku] > 1) || selectedProductSku;
     const bracketedProd = PRODUCT_CATALOG.find(p => p.sku === bracketedSku) || PRODUCT_CATALOG[0];
-    
-    // Add to Shopping Bag instead of instantly purchasing
+
     setShoppingBag((prev: any) => [
       ...prev,
       {
@@ -103,7 +110,7 @@ export default function L1Sizing() {
         sku: bracketedProd.sku,
         name: bracketedProd.name,
         price: bracketedProd.price,
-        grade: "A", // New catalog items are pristine Grade A
+        grade: "A",
         originalPrice: bracketedProd.price,
         size: acceptedSize,
         isPreloved: false
@@ -119,244 +126,344 @@ export default function L1Sizing() {
       const confetti = (window as any).confetti;
       if (confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
     } catch { }
+    setActiveTab("cart");
   };
 
   const chartData = getDynamicSizeChart(selectedProductSku);
 
   return (
-    <div className="flex flex-col gap-5">
-      <div style={{display:"flex", flexDirection:"column", gap:"20px", background:"#FFF", padding:"20px", border:"1px solid #DDD", borderRadius:"4px"}}>
-        <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
-          <h2 style={{fontSize:"24px", fontWeight:400, color:"#0F1111"}}>Find My Size — AI Fit Recommender</h2>
-          <span style={{fontSize:"12px", background:"#C7511F", color:"#FFF", padding:"2px 8px", borderRadius:"4px"}}>Size AI</span>
+    <div className="flex flex-col gap-0 bg-[#F7F8F8] min-h-screen">
+      {/* ── Page Header ── */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #E3E6E6", padding: "16px 24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Ruler className="w-5 h-5" style={{ color: "#007185" }} />
+          <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#0F1111" }}>Size Recommender</h1>
+          <span style={{ fontSize: "11px", background: "#C7511F", color: "#FFF", padding: "2px 8px", borderRadius: "3px", fontWeight: 700, letterSpacing: "0.05em" }}>AI POWERED</span>
         </div>
+        <p style={{ fontSize: "13px", color: "#565959", marginTop: "4px" }}>
+          Get your perfect fit in seconds. Our AI scans your body proportions and recommends the right size — reducing returns by up to 68%.
+        </p>
+      </div>
 
-        {/* Selected Product Context */}
-        {selectedProduct && (
-          <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/60 flex flex-col sm:flex-row gap-4 items-center sm:items-start shadow-sm mb-2">
-            <div className="w-24 h-24 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0">
-              <img src={getSKUReferenceImage(selectedProductSku)} className="w-full h-full object-contain" alt={selectedProduct.name} />
+      <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+
+        {/* ── Product Context Card ── */}
+        {selectedProduct ? (
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "16px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
+            <div style={{ width: "80px", height: "80px", flexShrink: 0, border: "1px solid #E3E6E6", borderRadius: "4px", overflow: "hidden", background: "#F7F8F8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src={getSKUReferenceImage(selectedProductSku)} style={{ width: "100%", height: "100%", objectFit: "contain" }} alt={selectedProduct.name} />
             </div>
-            <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Target Product</span>
-                <span className="mini-badge info text-[9px] font-mono font-bold">SKU: {selectedProductSku}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: "11px", color: "#565959", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Finding size for</div>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>{selectedProduct.name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "18px", fontWeight: 400, color: "#0F1111" }}>
+                  <span style={{ fontSize: "12px", verticalAlign: "top", lineHeight: "22px" }}>$</span>
+                  {Math.floor(selectedProduct.price)}
+                  <span style={{ fontSize: "12px" }}>.{(selectedProduct.price % 1).toFixed(2).substring(2)}</span>
+                </span>
+                <span style={{ fontSize: "12px", color: "#007600", fontWeight: 500 }}>Free Returns</span>
               </div>
-              <h3 className="text-sm font-bold text-slate-800">{selectedProduct.name}</h3>
-              <div className="text-emerald-600 font-extrabold font-mono">${selectedProduct.price.toFixed(2)}</div>
-              
-              {isApparelOrFootwear && (
-                <div className="mt-2">
-                  <div className="text-[10px] font-bold text-slate-500 mb-1">ADD SIZES TO TRY:</div>
-                  <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
-                    {(selectedProduct.sizes || ["S", "M", "L", "XL"]).map((size: string) => (
-                      <button
-                        key={size}
-                        onClick={() => handleAddSizeToCart(size)}
-                        className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 transition-all shadow-sm"
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
-        )}
-
-        {/* Sizing Cart (formerly in sidebar) */}
-        {cart.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col gap-2 mb-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center text-xs font-bold text-amber-900 border-b border-amber-200/50 pb-2">
-              <span>Your Size Try-On Cart</span>
-              <span className="bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]">{cart.length}</span>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {cart.map((item: any) => (
-                <div key={item.id} className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-amber-200 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">Sz {item.size}</span>
-                    <span className="text-amber-900 font-medium">{item.name.split(" ").slice(0,3).join(" ")}</span>
-                  </div>
-                  <button onClick={() => handleRemoveFromCart(item.id)} className="text-amber-400 hover:text-amber-600 transition-colors"><X className="w-4 h-4" /></button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {!isApparelOrFootwear ? (
-          <div className="flex flex-col gap-3">
-            <div className="warning-callout">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>
-                <strong>{selectedProduct?.name}</strong> ({selectedProduct?.category}) doesn't use size selection.
-                Pick an Apparel or Footwear item below to activate AI size scanning.
-              </span>
-            </div>
-
-            {/* Quick-pick: apparel/footwear from user's orders */}
-            {(walletInfo.orders || []).filter(o =>
-              ["apparel", "footwear"].includes(o.category.toLowerCase())
-            ).length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Your Apparel &amp; Footwear Orders</span>
-                  <div className="flex flex-wrap gap-2">
-                    {(walletInfo.orders || [])
-                      .filter(o => ["apparel", "footwear"].includes(o.category.toLowerCase()))
-                      .map(o => (
-                        <button
-                          key={o.sku}
-                          className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                          onClick={() => setSelectedProductSku(o.sku)}
-                        >
-                          <Shirt className="w-3 h-3" />
-                          {o.name.split(" ").slice(0, 3).join(" ")}
-                        </button>
-                      ))
-                    }
-                  </div>
-                </div>
-              )}
-
-            {/* Inline search filtered to apparel/footwear */}
-            <div className="relative">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Or Search by Product Name / SKU</span>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input
-                  type="text"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-400 font-semibold"
-                  placeholder="Search jackets, tees, shoes..."
-                  value={searchQuery}
-                  onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
-                  onFocus={() => setShowSuggestions(true)}
-                />
-              </div>
-              {showSuggestions && searchQuery && (
-                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-slate-100">
-                  {PRODUCT_CATALOG
-                    .filter(p =>
-                      (p.category === "Apparel" || p.category === "Footwear") &&
-                      (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
-                    )
-                    .slice(0, 8)
-                    .map(p => (
-                      <div
-                        key={p.sku}
-                        className="p-2.5 hover:bg-indigo-50 cursor-pointer flex items-center justify-between gap-2"
-                        onClick={() => { setSelectedProductSku(p.sku); setSearchQuery(""); setShowSuggestions(false); }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <img src={getSKUReferenceImage(p.sku)} alt={p.name} className="w-8 h-8 rounded object-cover flex-shrink-0 bg-slate-100" />
-                          <div>
-                            <div className="text-xs font-bold text-slate-800">{p.name}</div>
-                            <div className="text-[10px] text-indigo-500 font-mono">{p.category} · {p.sku}</div>
-                          </div>
-                        </div>
-                        <span className="text-emerald-600 font-extrabold text-xs font-mono">${p.price.toFixed(2)}</span>
-                      </div>
-                    ))
-                  }
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => setSelectedProductSku("")}
+              style={{ fontSize: "12px", color: "#007185", fontWeight: 500, border: "1px solid #007185", borderRadius: "3px", padding: "4px 10px", background: "none", cursor: "pointer" }}
+            >
+              Change
+            </button>
           </div>
         ) : (
-          <div className="info-callout">
-            <Camera className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>Snap a selfie using the camera below. Our AI maps your body proportions to the size chart and picks your perfect fit — cutting size-related returns by up to 68%.</span>
-          </div>
-        )}
-
-        {isApparelOrFootwear && (
-          <div className="border border-indigo-100 bg-indigo-50/30 rounded-2xl p-4 flex flex-col gap-3">
-            <div className="text-xs font-bold text-indigo-700 flex items-center gap-1.5">
-              <Camera className="w-3.5 h-3.5" /> Selfie Size Scan
-              <span className="text-[10px] font-normal text-indigo-500 ml-1">Maps your body to the size chart below</span>
-            </div>
-
-            {/* Height calibration field */}
-            <div className="flex flex-col gap-1.5 bg-white/70 border border-indigo-50 p-3 rounded-xl">
-              <label htmlFor="height-inches-input" className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                <span>Height (Inches) <span className="text-slate-400 font-normal">(Optional but recommended)</span></span>
-                {heightInches !== "" && (
-                  <span className="text-[10px] text-indigo-600 font-mono font-bold">
-                    {Math.floor(Number(heightInches) / 12)}&apos;{Number(heightInches) % 12}&quot;
-                  </span>
-                )}
-              </label>
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "16px" }}>
+            <div style={{ fontSize: "13px", color: "#565959", marginBottom: "10px", fontWeight: 600 }}>Search for an Apparel or Footwear product to get started:</div>
+            <div style={{ position: "relative" }}>
+              <Search style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "#888C8C" }} />
               <input
-                id="height-inches-input"
-                type="number"
-                min="36"
-                max="96"
-                placeholder="e.g. 68"
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-400 transition-all"
-                value={heightInches}
-                onChange={(e) => {
-                  const val = e.target.value === "" ? "" : Number(e.target.value);
-                  setHeightInches(val);
-                }}
+                type="text"
+                style={{ width: "100%", padding: "8px 10px 8px 32px", border: "1px solid #888C8C", borderRadius: "4px", fontSize: "13px", color: "#0F1111", outline: "none", boxSizing: "border-box" }}
+                placeholder="Search jackets, tees, shoes..."
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
               />
-              <span className="text-[9px] text-slate-400 leading-normal">
-                Anchors the 2D image scaling coordinates to true dimensions, preventing size hallucination.
-              </span>
             </div>
-
-            <WebcamCapture
-              onCapture={(base64) => {
-                setSizingImage(base64);
-                setSizingResult(null);
-              }}
-              overlayType="sizing"
-            />
-            {sizingImage && (
-              <div className="flex flex-col gap-2">
-                <span className="mini-badge success">Photo Ready — AI will analyse your proportions</span>
-                <img src={sizingImage} className="upload-preview rounded-xl" alt="Sizing photo" />
-                <button
-                  className="btn btn-primary w-full py-2.5 text-xs font-bold"
-                  disabled={sizingLoading}
-                  onClick={triggerSizeAssist}
-                >
-                  {sizingLoading ? <><span className="spinner" /> Analysing proportions...</> : "Analyze & Recommend My Size →"}
-                </button>
+            {showSuggestions && searchQuery && (
+              <div style={{ marginTop: "4px", border: "1px solid #D5D9D9", borderRadius: "4px", background: "#fff", maxHeight: "200px", overflowY: "auto" }}>
+                {PRODUCT_CATALOG
+                  .filter(p => (p.category === "Apparel" || p.category === "Footwear") && (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase())))
+                  .slice(0, 8)
+                  .map(p => (
+                    <div
+                      key={p.sku}
+                      style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", borderBottom: "1px solid #F0F2F2" }}
+                      onClick={() => { setSelectedProductSku(p.sku); setSearchQuery(""); setShowSuggestions(false); }}
+                      className="hover:bg-[#F7F8F8]"
+                    >
+                      <img src={getSKUReferenceImage(p.sku)} style={{ width: "36px", height: "36px", objectFit: "contain", flexShrink: 0 }} alt={p.name} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#0F1111" }}>{p.name}</div>
+                        <div style={{ fontSize: "11px", color: "#565959" }}>{p.category} · {p.sku}</div>
+                      </div>
+                      <span style={{ fontSize: "14px", color: "#0F1111", fontWeight: 600 }}>${p.price.toFixed(2)}</span>
+                    </div>
+                  ))
+                }
               </div>
             )}
           </div>
         )}
 
-        {/* Size chart for product */}
-        {(() => {
-          if (chartData) {
-            return (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-slate-700">{chartData.name} — {chartData.brand} Size Reference</h3>
+        {isApparelOrFootwear && (
+          <>
+            {/* ── Two-column layout: Size Picker + AI Scanner ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+
+              {/* LEFT: Manual Size Selection */}
+              <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                  <div style={{ width: "24px", height: "24px", background: "#232F3E", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>1</div>
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111" }}>Select Your Size</div>
+                    <div style={{ fontSize: "12px", color: "#565959" }}>Choose manually or let AI decide below</div>
+                  </div>
                 </div>
-                <div className="overflow-x-auto horizontal-scroll">
-                  <table className="size-chart-table">
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
+                  {(selectedProduct?.sizes || ["XS", "S", "M", "L", "XL", "XXL"]).map((size: string) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size === selectedSize ? "" : size)}
+                      style={{
+                        minWidth: "48px", height: "48px", padding: "0 12px",
+                        border: selectedSize === size ? "2px solid #007185" : "1px solid #D5D9D9",
+                        borderRadius: "4px",
+                        background: selectedSize === size ? "#F0F8FA" : "#fff",
+                        color: "#0F1111",
+                        fontSize: "14px",
+                        fontWeight: selectedSize === size ? 700 : 400,
+                        cursor: "pointer",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+
+                {selectedSize && (
+                  <div style={{ background: "#F0F8FA", border: "1px solid #007185", borderRadius: "4px", padding: "12px", marginBottom: "12px" }}>
+                    <div style={{ fontSize: "13px", color: "#007185", fontWeight: 600 }}>✓ Size <strong>{selectedSize}</strong> selected</div>
+                  </div>
+                )}
+
+                <button
+                  disabled={!selectedSize}
+                  onClick={() => {
+                    if (!selectedSize || !selectedProduct) return;
+                    setShoppingBag((prev: any) => [
+                      ...prev,
+                      {
+                        id: Math.random().toString(36).substr(2, 9),
+                        sku: selectedProduct.sku,
+                        name: selectedProduct.name,
+                        price: selectedProduct.price,
+                        grade: "A",
+                        originalPrice: selectedProduct.price,
+                        size: selectedSize,
+                        isPreloved: false
+                      }
+                    ]);
+                    try { const c = (window as any).confetti; if (c) c({ particleCount: 60, spread: 50, origin: { y: 0.7 } }); } catch {}
+                    setActiveTab("cart");
+                  }}
+                  style={{
+                    width: "100%", padding: "10px", borderRadius: "20px",
+                    background: selectedSize ? "#FFD814" : "#F7F8F8",
+                    border: selectedSize ? "1px solid #FCD200" : "1px solid #D5D9D9",
+                    color: selectedSize ? "#0F1111" : "#888",
+                    fontSize: "14px", fontWeight: 600, cursor: selectedSize ? "pointer" : "not-allowed",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                  }}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  {selectedSize ? `Add Size ${selectedSize} to Cart` : "Select a size first"}
+                </button>
+              </div>
+
+              {/* RIGHT: AI Scanner */}
+              <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <div style={{ width: "24px", height: "24px", background: "#232F3E", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>2</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111" }}>AI Body Scanner</div>
+                    <div style={{ fontSize: "12px", color: "#565959" }}>68% fewer size-related returns</div>
+                  </div>
+                  <span style={{ fontSize: "10px", background: "#C7511F", color: "#fff", padding: "2px 7px", borderRadius: "2px", fontWeight: 700, letterSpacing: "0.05em" }}>BETA</span>
+                </div>
+
+                <div style={{ background: "#F0F8FA", border: "1px solid #BEE3F0", borderRadius: "4px", padding: "10px 12px", marginBottom: "14px", fontSize: "12px", color: "#0F1111", lineHeight: 1.6 }}>
+                  📸 Take a quick selfie. Our AI maps your body proportions against the size chart and picks your perfect fit — no measuring tape needed.
+                </div>
+
+                {/* Height Input */}
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#0F1111", display: "block", marginBottom: "4px" }}>
+                    Height (inches) <span style={{ fontWeight: 400, color: "#565959" }}>(Optional but recommended)</span>
+                  </label>
+                  <input
+                    type="number" min="36" max="96" placeholder="e.g. 68"
+                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #888C8C", borderRadius: "4px", background: "#fff", color: "#0F1111", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                    value={heightInches}
+                    onChange={e => setHeightInches(e.target.value === "" ? "" : Number(e.target.value))}
+                  />
+                  {heightInches !== "" && (
+                    <div style={{ fontSize: "11px", color: "#007185", marginTop: "3px" }}>
+                      ✓ {Math.floor(Number(heightInches) / 12)}'{Number(heightInches) % 12}" — AI will calibrate to this height
+                    </div>
+                  )}
+                </div>
+
+                <WebcamCapture
+                  onCapture={(base64: string) => {
+                    setSizingImage(base64);
+                    setSizingResult(null);
+                  }}
+                  overlayType="sizing"
+                />
+
+                {sizingImage && (
+                  <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#007600", fontWeight: 600 }}>
+                      <CheckCircle className="w-3.5 h-3.5" /> Photo captured — ready to analyse
+                    </div>
+                    <img src={sizingImage} style={{ width: "100%", height: "100px", objectFit: "cover", borderRadius: "4px", border: "1px solid #D5D9D9" }} alt="Selfie preview" />
+                    <button
+                      disabled={sizingLoading}
+                      onClick={triggerSizeAssist}
+                      style={{
+                        width: "100%", padding: "10px", borderRadius: "20px",
+                        background: sizingLoading ? "#F7F8F8" : "#FFD814",
+                        border: sizingLoading ? "1px solid #D5D9D9" : "1px solid #FCD200",
+                        color: "#0F1111", fontSize: "13px", fontWeight: 700,
+                        cursor: sizingLoading ? "not-allowed" : "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                      }}
+                    >
+                      {sizingLoading ? (
+                        <><span className="spinner" /> Mapping your proportions...</>
+                      ) : (
+                        <><ScanLine className="w-4 h-4" /> Analyze & Recommend My Size</>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── AI Result Banner ── */}
+            {sizingResult && (
+              <div style={{
+                background: "#fff",
+                border: "2px solid #007600",
+                borderRadius: "6px",
+                padding: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "16px"
+              }}>
+                <div style={{ width: "48px", height: "48px", background: "#E7F5E7", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <CheckCircle className="w-6 h-6" style={{ color: "#007600" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "13px", color: "#007600", fontWeight: 700, marginBottom: "2px" }}>AI Recommendation Ready</div>
+                  <div style={{ fontSize: "15px", color: "#0F1111", fontWeight: 400 }}>
+                    Your perfect size is <strong style={{ fontSize: "20px" }}>{sizingResult.recommendedSize}</strong>
+                    <span style={{ fontSize: "13px", color: "#565959", marginLeft: "8px" }}>({sizingResult.confidenceScore}% confidence)</span>
+                  </div>
+                  {sizingResult.notes && (
+                    <div style={{ fontSize: "12px", color: "#565959", marginTop: "4px" }}>{sizingResult.notes}</div>
+                  )}
+                </div>
+                {!acceptedSize ? (
+                  <button
+                    onClick={() => applySizeRecommendation(sizingResult.recommendedSize)}
+                    style={{
+                      padding: "10px 20px", background: "#FFD814", border: "1px solid #FCD200",
+                      borderRadius: "20px", fontSize: "13px", fontWeight: 700, color: "#0F1111",
+                      cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0
+                    }}
+                  >
+                    Accept & Add to Cart <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleAddToCart}
+                    style={{
+                      padding: "10px 20px", background: "#FFD814", border: "1px solid #FCD200",
+                      borderRadius: "20px", fontSize: "13px", fontWeight: 700, color: "#0F1111",
+                      cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0
+                    }}
+                  >
+                    <ShoppingBag className="w-4 h-4" /> Add Size {acceptedSize} to Cart
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ── Size Chart ── */}
+            {chartData && (
+              <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", overflow: "hidden" }}>
+                <div style={{ padding: "14px 20px", borderBottom: "1px solid #E3E6E6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: "15px", fontWeight: 700, color: "#0F1111" }}>Size Chart</div>
+                    <div style={{ fontSize: "12px", color: "#565959" }}>{chartData.name} · {chartData.brand}</div>
+                  </div>
+                  <span style={{ fontSize: "11px", color: "#007185", fontWeight: 600, border: "1px solid #007185", borderRadius: "3px", padding: "2px 8px" }}>All measurements in inches</span>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
-                      <tr>
-                        {Object.keys(chartData.chart[0]).map(k => <th key={k} className="capitalize">{k}</th>)}
-                        <th>AI Match</th>
+                      <tr style={{ background: "#F7F8F8", borderBottom: "1px solid #D5D9D9" }}>
+                        {Object.keys(chartData.chart[0]).map((k: string) => (
+                          <th key={k} style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "#0F1111", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{k}</th>
+                        ))}
+                        <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "#0F1111", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.04em" }}>AI Match</th>
                       </tr>
                     </thead>
                     <tbody>
                       {chartData.chart.map((row: any, i: number) => {
                         const isRecommended = sizingResult?.recommendedSize === row.size;
+                        const isSelected = selectedSize === row.size;
                         return (
-                          <tr key={i} style={isRecommended ? { background: "#eff6ff" } : {}}>
+                          <tr
+                            key={i}
+                            onClick={() => setSelectedSize(row.size)}
+                            style={{
+                              background: isRecommended ? "#F0FFF0" : isSelected ? "#F0F8FA" : i % 2 === 0 ? "#fff" : "#FAFAFA",
+                              borderBottom: "1px solid #E3E6E6",
+                              cursor: "pointer",
+                              transition: "background 0.1s"
+                            }}
+                            className="hover:bg-[#F7F8F8]"
+                          >
                             {Object.values(row).map((v: any, j: number) => (
-                              <td key={j} className={j === 0 ? "font-bold text-indigo-600 font-mono" : ""}>{v}</td>
+                              <td key={j} style={{
+                                padding: "12px 16px",
+                                fontWeight: j === 0 ? 700 : 400,
+                                color: j === 0 ? (isRecommended ? "#007600" : "#007185") : "#0F1111",
+                                fontSize: j !== 0 && isRecommended ? "13px" : "13px"
+                              }}>{v}</td>
                             ))}
-                            <td>
+                            <td style={{ padding: "12px 16px" }}>
                               {isRecommended ? (
-                                <span className="mini-badge success">✓ Best Fit</span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#E7F5E7", color: "#007600", fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "3px" }}>
+                                  <CheckCircle className="w-3 h-3" /> Best Fit
+                                </span>
+                              ) : isSelected ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#F0F8FA", color: "#007185", fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "3px" }}>
+                                  Selected
+                                </span>
                               ) : (
-                                <span className="text-slate-300 text-xs">—</span>
+                                <span style={{ color: "#C8CBCC", fontSize: "13px" }}>—</span>
                               )}
                             </td>
                           </tr>
@@ -365,59 +472,52 @@ export default function L1Sizing() {
                     </tbody>
                   </table>
                 </div>
+                <div style={{ padding: "10px 16px", background: "#F7F8F8", borderTop: "1px solid #E3E6E6", fontSize: "12px", color: "#565959" }}>
+                  💡 <strong>Tip:</strong> Click a row to select that size, or use the AI scanner above for a personalized recommendation.
+                </div>
               </div>
-            );
-          } else {
-            return (
-              <div className="warning-callout">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>No sizing template required for this category. Only Apparel and Footwear items require sizing charts. Switch to an apparel product using the search bar.</span>
-              </div>
-            );
-          }
-        })()}
+            )}
 
-        {sizingResult && (
-          <div className="success-callout">
-            <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            {/* ── How It Works Strip ── */}
+            <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "20px" }}>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "16px" }}>How AI Size Recommender Works</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                {[
+                  { step: "1", icon: <Ruler className="w-5 h-5" />, title: "Check the size chart", desc: "Browse measurements above. Click any row to manually pick a size.", color: "#007185" },
+                  { step: "2", icon: <ScanLine className="w-5 h-5" />, title: "Take a body scan selfie", desc: "Our AI analyses your proportions from a single photo — takes 5 seconds.", color: "#C7511F" },
+                  { step: "3", icon: <CheckCircle className="w-5 h-5" />, title: "Accept your perfect fit", desc: "AI recommends a size. Keep it, return it for free if it's wrong — zero risk.", color: "#007600" },
+                ].map(({ step, icon, title, desc, color }) => (
+                  <div key={step} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: `${color}18`, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {icon}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "11px", color: "#888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "2px" }}>Step {step}</div>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>{title}</div>
+                      <div style={{ fontSize: "12px", color: "#565959", lineHeight: 1.5 }}>{desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </>
+        )}
+
+        {/* ── Non-apparel warning ── */}
+        {!isApparelOrFootwear && selectedProduct && (
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "6px", padding: "20px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#FFA41C" }} />
             <div>
-              <div className="font-bold">Sizing Scan Ledger Entry</div>
-              <div className="mt-0.5">Recommended: <strong>{sizingResult.recommendedSize}</strong> — Confidence: <strong>{sizingResult.confidenceScore}%</strong></div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>Size selection not available for this product</div>
+              <div style={{ fontSize: "13px", color: "#565959" }}>
+                <strong>{selectedProduct?.name}</strong> ({selectedProduct?.category}) doesn't require size selection.
+                Use the search above to find an Apparel or Footwear product instead.
+              </div>
             </div>
           </div>
         )}
 
-        {sizingResult && !acceptedSize && (
-          <button className="btn btn-success w-full py-2.5 text-xs font-bold" onClick={() => applySizeRecommendation(sizingResult.recommendedSize)}>
-            <CheckCircle className="w-4 h-4" /> Accept AI Recommendation
-          </button>
-        )}
-        
-        {acceptedSize && (
-          <button className="btn btn-primary w-full py-2.5 text-xs font-bold" onClick={handleAddToCart}>
-            Add Size {acceptedSize} to Cart
-          </button>
-        )}
-
-        {/* How Bracketing Works */}
-        <div className="border-t border-slate-100 pt-4">
-          <h4 className="text-xs font-bold text-slate-700 mb-3">How Size Bracketing Works</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {[
-              { step: "1", title: "Select 2 adjacent sizes", desc: "Use the buttons above to add 2 sizes (e.g. M + L) to your size cart on the left." },
-              { step: "2", title: "Scan with your selfie", desc: "Use Camera or Upload above to submit a full-body photo for AI body mapping." },
-              { step: "3", title: "Accept AI pick", desc: "AI maps your body to the size chart. Keep one, return the other — zero waste." },
-            ].map(({ step, title, desc }) => (
-              <div key={step} className="flex gap-2.5 bg-slate-50 border border-slate-100 p-3 rounded-xl">
-                <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center flex-shrink-0">{step}</div>
-                <div>
-                  <div className="text-xs font-bold text-slate-800">{title}</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
