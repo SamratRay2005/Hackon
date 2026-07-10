@@ -486,6 +486,7 @@ function ReturnSuccessView({ order, onContinueShopping }: { order: any, onContin
 export default function L6Orders() {
   const {
     walletInfo,
+    setWalletInfo,
     profileUserId,
     setActiveTab,
     setDeflectProduct,
@@ -639,8 +640,30 @@ export default function L6Orders() {
       {/* Normal orders list (always rendered underneath) */}
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {!showReturnSuccess && !reasonOrder && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-            <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111" }}>Your Orders</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h2 style={{ fontSize: "24px", fontWeight: 400, color: "#0F1111" }}>Your Orders</h2>
+            </div>
+            {orders.length > 0 && (
+              <button 
+                onClick={async () => {
+                  setWalletInfo((prev: any) => ({ ...prev, orders: [] }));
+                  try {
+                    await fetch("/api/wallet", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ choice: "clearOrders", userId: profileUserId }),
+                    });
+                  } catch (e) {
+                    console.error("Failed to clear orders:", e);
+                  }
+                }}
+                style={{ background: "#FFF", color: "#B12704", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "6px 12px", fontSize: "14px", boxShadow: "0 1px 2px rgba(15,17,17,0.15)", fontWeight: 500 }}
+                className="hover:bg-[#F7FAFA]"
+              >
+                Delete History
+              </button>
+            )}
           </div>
         )}
 

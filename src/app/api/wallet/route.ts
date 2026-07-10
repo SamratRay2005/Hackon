@@ -26,6 +26,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, ...wallet });
     }
 
+    if (choice === "clearOrders") {
+      await db.clearOrders(activeUserId);
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Unknown wallet action" }, { status: 400 });
   } catch (error: any) {
     console.error("Wallet API Route Error:", error);

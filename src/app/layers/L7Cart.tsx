@@ -61,6 +61,7 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
   const [checkoutLoading, setCheckoutLoading] = React.useState(false);
   const [checkoutResult, setCheckoutResult] = React.useState<any>(null);
   const [showVoucherList, setShowVoucherList] = React.useState(false);
+  const [orderSummary, setOrderSummary] = React.useState<any>(null);
 
   // Sync: if bag is cleared externally, snap back to bag step
   React.useEffect(() => {
@@ -175,6 +176,18 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
           }));
         }
 
+        // Save order summary and clear cart
+        setOrderSummary({
+          items: shoppingBag,
+          subtotal,
+          tax,
+          voucherDiscount,
+          cashbackDiscount,
+          orderTotal,
+          totalDiscount: voucherDiscount + cashbackDiscount
+        });
+        setShoppingBag([]);
+
         // Reset local reward selections
         setUseCashback(false);
         setSelectedVoucherId(null);
@@ -201,6 +214,7 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
     setCheckoutResult(null);
     setSelectedVoucherId(null);
     setUseCashback(false);
+    setOrderSummary(null);
   };
 
   // ── Rewards Panel (always visible at top) ─────────────────────
@@ -564,7 +578,11 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
   if (checkoutStep === "confirmed") {
     const displayOrderId = `407-${Math.floor(Math.random() * 10000000)}-${Math.floor(Math.random() * 10000000)}`;
     const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    const totalDiscount = voucherDiscount + cashbackDiscount;
+    
+    const displayItems = orderSummary?.items || shoppingBag;
+    const displaySubtotal = orderSummary?.subtotal || subtotal;
+    const displayTotalDiscount = orderSummary?.totalDiscount || (voucherDiscount + cashbackDiscount);
+    const displayOrderTotal = orderSummary?.orderTotal || orderTotal;
     
     return (
       <div className="font-sans w-full" style={{ padding: "0 10px" }}>
@@ -587,14 +605,14 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
               
               <div style={{marginLeft: "40px"}}>
                 <div style={{fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "12px"}}>Order Number: {displayOrderId}</div>
-                <div className="flex gap-20 mb-4">
+                 <div className="flex gap-20 mb-4">
                    <div>
                      <div style={{fontSize: "14px", color: "#565959", marginBottom: "2px"}}>Order Date</div>
                      <div style={{fontSize: "14px", color: "#0F1111"}}>{orderDate}</div>
                    </div>
                    <div>
                      <div style={{fontSize: "14px", color: "#565959", marginBottom: "2px"}}>Total</div>
-                     <div style={{fontSize: "14px", color: "#0F1111"}}>${orderTotal.toFixed(2)}</div>
+                     <div style={{fontSize: "14px", color: "#0F1111"}}>${displayOrderTotal.toFixed(2)}</div>
                    </div>
                 </div>
                 <div style={{fontSize: "14px", color: "#0F1111"}}>
@@ -612,12 +630,12 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
                <div className="flex flex-col sm:flex-row gap-8 mb-6">
                  {/* Product Info */}
                  <div className="flex-1 flex gap-4">
-                    {shoppingBag.length > 0 && (
+                    {displayItems.length > 0 && (
                       <>
-                        <img src={getSKUReferenceImage(shoppingBag[0].sku)} alt="" style={{width: "70px", height: "70px", objectFit: "contain"}} />
+                        <img src={getSKUReferenceImage(displayItems[0].sku)} alt="" style={{width: "70px", height: "70px", objectFit: "contain"}} />
                         <div>
-                          <div style={{fontSize: "14px", color: "#0F1111"}}>{shoppingBag[0].name}</div>
-                          <div style={{fontSize: "14px", color: "#B12704", fontWeight: 700, marginTop: "2px"}}>${shoppingBag[0].price.toFixed(2)}</div>
+                          <div style={{fontSize: "14px", color: "#0F1111"}}>{displayItems[0].name}</div>
+                          <div style={{fontSize: "14px", color: "#B12704", fontWeight: 700, marginTop: "2px"}}>${displayItems[0].price.toFixed(2)}</div>
                           <div style={{fontSize: "12px", color: "#565959", marginTop: "2px"}}>Sold by: Amazon Pre-loved Marketplace</div>
                         </div>
                       </>
@@ -669,7 +687,7 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
               
               <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
                 <span>Items:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>${displaySubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
                 <span>Delivery:</span>
@@ -677,18 +695,18 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
               </div>
               <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
                 <span>Total:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>${displaySubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between" style={{fontSize: "14px", color: "#0F1111", marginBottom: "4px"}}>
                 <span>Promotion Applied:</span>
-                <span>-${totalDiscount.toFixed(2)}</span>
+                <span>-${displayTotalDiscount.toFixed(2)}</span>
               </div>
               
               <div style={{borderTop: "1px solid #D5D9D9", margin: "12px 0 10px 0"}} />
               
               <div className="flex justify-between items-center" style={{marginBottom: "4px"}}>
                 <span style={{fontSize: "16px", fontWeight: 700, color: "#0F1111"}}>Order Total:</span>
-                <span style={{fontSize: "18px", fontWeight: 700, color: "#B12704"}}>${orderTotal.toFixed(2)}</span>
+                <span style={{fontSize: "18px", fontWeight: 700, color: "#B12704"}}>${displayOrderTotal.toFixed(2)}</span>
               </div>
               <div style={{fontSize: "12px", color: "#565959"}}>Inclusive of all taxes</div>
             </div>
@@ -697,7 +715,7 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
             <div style={{border: "1px solid #D5D9D9", borderRadius: "8px", padding: "16px", background: "#FFF", display: "flex", gap: "12px", alignItems: "flex-start"}}>
               <img src="/amazon-pay-logo-2.png" alt="Amazon Pay" style={{width: "60px", objectFit: "contain", mixBlendMode: "multiply"}} />
               <div style={{fontSize: "12px", color: "#0F1111", lineHeight: "1.4"}}>
-                <span style={{fontWeight: 700}}>You saved ${totalDiscount.toFixed(2)}</span> on this order with Amazon Pay balance.<br/>
+                <span style={{fontWeight: 700}}>You saved ${displayTotalDiscount.toFixed(2)}</span> on this order with Amazon Pay balance.<br/>
                 <span className="cursor-pointer hover:underline hover:text-[#007185]" style={{color: "#007185"}}>View Amazon Pay balance</span>
               </div>
             </div>

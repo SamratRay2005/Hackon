@@ -22,23 +22,33 @@ export async function GET(req: NextRequest) {
     const feedItems = [];
     
     // Filter the catalog if a query is provided
-    const itemsToProcess = query 
-      ? PRODUCT_CATALOG.filter(p => 
-          p.name.toLowerCase().includes(query) || 
-          p.category.toLowerCase().includes(query) || 
-          p.brand.toLowerCase().includes(query) ||
-          p.sku.toLowerCase().includes(query)
-        )
-      : PRODUCT_CATALOG;
+    let itemsToProcess = [];
+    if (query) {
+      itemsToProcess = PRODUCT_CATALOG.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.category.toLowerCase().includes(query) || 
+        p.brand.toLowerCase().includes(query) ||
+        p.sku.toLowerCase().includes(query)
+      );
+    } else {
+      // Default feed without query: pin specific SKUs and pick unique remaining items
+      const forcedSkus = ["HEADPHN-51", "SPK-AIR-12", "CARTER-ONES-1"];
+      const forcedProducts = forcedSkus
+        .map(sku => PRODUCT_CATALOG.find(p => p.sku === sku))
+        .filter((p): p is typeof PRODUCT_CATALOG[0] => p !== undefined);
 
-    // Show up to 30 items for variety (or all matched items if searching)
-    const numItems = query ? itemsToProcess.length : Math.min(30, itemsToProcess.length);
+      const remainingProducts = PRODUCT_CATALOG.filter(p => !forcedSkus.includes(p.sku));
+      
+      // Shuffle remaining products deterministically based on seed
+      const shuffled = [...remainingProducts].sort((a, b) => 
+        pseudoRandom(seedBase + a.sku.charCodeAt(0)) - pseudoRandom(seedBase + b.sku.charCodeAt(0))
+      );
 
-    for (let i = 0; i < numItems; i++) {
-      // If we are searching, just iterate through the matches. 
-      // If we are showing the default feed, pick pseudo-randomly.
-      const pIndex = query ? i : Math.floor(pseudoRandom(seedBase + i) * itemsToProcess.length);
-      const product = itemsToProcess[pIndex];
+      itemsToProcess = [...forcedProducts, ...shuffled].slice(0, 30);
+    }
+
+    for (let i = 0; i < itemsToProcess.length; i++) {
+      const product = itemsToProcess[i];
       if (!product) continue;
 
       // Simulate a seller returning the item
@@ -75,8 +85,15 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Sort by distance
-    feedItems.sort((a, b) => parseInt(a.distance) - parseInt(b.distance));
+    // Sort by distance, but keep forced SKUs at the very top
+    feedItems.sort((a, b) => {
+      const forcedSkus = ["HEADPHN-51", "SPK-AIR-12", "CARTER-ONES-1"];
+      const isAForced = forcedSkus.includes(a.sku);
+      const isBForced = forcedSkus.includes(b.sku);
+      if (isAForced && !isBForced) return -1;
+      if (!isAForced && isBForced) return 1;
+      return parseInt(a.distance) - parseInt(b.distance);
+    });
 
     return NextResponse.json({ items: feedItems });
   } catch (error: any) {

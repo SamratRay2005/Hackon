@@ -878,6 +878,27 @@ export const db = {
     return result;
   },
 
+  clearOrders: async (userId: string): Promise<void> => {
+    globalState.orders[userId] = [];
+    if (useAWS) {
+      try {
+        const res = await ddbDocClient.send(
+          new ScanCommand({
+            TableName: "Orders",
+            FilterExpression: "userId = :uid",
+            ExpressionAttributeValues: { ":uid": userId },
+          })
+        );
+        const items = res.Items ?? [];
+        for (const item of items) {
+          // Simplistic mock delete logic for AWS
+        }
+      } catch (e) {
+        console.warn("Failed to clear AWS orders", e);
+      }
+    }
+  },
+
   updateOrderStatus: async (
     userId: string,
     orderId: string,

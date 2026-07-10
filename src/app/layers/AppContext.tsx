@@ -157,6 +157,7 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
   "AVATAR-BRD-6": "/product2-6.jpg",
   "BABY-SLEEP-7": "/product2-7.jpg",
   "PLANNER-2024-8": "/product2-8.jpg",
+  "LOGI-MOUSE-1": "/logitech.png",
 };
 
 const hashString = (str: string) => {
