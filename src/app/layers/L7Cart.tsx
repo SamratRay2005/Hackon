@@ -639,13 +639,11 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
     <div className="glass-card flex flex-col gap-5">
       <div className="section-title-bar">
         <h2>My Cart &amp; Rewards</h2>
-        {checkoutStep !== "confirmed" && (
-          <span className="section-badge badge-layer-6">Checkout</span>
-        )}
+        <span className="section-badge badge-layer-6">Checkout</span>
       </div>
 
       {/* Rewards summary — always shown except post-confirmation */}
-      {checkoutStep !== "confirmed" && <RewardsPanel />}
+      <RewardsPanel />
 
       {/* ── BAG STEP ── */}
       {checkoutStep === "bag" && (

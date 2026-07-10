@@ -21,6 +21,8 @@ import {
   Camera,
   Upload,
   ScanLine,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 import {
@@ -41,6 +43,7 @@ export default function L0Dashboard() {
     setResaleListings,
     isAdminMode,
     setIsAdminMode,
+    shoppingBag,
     setShoppingBag
   } = useApp() as any;
 
@@ -139,7 +142,6 @@ export default function L0Dashboard() {
       const confetti = (window as any).confetti;
       if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } });
     } catch {}
-    setActiveTab("cart");
   };
 
   const handleQuickAdd = (p: any, isPreloved: boolean = false) => {
@@ -165,7 +167,6 @@ export default function L0Dashboard() {
         const confetti = (window as any).confetti;
         if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } });
       } catch {}
-      setActiveTab("cart");
     }
   };
 
@@ -238,17 +239,38 @@ export default function L0Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredCatalog.map((p) => (
+            {filteredCatalog.map((p) => {
+              const ratingCount = ((p.sku.length * 113) % 4000) + 120;
+              const isBestSeller = (p.sku.length + Math.floor(p.price)) % 10 > 5;
+              const isAmazonChoice = !isBestSeller && (p.sku.length + Math.floor(p.price)) % 10 > 2;
+              const isLimitedTime = (p.sku.length + Math.floor(p.price)) % 10 < 5;
+              const boughtPastMonth = ((p.sku.length * 7) % 9) + 1;
+              const countInCart = shoppingBag?.filter((b: any) => b.sku === p.sku).length || 0;
+
+              return (
               <div key={p.sku} className="marketplace-item-card group relative flex flex-col" style={{border:"1px solid #DDD", borderRadius:"4px", overflow:"hidden"}}>
-                <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
+                {/* Badges */}
+                <div className="absolute top-0 left-0 z-10 flex flex-col gap-1 w-full">
+                  {isBestSeller && (
+                    <div className="bg-[#E67A00] text-white text-[12px] px-2 py-1 inline-block self-start shadow-sm whitespace-nowrap">
+                      Best seller
+                    </div>
+                  )}
+                  {isAmazonChoice && (
+                    <div className="bg-[#232F3E] text-white text-[12px] px-2 py-1 inline-block self-start shadow-sm whitespace-nowrap">
+                      Amazon's Choice
+                    </div>
+                  )}
+                </div>
+
+                <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px", paddingTop: "40px"}}>
                   <img src={getSKUReferenceImage(p.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={p.name} />
                 </div>
                 <div className="p-4 flex flex-col flex-1 bg-white gap-1.5 text-left">
-                  <div className="text-[11px] text-[#565959] uppercase tracking-wide">{p.brand}</div>
-                  <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(p, false)}>{p.name}</h3>
-                  <div className="flex items-center gap-2">
-                     <div className="flex items-center gap-1">
-                       <span className="text-[#007185] text-sm">{(p.reviewScore || 4.1).toFixed(1)}</span>
+                  <h3 className="text-[15px] font-medium text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(p, false)}>{p.name}</h3>
+                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                     <div className="flex items-center gap-0.5">
+                       <span className="text-[#0F1111] text-[13px] font-bold">{(p.reviewScore || 4.1).toFixed(1)}</span>
                        <div className="flex text-[#DE7921] text-sm leading-none">
                          <Star className="w-4 h-4 fill-current stroke-current" />
                          <Star className="w-4 h-4 fill-current stroke-current" />
@@ -257,33 +279,71 @@ export default function L0Dashboard() {
                          <Star className="w-4 h-4" />
                        </div>
                        <ChevronDown className="w-3 h-3 text-[#565959]" />
-                       <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">({(p.reviewCount || Math.random() * 5 + 1).toFixed(1)}k)</span>
+                       <span className="text-[13px] text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">({ratingCount})</span>
                      </div>
-                     <span className="bg-[#232F3E] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Prime</span>
                   </div>
-                  <div className="flex items-end gap-2 mt-1">
+                  <div className="text-[13px] text-[#565959]">{boughtPastMonth}K+ bought in past month</div>
+
+                  {isLimitedTime && (
+                    <div className="bg-[#CC0C39] text-white text-[11px] px-2 py-1 rounded-sm self-start mt-1 mb-1 font-bold">
+                      Limited time deal
+                    </div>
+                  )}
+
+                  <div className="flex items-end gap-1.5 mt-1">
                      <div className="flex items-start text-[#0F1111]">
-                       <span className="text-sm font-normal mt-[2px] mr-[1px]">$</span>
-                       <span className="text-[28px] font-normal leading-none">{Math.floor(p.price)}</span>
-                       <span className="text-sm font-normal mt-[2px] ml-[1px]">{(p.price % 1).toFixed(2).substring(2)}</span>
+                       <span className="text-[12px] font-normal mt-[3px] mr-[1px]">$</span>
+                       <span className="text-[28px] font-medium leading-none">{Math.floor(p.price)}</span>
+                       <span className="text-[12px] font-normal mt-[3px] ml-[1px]">{(p.price % 1).toFixed(2).substring(2)}</span>
                      </div>
-                     <div className="flex flex-col mb-0.5">
-                       <span className="text-[#565959] text-xs">Typical: <span className="line-through">${(p.price * 1.2).toFixed(2)}</span></span>
-                     </div>
+                     <span className="text-[12px] text-[#565959] mb-1">M.R.P: <span className="line-through">${(p.price * 1.2).toFixed(2)}</span> (16% off)</span>
                   </div>
-                  <div className="text-xs text-[#565959] mb-2 leading-relaxed">
-                    <span className="text-[#007600] font-medium">In Stock.</span> FREE delivery on qualifying orders.
+
+                  {/* Prime icon */}
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[#FF9900] text-[13px] font-bold">✓</span>
+                    <img src="/prime-logo-2.png" alt="Prime" style={{ height: "14px", objectFit: "contain", mixBlendMode: "multiply" }} />
+                    <span className="text-[13px] text-[#0F1111]">FREE delivery <span className="font-bold">Tomorrow</span></span>
                   </div>
                   
-                  <button
-                    className="w-full mt-auto h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-sm text-sm transition-colors flex items-center justify-center font-medium"
-                    onClick={() => handleQuickAdd(p, false)}
-                  >
-                    Add to cart
-                  </button>
+                  <div className="mt-auto pt-3">
+                    {countInCart > 0 ? (
+                      <div className="w-full flex items-center h-9" style={{ border: "2px solid #FFD814", borderRadius: "100px", overflow: "hidden", background: "white" }}>
+                        <button
+                          className="flex items-center justify-center hover:bg-[#FFF3CD] transition-colors h-full px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShoppingBag((prev: any) => {
+                              const items = [...prev];
+                              const idx = items.map((b: any, i: number) => b.sku === p.sku ? i : -1).filter((i: number) => i >= 0).pop() ?? -1;
+                              if (idx !== -1) items.splice(idx, 1);
+                              return items;
+                            });
+                          }}
+                        ><Trash2 className="w-4 h-4 text-[#0F1111]" /></button>
+                        <span className="flex-1 text-center text-[14px] font-bold text-[#0F1111]">
+                          {countInCart} in cart
+                        </span>
+                        <button
+                          className="flex items-center justify-center hover:bg-[#FFF3CD] transition-colors h-full px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShoppingBag((prev: any) => [...prev, { id: Math.random().toString(36).substr(2, 9), sku: p.sku, name: p.name, price: p.price, grade: "A", originalPrice: p.price, size: p.sizes?.[0] || "M", isPreloved: false }]);
+                          }}
+                        ><Plus className="w-4 h-4 text-[#0F1111]" /></button>
+                      </div>
+                    ) : (
+                      <button
+                        className="w-full h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-[0_1px_2px_rgba(15,17,17,0.15)] hover:shadow-[0_2px_5px_rgba(15,17,17,0.2)] active:scale-[0.99] text-sm transition-all flex items-center justify-center font-medium"
+                        onClick={() => handleQuickAdd(p, false)}
+                      >
+                        Add to cart
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       )}
@@ -362,6 +422,9 @@ export default function L0Dashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {activeResale.map((item: any, i: number) => {
+                  const ratingCount = ((item.sku.length * 113) % 4000) + 120;
+                  const boughtPastMonth = ((item.sku.length * 7) % 9) + 1;
+                  const countInCart = shoppingBag?.filter((b: any) => b.sku === item.sku && b.isPreloved).length || 0;
                   const ageMs = now - item.addedToStoreAt;
                   const isReturnedProduct = item.isReturnedProduct || ageMs >= TWO_DAYS_MS;
                   return (
@@ -374,15 +437,14 @@ export default function L0Dashboard() {
                           </span>
                         )}
                       </div>
-                      <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
+                      <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px", paddingTop: "40px"}}>
                         <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
                       </div>
                       <div className="p-4 flex flex-col flex-1 bg-white gap-1.5 text-left">
-                        <div className="text-[11px] text-[#565959] uppercase tracking-wide">{item.brand}</div>
-                        <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
-                        <div className="flex items-center gap-2">
-                           <div className="flex items-center gap-1">
-                             <span className="text-[#007185] text-sm">{(item.reviewScore || 4.1).toFixed(1)}</span>
+                        <h3 className="text-[15px] font-medium text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                           <div className="flex items-center gap-0.5">
+                             <span className="text-[#0F1111] text-[13px] font-bold">{(item.reviewScore || 4.1).toFixed(1)}</span>
                              <div className="flex text-[#DE7921] text-sm leading-none">
                                <Star className="w-4 h-4 fill-current stroke-current" />
                                <Star className="w-4 h-4 fill-current stroke-current" />
@@ -391,36 +453,63 @@ export default function L0Dashboard() {
                                <Star className="w-4 h-4" />
                              </div>
                              <ChevronDown className="w-3 h-3 text-[#565959]" />
-                             <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(item.reviewCount || Math.random() * 5 + 1).toFixed(1)}k</span>
+                             <span className="text-[13px] text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">({ratingCount})</span>
                            </div>
-                           <span className="bg-[#007185] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Certified</span>
+                           <span className="bg-[#007185] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Certified Local</span>
                         </div>
-                        <div className="flex items-end gap-2 mt-1">
+                        <div className="text-[13px] text-[#565959]">{boughtPastMonth}K+ bought in past month</div>
+                        
+                        <div className="flex items-end gap-1.5 mt-1">
                            <div className="flex items-start text-[#B12704]">
-                             <span className="text-sm font-normal mt-[2px] mr-[1px]">$</span>
-                             <span className="text-[28px] font-normal leading-none">{Math.floor(item.price)}</span>
-                             <span className="text-sm font-normal mt-[2px] ml-[1px]">{(item.price % 1).toFixed(2).substring(2)}</span>
+                             <span className="text-[12px] font-normal mt-[3px] mr-[1px]">$</span>
+                             <span className="text-[28px] font-medium leading-none">{Math.floor(item.price)}</span>
+                             <span className="text-[12px] font-normal mt-[3px] ml-[1px]">{(item.price % 1).toFixed(2).substring(2)}</span>
                            </div>
-                           <div className="flex flex-col mb-0.5">
-                             <span className="text-[#565959] text-xs">New: <span className="line-through">${item.originalPrice.toFixed(2)}</span></span>
-                           </div>
+                           <span className="text-[12px] text-[#565959] mb-1">M.R.P: <span className="line-through">${item.originalPrice.toFixed(2)}</span> ({Math.round(100 - (item.price/item.originalPrice)*100)}% off)</span>
                         </div>
-                        <div className="flex flex-col gap-1 mb-2">
-                          <div className="text-xs text-[#565959] leading-relaxed">
-                            <span className="text-[#007600] font-medium">Available Now.</span> Ready for local pickup or fast delivery.
-                          </div>
-                          {isReturnedProduct && (
-                            <div className="text-xs text-[#007600] flex items-center gap-1">
-                              <Award className="w-3.5 h-3.5" /> Earn ${(item.price * 0.05).toFixed(2)} Cashback
+
+                        <div className="flex flex-col gap-1 mb-2 mt-1">
+                          {isReturnedProduct ? (
+                            <div className="text-[13px] text-[#007600] flex items-center gap-1">
+                              <Award className="w-4 h-4" /> Earn ${(item.price * 0.05).toFixed(2)} Cashback
                             </div>
+                          ) : (
+                            <div className="text-[13px] text-[#007600] font-medium">Available Now for local pickup.</div>
                           )}
                         </div>
-                        <button
-                          className="w-full mt-auto h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-sm text-sm transition-colors flex items-center justify-center font-medium"
-                          onClick={() => handleQuickAdd(item, true)}
-                        >
-                          Add to cart
-                        </button>
+
+                        <div className="mt-auto pt-3">
+                          {countInCart > 0 ? (
+                            <div className="w-full flex items-center h-9" style={{ border: "2px solid #FFD814", borderRadius: "100px", overflow: "hidden", background: "white" }}>
+                              <button
+                                className="flex items-center justify-center hover:bg-[#FFF3CD] transition-colors h-full px-3"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShoppingBag((prev: any) => {
+                                    const items = [...prev];
+                                    const idx = items.map((b: any, j: number) => b.sku === item.sku && b.isPreloved ? j : -1).filter((j: number) => j >= 0).pop() ?? -1;
+                                    if (idx !== -1) items.splice(idx, 1);
+                                    return items;
+                                  });
+                                }}
+                              ><Trash2 className="w-4 h-4 text-[#0F1111]" /></button>
+                              <span className="flex-1 text-center text-[14px] font-bold text-[#0F1111]">
+                                1 in cart
+                              </span>
+                              <button
+                                className="flex items-center justify-center h-full px-3 opacity-50 cursor-not-allowed"
+                                disabled
+                              ><Plus className="w-4 h-4 text-[#0F1111]" /></button>
+                            </div>
+                          ) : (
+                            <button
+                              className="w-full h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-[0_1px_2px_rgba(15,17,17,0.15)] hover:shadow-[0_2px_5px_rgba(15,17,17,0.2)] active:scale-[0.99] text-sm transition-all flex items-center justify-center font-medium"
+                              onClick={() => handleQuickAdd(item, true)}
+                            >
+                              Add to cart
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -437,18 +526,24 @@ export default function L0Dashboard() {
                 <div>Discovering local circular deals in {profileZip}...</div>
               </div>
             ) : (
-              marketplaceFeed.map((item, i) => (
+              marketplaceFeed.map((item, i) => {
+                const ratingCount = ((item.sku.length * 113) % 4000) + 120;
+                const boughtPastMonth = ((item.sku.length * 7) % 9) + 1;
+                const countInCart = shoppingBag?.filter((b: any) => b.sku === item.sku && b.isPreloved).length || 0;
+                return (
                 <div key={i} className="marketplace-item-card group relative flex flex-col" style={{border:"1px solid #DDD", borderRadius:"4px", overflow:"hidden"}}>
-                  {item.trust < 40 && (
-                    <div className="absolute top-2 right-2 bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 border border-rose-200 z-10 shadow-sm flex items-center gap-1" style={{borderRadius:"2px"}}>
-                      <AlertTriangle className="w-3 h-3" /> High Risk Seller
-                    </div>
-                  )}
-                  <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px"}}>
-                    <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
-                    <div className="absolute top-2 left-2 flex gap-1">
+                  <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 w-full px-2">
+                    <div className="flex justify-between w-full">
                       <span style={{background:item.grade.startsWith("A") ? "#007600" : "#E47911", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px"}}>Grade {item.grade}</span>
+                      {item.trust < 40 && (
+                        <div className="bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 border border-rose-200 shadow-sm flex items-center gap-1" style={{borderRadius:"2px"}}>
+                          <AlertTriangle className="w-3 h-3" /> High Risk Seller
+                        </div>
+                      )}
                     </div>
+                  </div>
+                  <div className="marketplace-item-image" style={{background:"#F7F7F7", padding:"16px", paddingTop: "40px"}}>
+                    <img src={getSKUReferenceImage(item.sku)} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
                   </div>
 
                   <div className="p-4 flex flex-col flex-1 bg-white gap-1.5 text-left">
@@ -457,12 +552,11 @@ export default function L0Dashboard() {
                       <span className="text-xs text-[#565959] flex items-center gap-1"><Map className="w-3 h-3" /> {item.distance}</span>
                     </div>
 
-                    <div className="text-[11px] text-[#565959] uppercase tracking-wide">{item.brand}</div>
-                    <h3 className="text-base font-bold text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
+                    <h3 className="text-[15px] font-medium text-[#0F1111] leading-snug line-clamp-2 hover:text-[#c45500] cursor-pointer" onClick={() => openProductDetails(item, true)}>{item.name}</h3>
 
-                    <div className="flex items-center gap-2">
-                       <div className="flex items-center gap-1">
-                         <span className="text-[#007185] text-sm">{(item.reviewScore || 4.1).toFixed(1)}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                       <div className="flex items-center gap-0.5">
+                         <span className="text-[#0F1111] text-[13px] font-bold">{(item.reviewScore || 4.1).toFixed(1)}</span>
                          <div className="flex text-[#DE7921] text-sm leading-none">
                            <Star className="w-4 h-4 fill-current stroke-current" />
                            <Star className="w-4 h-4 fill-current stroke-current" />
@@ -471,43 +565,64 @@ export default function L0Dashboard() {
                            <Star className="w-4 h-4" />
                          </div>
                          <ChevronDown className="w-3 h-3 text-[#565959]" />
-                         <span className="text-sm text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">{(item.reviewCount || Math.random() * 5 + 1).toFixed(1)}k</span>
+                         <span className="text-[13px] text-[#007185] hover:underline cursor-pointer hover:text-[#c45500]">({ratingCount})</span>
                        </div>
-                       <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Local</span>
+                       <span className="bg-[#007185] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Certified Local</span>
+                    </div>
+                    <div className="text-[13px] text-[#565959]">{boughtPastMonth}K+ bought in past month</div>
+
+                    <div className="flex items-end gap-1.5 mt-1">
+                       <div className="flex items-start text-[#B12704]">
+                         <span className="text-[12px] font-normal mt-[3px] mr-[1px]">$</span>
+                         <span className="text-[28px] font-medium leading-none">{Math.floor(item.price)}</span>
+                         <span className="text-[12px] font-normal mt-[3px] ml-[1px]">{(item.price % 1).toFixed(2).substring(2)}</span>
+                       </div>
+                       <span className="text-[12px] text-[#565959] mb-1">M.R.P: <span className="line-through">${item.originalPrice.toFixed(2)}</span> ({Math.round(100 - (item.price/item.originalPrice)*100)}% off)</span>
                     </div>
 
-                    <div className="flex flex-col mt-1 gap-1">
-                       <div className="flex items-end gap-2">
-                         <div className="flex items-start text-[#B12704]">
-                           <span className="text-sm font-normal mt-[2px] mr-[1px]">$</span>
-                           <span className="text-[28px] font-normal leading-none">{Math.floor(item.price)}</span>
-                           <span className="text-sm font-normal mt-[2px] ml-[1px]">{(item.price % 1).toFixed(2).substring(2)}</span>
-                         </div>
-                         <div className="flex flex-col mb-0.5">
-                           <span className="text-[#565959] text-xs">New: <span className="line-through">${item.originalPrice.toFixed(2)}</span></span>
-                         </div>
-                       </div>
-
-                       <div className="flex flex-col gap-1 mb-2">
-                         <div className="text-xs text-[#565959] leading-relaxed">
-                           <span className="text-[#007600] font-medium">In Stock locally.</span> Available for immediate pickup.
-                         </div>
-                         <div className="text-xs text-[#007600] flex items-start gap-1">
-                           <Award className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                           <span><strong>Earn ${(item.price * (item.grade === "A" ? 0.03 : 0.05)).toFixed(2)} Cashback</strong> instantly.</span>
-                         </div>
-                       </div>
+                    <div className="flex flex-col gap-1 mb-2 mt-1">
+                      <div className="text-[13px] text-[#007600] font-medium">In Stock locally.</div>
+                      <div className="text-[13px] text-[#007600] flex items-center gap-1">
+                        <Award className="w-4 h-4 flex-shrink-0" />
+                        <span>Earn ${(item.price * (item.grade === "A" ? 0.03 : 0.05)).toFixed(2)} Cashback</span>
+                      </div>
                     </div>
 
-                    <button
-                      className="w-full mt-auto h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-sm text-sm transition-colors flex items-center justify-center font-medium"
-                      onClick={() => handleQuickAdd(item, true)}
-                    >
-                      Add to cart
-                    </button>
+                    <div className="mt-auto pt-3">
+                      {countInCart > 0 ? (
+                        <div className="w-full flex items-center h-9" style={{ border: "2px solid #FFD814", borderRadius: "100px", overflow: "hidden", background: "white" }}>
+                          <button
+                            className="flex items-center justify-center hover:bg-[#FFF3CD] transition-colors h-full px-3"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShoppingBag((prev: any) => {
+                                const items = [...prev];
+                                const idx = items.map((b: any, j: number) => b.sku === item.sku && b.isPreloved ? j : -1).filter((j: number) => j >= 0).pop() ?? -1;
+                                if (idx !== -1) items.splice(idx, 1);
+                                return items;
+                              });
+                            }}
+                          ><Trash2 className="w-4 h-4 text-[#0F1111]" /></button>
+                          <span className="flex-1 text-center text-[14px] font-bold text-[#0F1111]">
+                            1 in cart
+                          </span>
+                          <button
+                            className="flex items-center justify-center h-full px-3 opacity-50 cursor-not-allowed"
+                            disabled
+                          ><Plus className="w-4 h-4 text-[#0F1111]" /></button>
+                        </div>
+                      ) : (
+                        <button
+                          className="w-full h-9 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] text-[#0F1111] rounded-full shadow-[0_1px_2px_rgba(15,17,17,0.15)] hover:shadow-[0_2px_5px_rgba(15,17,17,0.2)] active:scale-[0.99] text-sm transition-all flex items-center justify-center font-medium"
+                          onClick={() => handleQuickAdd(item, true)}
+                        >
+                          Add to cart
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))
+              )})
             )}
           </div>
         </div>
@@ -659,147 +774,174 @@ export default function L0Dashboard() {
 
       {/* Quick Add Modal */}
       {quickAddProduct && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[520px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }}>
+          <div className="bg-white shadow-xl w-full max-w-[540px] overflow-y-auto" style={{ maxHeight: "94vh", borderRadius: "12px" }} onClick={e => e.stopPropagation()}>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-[15px] font-bold text-[#0F1111]">Select Size & Add to Cart</h2>
-              <button onClick={() => setQuickAddProduct(null)} className="text-gray-400 hover:text-black transition-colors p-1 rounded">
-                <X className="w-5 h-5" />
+            <div className="flex items-center justify-between px-6 pt-5 pb-4">
+              <h2 className="text-[20px] font-bold text-[#0F1111]">Select Size</h2>
+              <button onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }} className="text-[#0F1111] hover:opacity-60">
+                <X className="w-6 h-6" />
               </button>
             </div>
+            <div style={{ height: "1px", background: "#E3E6E6", margin: "0" }} />
 
             {/* Product Info */}
-            <div className="flex gap-5 px-6 py-5 bg-[#FAFAFA] border-b border-gray-100">
-              <div className="w-[100px] h-[100px] flex-shrink-0 bg-white border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src={getSKUReferenceImage(quickAddProduct.sku)} alt={quickAddProduct.name} className="w-full h-full object-contain" />
+            <div className="flex gap-6 px-6 py-6">
+              <div className="w-[120px] h-[120px] flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center border border-[#E3E6E6] bg-[#F7F8F8]">
+                <img src={getSKUReferenceImage(quickAddProduct.sku)} alt={quickAddProduct.name} className="w-full h-full object-contain mix-blend-multiply p-2" />
               </div>
-              <div className="flex flex-col justify-center flex-1 gap-1">
-                <h3 className="text-[15px] font-bold text-[#0F1111] leading-snug line-clamp-2">{quickAddProduct.name}</h3>
-                <div className="text-[13px] text-[#565959]">
-                  Colour: <span className="font-semibold text-[#0F1111]">{quickAddProduct.colors?.[0] || "Default"}</span>
+              <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
+                <div className="text-[16px] font-bold text-[#0F1111] leading-snug">{quickAddProduct.name}</div>
+                <div className="text-[14px] text-[#565959]">Colour: <span className="font-semibold text-[#0F1111]">{quickAddProduct.colors?.[0] || "Default"}</span></div>
+                {/* Price + FREE Returns */}
+                <div className="flex items-baseline gap-3 flex-wrap mt-1">
+                  <div className="flex items-start text-[#B12704]">
+                    <span className="text-[16px] mt-[2px]">₹</span>
+                    <span className="text-[26px] font-bold leading-none">{Math.floor(quickAddProduct.price * 83)}</span>
+                  </div>
+                  <span className="text-[14px] text-[#007600] font-semibold">FREE Returns</span>
                 </div>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-[12px] text-[#B12704] leading-none">$</span>
-                  <span className="text-[24px] text-[#B12704] font-medium leading-none">{Math.floor(quickAddProduct.price)}</span>
-                  <span className="text-[12px] text-[#B12704]">.{(quickAddProduct.price % 1).toFixed(2).substring(2)}</span>
-                  <span className="text-[12px] text-[#007600] font-medium ml-2">FREE Returns</span>
+                {/* Prime */}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-[#FF9900] text-[15px] font-bold">✓</span>
+                  <img src="/prime-logo-2.png" alt="Prime" style={{ height: "15px", objectFit: "contain", mixBlendMode: "multiply" }} />
+                  <span className="text-[14px] text-[#0F1111]">FREE Delivery Today</span>
                 </div>
-                <div className="text-[12px] text-[#565959]">Prime <span className="text-[#007185] font-medium">FREE Delivery</span> Today</div>
-                <div className="text-[12px] text-[#007185] hover:underline cursor-pointer font-medium mt-0.5">See all item details</div>
+                <span className="text-[14px] text-[#007185] hover:underline cursor-pointer font-medium mt-1 inline-block">See all details</span>
               </div>
             </div>
+            <div style={{ height: "1px", background: "#E3E6E6", margin: "0" }} />
 
-            {/* Size + AI Body */}
-            <div className="px-6 py-5 flex flex-col gap-4">
+            {/* Size Picker */}
+            <div className="px-6 pt-6 pb-10">
+              <div className="text-[18px] font-bold text-[#0F1111] mb-4">Choose your size</div>
 
-              {/* Size label */}
-              <div className="flex items-center justify-between">
-                <div className="text-[13px] font-bold text-[#0F1111]">
-                  Size:&nbsp;
-                  {selectedSize
-                    ? <span className="text-[#007185]">{selectedSize} selected ✓</span>
-                    : <span className="font-normal text-[#565959]">please select</span>
-                  }
-                </div>
-              </div>
-
-              {/* Size Buttons */}
-              <div id="quick-add-sizes" className="flex flex-wrap gap-2 p-2 rounded-lg transition-all">
+              <div id="quick-add-sizes" className="flex flex-wrap gap-4 mb-6 transition-all rounded-lg">
                 {quickAddProduct.sizes.map((s: string) => (
                   <button
                     key={s}
                     onClick={() => setSelectedSize(s === selectedSize ? "" : s)}
-                    className={`min-w-[54px] h-11 px-4 rounded-md border text-[14px] transition-all flex items-center justify-center ${
-                      selectedSize === s
-                        ? 'border-[#007185] ring-1 ring-[#007185] bg-[#F0F8FA] text-[#0F1111] font-bold shadow-sm'
-                        : 'border-[#D5D9D9] bg-white text-[#0F1111] hover:border-[#007185] hover:bg-[#F7FAFA] font-medium'
-                    }`}
-                  >
-                    {s}
-                  </button>
+                    style={{
+                      minWidth: "76px", height: "56px", borderRadius: "8px",
+                      border: selectedSize === s ? "1.5px solid #E47911" : "1px solid #D5D9D9",
+                      background: "white", fontSize: "16px",
+                      fontWeight: selectedSize === s ? 700 : 400,
+                      color: selectedSize === s ? "#E47911" : "#0F1111", cursor: "pointer", transition: "all 0.15s",
+                      boxShadow: selectedSize === s ? "0 0 0 1px #E47911" : "none"
+                    }}
+                  >{s}</button>
                 ))}
               </div>
 
-              {!selectedSize && (
-                <div className="text-[12px] text-[#565959]">👆 Tap a size, or use AI to find your perfect fit below</div>
-              )}
+              {/* Not sure / View size chart */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2.5 text-[14px] text-[#565959]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E47911" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:"rotate(45deg)"}}><path d="M21 16H3"/><path d="M21 8H3"/><path d="M7 16V8"/><path d="M11 16V8"/><path d="M15 16V8"/><path d="M19 16V8"/></svg>
+                  <span>Not sure which size is right for you?</span>
+                </div>
+                <button
+                  onClick={() => { setQuickAddProduct(null); setSelectedSize(""); routeToSizing(quickAddProduct.sku); }}
+                  className="text-[14px] text-[#007185] hover:underline flex items-center gap-0.5 font-medium whitespace-nowrap"
+                >View size chart <ChevronDown className="w-3.5 h-3.5 -rotate-90" /></button>
+              </div>
 
-              {/* Divider */}
-              <div className="flex items-center gap-3">
+              {/* OR divider */}
+              <div className="flex items-center gap-3 mb-8 relative">
                 <div className="flex-1 border-t border-[#E3E6E6]" />
-                <span className="text-[11px] text-[#888C8C] uppercase tracking-widest font-bold">or</span>
+                <span className="text-[12px] text-[#767676] font-bold uppercase bg-white px-3 tracking-wide">OR</span>
                 <div className="flex-1 border-t border-[#E3E6E6]" />
               </div>
 
-              {/* AI Scanner Row */}
+              {/* AI Body Scanner Banner */}
               <button
-                onClick={() => { setQuickAddProduct(null); routeToSizing(quickAddProduct.sku); }}
-                className="flex items-center gap-3 w-full py-3 px-4 rounded-lg border border-[#D5D9D9] bg-white hover:bg-[#F7F8F8] text-left transition-all group"
+                onClick={() => { setQuickAddProduct(null); setSelectedSize(""); routeToSizing(quickAddProduct.sku); }}
+                className="w-full flex items-center gap-4 px-5 py-4 mb-4 rounded-xl text-left transition-all hover:bg-[#F3F8FC]"
+                style={{ background: "#F5F9FE", border: "1px solid #D6E6F8" }}
               >
-                <div className="w-9 h-9 rounded-full bg-[#F0F8FA] border border-[#BEE3F0] flex items-center justify-center flex-shrink-0 group-hover:bg-[#E0F4F8] transition-colors">
-                  <Zap className="w-4 h-4 text-[#007185]" />
+                <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#9ABDF8", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0, border: "2px solid #E4EFFF" }}>
+                  <div style={{ position: "absolute", inset: "4px", borderRadius: "50%", background: "#71A2F6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4a2 2 0 100-4 2 2 0 000 4zM7.5 7.5A1.5 1.5 0 019 6h6a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H14v7.5a1.5 1.5 0 01-1.5 1.5h-1a1.5 1.5 0 01-1.5-1.5V15H9.5a1.5 1.5 0 01-1.5-1.5v-6z" fill="white"/>
+                    </svg>
+                  </div>
+                  {/* Dashed circular outline */}
+                  <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", transform: "rotate(-45deg)" }} viewBox="0 0 56 56">
+                    <circle cx="28" cy="28" r="27" stroke="white" strokeWidth="1.5" strokeDasharray="18 6" fill="none" />
+                  </svg>
                 </div>
-                <div className="flex-1">
-                  <div className="text-[13px] font-bold text-[#0F1111]">Use AI Body Scanner</div>
-                  <div className="text-[12px] text-[#565959]">Get your perfect size from a selfie — 68% fewer returns</div>
+                <div className="flex-1 ml-1">
+                  <div className="text-[16px] font-bold text-[#0F1111] mb-1">Find your perfect fit with AI</div>
+                  <div className="text-[14px] text-[#565959] leading-relaxed">
+                    Use our AI Body Scanner to get your best size<br/>
+                    — <span className="text-[#007185] font-semibold">68% fewer returns</span>
+                  </div>
                 </div>
-                <ChevronDown className="w-4 h-4 text-[#888C8C] -rotate-90 flex-shrink-0" />
+                <ChevronDown className="w-5 h-5 text-[#0F1111] -rotate-90 flex-shrink-0" strokeWidth={2.5} />
               </button>
-
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 px-6 py-4 border-t border-gray-100 bg-[#FAFAFA]">
-              <button
-                onClick={() => setQuickAddProduct(null)}
-                className="flex-1 py-2.5 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] rounded-full text-[13px] font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (!selectedSize) {
-                    // Flash the size section to prompt user
-                    const sizeSection = document.getElementById("quick-add-sizes");
-                    if (sizeSection) {
-                      sizeSection.style.transition = "background 0.1s";
-                      sizeSection.style.background = "#FFF3CD";
-                      setTimeout(() => { sizeSection.style.background = ""; }, 600);
-                    }
-                    return;
-                  }
-                  setShoppingBag((prev: any) => [
-                    ...prev,
-                    {
-                      id: Math.random().toString(36).substr(2, 9),
-                      sku: quickAddProduct.sku,
-                      name: quickAddProduct.name,
-                      price: quickAddProduct.price,
-                      grade: quickAddProduct.isPreloved ? (quickAddProduct.grade || "B") : "A",
-                      originalPrice: quickAddProduct.originalPrice || quickAddProduct.price,
-                      size: selectedSize,
-                      isPreloved: !!quickAddProduct.isPreloved,
-                    }
-                  ]);
-                  setQuickAddProduct(null);
-                  try {
-                    const confetti = (window as any).confetti;
-                    if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } });
-                  } catch {}
-                  setActiveTab("cart");
-                }}
-                className="flex-[2] py-2.5 bg-[#FFD814] hover:bg-[#F7CA00] border border-[#FCD200] rounded-full text-[13px] font-bold transition-colors"
-              >
-                {selectedSize ? `Add Size ${selectedSize} to Cart` : "Add to cart"}
-              </button>
+            <div style={{ borderTop: "1px solid #E3E6E6", background: "#F7F8F8" }} className="px-6 py-5 flex gap-4">
+              {selectedSize && shoppingBag?.some((b: any) => b.sku === quickAddProduct.sku && b.size === selectedSize) ? (
+                /* "X in cart" state */
+                <>
+                  <button
+                    onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }}
+                    className="flex-1 py-3 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] text-[15px] font-medium transition-colors"
+                    style={{ borderRadius: "8px", color: "#0F1111", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}
+                  >Cancel</button>
+                  <div className="flex-[1.5] flex items-center" style={{ border: "1px solid #FCD200", borderRadius: "8px", overflow: "hidden", background: "#FFD814", height: "48px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" }}>
+                    <button
+                      className="flex items-center justify-center hover:bg-[#F7CA00] transition-colors h-full"
+                      style={{ width: "48px" }}
+                      onClick={() => {
+                        setShoppingBag((prev: any) => {
+                          const items = [...prev];
+                          const idx = items.map((b: any, i: number) => b.sku === quickAddProduct.sku && b.size === selectedSize ? i : -1).filter((i: number) => i >= 0).pop() ?? -1;
+                          if (idx !== -1) items.splice(idx, 1);
+                          return items;
+                        });
+                      }}
+                    ><Trash2 className="w-5 h-5 text-[#0F1111]" /></button>
+                    <span className="flex-1 text-center text-[15px] font-bold text-[#0F1111]">
+                      {shoppingBag?.filter((b: any) => b.sku === quickAddProduct.sku && b.size === selectedSize).length} in cart
+                    </span>
+                    <button
+                      className="flex items-center justify-center hover:bg-[#F7CA00] transition-colors h-full"
+                      style={{ width: "48px" }}
+                      onClick={() => setShoppingBag((prev: any) => [...prev, { id: Math.random().toString(36).substr(2, 9), sku: quickAddProduct.sku, name: quickAddProduct.name, price: quickAddProduct.price, grade: quickAddProduct.isPreloved ? (quickAddProduct.grade || "B") : "A", originalPrice: quickAddProduct.originalPrice || quickAddProduct.price, size: selectedSize, isPreloved: !!quickAddProduct.isPreloved }])}
+                    ><Plus className="w-5 h-5 text-[#0F1111]" /></button>
+                  </div>
+                </>
+              ) : (
+                /* Normal state */
+                <>
+                  <button
+                    onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }}
+                    className="flex-1 py-3 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] text-[15px] font-medium transition-colors"
+                    style={{ borderRadius: "8px", color: "#0F1111", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}
+                  >Cancel</button>
+                  <button
+                    onClick={() => {
+                      if (!selectedSize) {
+                        const sizeSection = document.getElementById("quick-add-sizes");
+                        if (sizeSection) { sizeSection.style.background = "#FFF3CD"; setTimeout(() => { sizeSection.style.background = ""; }, 600); }
+                        return;
+                      }
+                      setShoppingBag((prev: any) => [...prev, { id: Math.random().toString(36).substr(2, 9), sku: quickAddProduct.sku, name: quickAddProduct.name, price: quickAddProduct.price, grade: quickAddProduct.isPreloved ? (quickAddProduct.grade || "B") : "A", originalPrice: quickAddProduct.originalPrice || quickAddProduct.price, size: selectedSize, isPreloved: !!quickAddProduct.isPreloved }]);
+                      try { const confetti = (window as any).confetti; if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } }); } catch {}
+                    }}
+                    className="flex-[1.5] py-3 text-[15px] font-bold transition-all hover:bg-[#F7CA00]"
+                    style={{ background: "#FFD814", border: "1px solid #FCD200", borderRadius: "8px", color: "#0F1111", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" }}
+                  >Add to cart</button>
+                </>
+              )}
             </div>
 
           </div>
         </div>
       )}
-
     </div>
   );
 }
