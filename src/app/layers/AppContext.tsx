@@ -136,6 +136,7 @@ export const SKU_REFERENCE_IMAGES: Record<string, string> = {
   "SPK-AIR-12": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500",
   "YRDLY-GNTLMN-001": "/yardley-gentleman.webp",
   "BOAT-EARBUDS-01": "/boat-earbuds.jpg",
+  "PUMA-SHOE-001": "/puma.png",
 
   // Custom SKUs
   "HOTHANDS-1": "/product1-1.jpg",

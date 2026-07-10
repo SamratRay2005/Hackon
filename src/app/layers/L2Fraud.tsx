@@ -520,9 +520,10 @@ export default function L2Fraud() {
             </div>
             <button
               onClick={() => setFilterResalable(f => !f)}
-              style={{ padding: "6px 10px", border: `1px solid ${filterResalable ? "#FF9900" : "#DDD"}`, borderRadius: "4px", background: filterResalable ? "#FFF8E7" : "#FFF", cursor: "pointer", fontSize: "11px", fontWeight: 600, color: filterResalable ? "#C7511F" : "#565959" }}
+              style={{ padding: "6px 10px", border: `1px solid ${filterResalable ? "#067D62" : "#DDD"}`, borderRadius: "4px", background: filterResalable ? "#F0FAF4" : "#FFF", cursor: "pointer", fontSize: "11px", fontWeight: 600, color: filterResalable ? "#067D62" : "#565959", display: "flex", alignItems: "center", gap: "4px" }}
             >
-              ⚙ Filter
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              {filterResalable ? "Resalable Only" : "Filter Resalable"}
             </button>
           </div>
 
@@ -585,7 +586,9 @@ export default function L2Fraud() {
                                   <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{claim.itemName}</div>
                                   <div style={{ fontSize: "11px", color: "#565959", marginTop: "2px" }}>Order: {claim.orderId || "N/A"}</div>
                                   <div style={{ fontSize: "11px", color: "#565959" }}>Customer: {claim.userId}</div>
-                                  <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px" }}>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                                  <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                                  </div>
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px", flexShrink: 0, minWidth: "72px" }}>
                                   <div style={{ fontSize: "20px", fontWeight: 900, color: risk.color, lineHeight: 1 }}>{claim.riskScore}</div>
@@ -594,6 +597,15 @@ export default function L2Fraud() {
                                   <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#FFF8E7", color: "#C7511F", border: "1px solid #FCD200", display: "flex", alignItems: "center", gap: "3px" }}>
                                     <Clock style={{ width: "9px", height: "9px" }} /> In Review
                                   </span>
+                                  {claim.status !== "REJECTED" && claim.isResalable !== undefined && (
+                                    <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: claim.isResalable ? "#F0FAF4" : "#FEE8E4", color: claim.isResalable ? "#067D62" : "#B12704", border: `1px solid ${claim.isResalable ? "#84C2A6" : "#F5B5AD"}`, display: "flex", alignItems: "center", gap: "3px" }}>
+                                      {claim.isResalable ? (
+                                        <><CheckCircle style={{ width: "9px", height: "9px" }} /> Resalable</>
+                                      ) : (
+                                        <><XCircle style={{ width: "9px", height: "9px" }} /> Not Resalable</>
+                                      )}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -663,7 +675,9 @@ export default function L2Fraud() {
                                   <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{claim.itemName}</div>
                                   <div style={{ fontSize: "11px", color: "#565959", marginTop: "2px" }}>Order: {claim.orderId || "N/A"}</div>
                                   <div style={{ fontSize: "11px", color: "#565959" }}>Customer: {claim.userId}</div>
-                                  <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px" }}>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                                  <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                                  </div>
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px", flexShrink: 0, minWidth: "72px" }}>
                                   <div style={{ fontSize: "20px", fontWeight: 900, color: risk.color, lineHeight: 1 }}>{claim.riskScore}</div>
@@ -676,6 +690,15 @@ export default function L2Fraud() {
                                   ) : (
                                     <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: risk.bg, color: risk.color, border: `1px solid ${risk.border}`, display: "flex", alignItems: "center", gap: "3px" }}>
                                       <CheckCircle style={{ width: "9px", height: "9px" }} /> {itemStatus === "MANUAL_REVIEW" ? "In Review" : "Approved"}
+                                    </span>
+                                  )}
+                                  {claim.status !== "REJECTED" && claim.isResalable !== undefined && (
+                                    <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: claim.isResalable ? "#F0FAF4" : "#FEE8E4", color: claim.isResalable ? "#067D62" : "#B12704", border: `1px solid ${claim.isResalable ? "#84C2A6" : "#F5B5AD"}`, display: "flex", alignItems: "center", gap: "3px" }}>
+                                      {claim.isResalable ? (
+                                        <><CheckCircle style={{ width: "9px", height: "9px" }} /> Resalable</>
+                                      ) : (
+                                        <><XCircle style={{ width: "9px", height: "9px" }} /> Not Resalable</>
+                                      )}
                                     </span>
                                   )}
                                 </div>

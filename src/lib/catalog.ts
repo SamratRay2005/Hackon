@@ -87,6 +87,7 @@ const RAW_PRODUCT_CATALOG = [
   { sku: "WORK-SHRT-28",    name: "Heavyweight Cotton Canvas Utility Shirt",           price: 68.00,  sizes: ["S","M","L","XL"] },
 
   // --- FOOTWEAR ---
+  { sku: "PUMA-SHOE-001",   name: "Puma Shoes",                                        price: 65.00,  sizes: ["7","8","9","10","11","12"] },
   { sku: "RUN-SHOE-30",     name: "Aero-Foam Max Running Shoes",                       price: 135.00, sizes: ["7","8","9","10","11","12"] },
   { sku: "SNEAK-LE-31",     name: "Classic White Leather Court Sneakers",              price: 95.00,  sizes: ["7","8","9","10","11","12"] },
   { sku: "BOOT-WTR-32",     name: "Waterproof Leather Hiking Boots",                   price: 165.00, sizes: ["7","8","9","10","11","12"] },

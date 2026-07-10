@@ -377,7 +377,6 @@ export default function L1Sizing() {
                   <div style={{ fontSize: "13px", color: "#007600", fontWeight: 700, marginBottom: "2px" }}>AI Recommendation Ready</div>
                   <div style={{ fontSize: "15px", color: "#0F1111", fontWeight: 400 }}>
                     Your perfect size is <strong style={{ fontSize: "20px" }}>{sizingResult.recommendedSize}</strong>
-                    <span style={{ fontSize: "13px", color: "#565959", marginLeft: "8px" }}>({sizingResult.confidenceScore}% confidence)</span>
                   </div>
                   {sizingResult.notes && (
                     <div style={{ fontSize: "12px", color: "#565959", marginTop: "4px" }}>{sizingResult.notes}</div>
