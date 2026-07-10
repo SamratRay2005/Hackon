@@ -63,9 +63,11 @@ export default function L2Fraud() {
   const [selectedClaim, setSelectedClaim] = React.useState<any>(null);
   const [fraudImageName, setFraudImageName] = React.useState("uploaded_claim_evidence.jpg");
   const [fraudDemoCycle, setFraudDemoCycle] = React.useState(0);
-  const [adminTab, setAdminTab] = React.useState<"manual" | "processed">("manual");
+  const [manualCollapsed, setManualCollapsed] = React.useState(false);
+  const [processedCollapsed, setProcessedCollapsed] = React.useState(false);
   const [filterResalable, setFilterResalable] = React.useState(false);
-  const [visibleCount, setVisibleCount] = React.useState(5);
+  const [visibleManualCount, setVisibleManualCount] = React.useState(5);
+  const [visibleProcessedCount, setVisibleProcessedCount] = React.useState(5);
 
   const triggerFraudCheck = async () => {
     if (!fraudImage) return;
@@ -501,29 +503,13 @@ export default function L2Fraud() {
       {/* ── Main Body ── */}
       <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", flex: 1, minHeight: 0, maxWidth: "1400px", margin: "0 auto", width: "100%", padding: "12px", gap: "12px", boxSizing: "border-box", alignItems: "stretch", gridTemplateRows: "1fr" }}>
 
-        {/* ── Left: Review Queues ── */}
         <div style={{ background: "#FFF", border: "1px solid #DDD", borderRadius: "8px", display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-          {/* Tabs */}
-          <div style={{ display: "flex", borderBottom: "1px solid #DDD" }}>
-            {(["manual", "processed"] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => { setAdminTab(tab); setSelectedClaim(null); setVisibleCount(5); }}
-                style={{
-                  flex: 1, padding: "12px 8px", fontSize: "12px", fontWeight: 700, border: "none", cursor: "pointer",
-                  background: "transparent",
-                  color: adminTab === tab ? "#0F1111" : "#565959",
-                  borderBottom: adminTab === tab ? "2px solid #FF9900" : "2px solid transparent",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
-                }}
-              >
-                {tab === "manual" ? <AlertTriangle style={{ width: "12px", height: "12px" }} /> : <CheckCircle style={{ width: "12px", height: "12px" }} />}
-                {tab === "manual" ? "Manual Review" : "AI Processed"}
-                <span style={{ background: "#F0F2F2", color: "#565959", fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "99px" }}>
-                  {tab === "manual" ? manualReviewQueue.length : processedFraudQueue.length}
-                </span>
-              </button>
-            ))}
+          {/* Inspect Queue Header */}
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid #DDD", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#565959", textTransform: "uppercase", letterSpacing: "0.06em" }}>Inspect Queue</span>
+            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#565959", padding: "2px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            </button>
           </div>
 
           {/* Search & Filter */}
@@ -540,93 +526,174 @@ export default function L2Fraud() {
             </button>
           </div>
 
-          {/* Queue List */}
+          {/* Scrollable Queue List */}
           <div style={{ flex: 1, overflowY: "auto" }}>
-            {(adminTab === "manual" ? manualReviewQueue : processedFraudQueue)
-              .filter((c: any) => filterResalable ? c.isResalable : true)
-              .length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px", color: "#8D9098" }}>
-                <Shield style={{ width: "32px", height: "32px", margin: "0 auto 8px", opacity: 0.3 }} />
-                <div style={{ fontSize: "13px", fontWeight: 600 }}>No claims in this queue.</div>
-              </div>
-            ) : (
-              <>
-                {(adminTab === "manual" ? manualReviewQueue : processedFraudQueue)
-                  .filter((c: any) => filterResalable ? c.isResalable : true)
-                  .slice(0, visibleCount)
-                  .map((claim: any) => {
-                    const risk = getRiskLevel(claim.riskScore);
-                    const isSelected = selectedClaim?.id === claim.id;
-                    return (
-                      <div
-                        key={claim.id}
-                        onClick={() => setSelectedClaim(claim)}
-                        style={{
-                          padding: "12px", borderBottom: "1px solid #F0F2F2", cursor: "pointer",
-                          background: isSelected ? "#FFF8E7" : "#FFF",
-                          borderLeft: isSelected ? "3px solid #FF9900" : "3px solid transparent",
-                          transition: "all 0.15s"
-                        }}
-                      >
-                        <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-                          {/* Thumbnail */}
-                          <div style={{ width: "44px", height: "44px", borderRadius: "6px", border: "1px solid #DDD", overflow: "hidden", flexShrink: 0, background: "#F7F8F8" }}>
-                            {claim.fraudImage
-                              ? <img src={claim.fraudImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                              : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <Package style={{ width: "20px", height: "20px", color: "#C8CBCF" }} />
+
+            {/* ── MANUAL REVIEW Section ── */}
+            <div>
+              {/* Collapsible Header */}
+              <button
+                onClick={() => setManualCollapsed(c => !c)}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "#F7F8F8", border: "none", borderBottom: "1px solid #E8E8E8", cursor: "pointer", gap: "8px" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ background: "#0F1111", color: "#FFF", fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "4px" }}>Manual Review</div>
+                  <span style={{ background: "#F0F2F2", color: "#565959", fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "99px" }}>{manualReviewQueue.length}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "10px", color: "#565959", fontWeight: 500 }}>AI Processed</span>
+                  <span style={{ background: "#E8E8E8", color: "#565959", fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "99px" }}>{processedFraudQueue.length}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#565959" strokeWidth="2.5" style={{ transform: manualCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </button>
+
+              {/* Manual Review Items */}
+              {!manualCollapsed && (
+                <>
+                  {manualReviewQueue.filter((c: any) => filterResalable ? c.isResalable : true).length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "24px 16px", color: "#8D9098" }}>
+                      <AlertTriangle style={{ width: "24px", height: "24px", margin: "0 auto 6px", opacity: 0.3 }} />
+                      <div style={{ fontSize: "12px", fontWeight: 600 }}>No manual reviews pending.</div>
+                    </div>
+                  ) : (
+                    <>
+                      {manualReviewQueue
+                        .filter((c: any) => filterResalable ? c.isResalable : true)
+                        .slice(0, visibleManualCount)
+                        .map((claim: any) => {
+                          const risk = getRiskLevel(claim.riskScore);
+                          const isSelected = selectedClaim?.id === claim.id;
+                          return (
+                            <div
+                              key={claim.id}
+                              onClick={() => setSelectedClaim(claim)}
+                              style={{
+                                padding: "12px", borderBottom: "1px solid #F0F2F2", cursor: "pointer",
+                                background: isSelected ? "#FFF8E7" : "#FFF",
+                                borderLeft: isSelected ? "3px solid #FF9900" : "3px solid transparent",
+                                transition: "all 0.15s"
+                              }}
+                            >
+                              <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                                <div style={{ width: "44px", height: "44px", borderRadius: "6px", border: "1px solid #DDD", overflow: "hidden", flexShrink: 0, background: "#F7F8F8" }}>
+                                  {claim.fraudImage
+                                    ? <img src={claim.fraudImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><Package style={{ width: "20px", height: "20px", color: "#C8CBCF" }} /></div>
+                                  }
                                 </div>
-                            }
-                          </div>
-                          {/* Main Info */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{claim.itemName}</div>
-                            <div style={{ fontSize: "11px", color: "#565959", marginTop: "2px" }}>Order: {claim.orderId || "N/A"}</div>
-                            <div style={{ fontSize: "11px", color: "#565959" }}>Customer: {claim.userId}</div>
-                            <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px" }}>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
-                          </div>
-                          {/* Score + Status */}
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px", flexShrink: 0, minWidth: "72px" }}>
-                            <div style={{ fontSize: "20px", fontWeight: 900, color: risk.color, lineHeight: 1 }}>{claim.riskScore}</div>
-                            <div style={{ fontSize: "8px", fontWeight: 700, color: "#8D9098", textTransform: "uppercase", letterSpacing: "0.04em" }}>RISK SCORE</div>
-                            {/* Risk level pill */}
-                            <span style={{ fontSize: "8px", fontWeight: 700, padding: "1px 5px", borderRadius: "99px", background: risk.bg, color: risk.color, border: `1px solid ${risk.border}` }}>
-                              {risk.label}
-                            </span>
-                            {/* Status badge with icon */}
-                            {(() => {
-                              const itemStatus = claim.status || (adminTab === "manual" ? "MANUAL_REVIEW" : (claim.riskScore > 40 ? "REJECTED" : "APPROVED"));
-                              if (itemStatus === "REJECTED") {
-                                return (
-                                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#FEE8E4", color: "#B12704", border: "1px solid #F5B5AD", display: "flex", alignItems: "center", gap: "3px" }}>
-                                    <XCircle style={{ width: "9px", height: "9px" }} /> Rejected
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{claim.itemName}</div>
+                                  <div style={{ fontSize: "11px", color: "#565959", marginTop: "2px" }}>Order: {claim.orderId || "N/A"}</div>
+                                  <div style={{ fontSize: "11px", color: "#565959" }}>Customer: {claim.userId}</div>
+                                  <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px" }}>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px", flexShrink: 0, minWidth: "72px" }}>
+                                  <div style={{ fontSize: "20px", fontWeight: 900, color: risk.color, lineHeight: 1 }}>{claim.riskScore}</div>
+                                  <div style={{ fontSize: "8px", fontWeight: 700, color: "#8D9098", textTransform: "uppercase", letterSpacing: "0.04em" }}>RISK SCORE</div>
+                                  <span style={{ fontSize: "8px", fontWeight: 700, padding: "1px 5px", borderRadius: "99px", background: risk.bg, color: risk.color, border: `1px solid ${risk.border}` }}>{risk.label}</span>
+                                  <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#FFF8E7", color: "#C7511F", border: "1px solid #FCD200", display: "flex", alignItems: "center", gap: "3px" }}>
+                                    <Clock style={{ width: "9px", height: "9px" }} /> In Review
                                   </span>
-                                );
-                              }
-                              return (
-                                <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: risk.bg, color: risk.color, border: `1px solid ${risk.border}`, display: "flex", alignItems: "center", gap: "3px" }}>
-                                  <CheckCircle style={{ width: "9px", height: "9px" }} />
-                                  {itemStatus === "MANUAL_REVIEW" ? "In Review" : "Approved"}
-                                </span>
-                              );
-                            })()}
-                          </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {manualReviewQueue.filter((c: any) => filterResalable ? c.isResalable : true).length > visibleManualCount && (
+                        <div style={{ padding: "10px", textAlign: "center", borderTop: "1px solid #F0F2F2" }}>
+                          <button onClick={() => setVisibleManualCount(v => v + 5)} style={{ fontSize: "12px", color: "#007185", background: "none", border: "none", cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px", margin: "0 auto" }}>Load more ↓</button>
                         </div>
-                      </div>
-                    );
-                  })}
-                {(adminTab === "manual" ? manualReviewQueue : processedFraudQueue).filter((c: any) => filterResalable ? c.isResalable : true).length > visibleCount && (
-                  <div style={{ padding: "10px", textAlign: "center", borderTop: "1px solid #F0F2F2" }}>
-                    <button
-                      onClick={() => setVisibleCount(v => v + 5)}
-                      style={{ fontSize: "12px", color: "#007185", background: "none", border: "none", cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px", margin: "0 auto" }}
-                    >
-                      Load more ↓
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* ── AI PROCESSED Section ── */}
+            <div>
+              {/* Collapsible Header */}
+              <button
+                onClick={() => setProcessedCollapsed(c => !c)}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "#F7F8F8", border: "none", borderBottom: "1px solid #E8E8E8", borderTop: "1px solid #DDD", cursor: "pointer", gap: "8px" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ background: "#E8E8E8", color: "#565959", fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "4px" }}>AI Processed</div>
+                  <span style={{ background: "#F0F2F2", color: "#565959", fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "99px" }}>{processedFraudQueue.length}</span>
+                </div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#565959" strokeWidth="2.5" style={{ transform: processedCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+
+              {/* AI Processed Items */}
+              {!processedCollapsed && (
+                <>
+                  {processedFraudQueue.filter((c: any) => filterResalable ? c.isResalable : true).length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "24px 16px", color: "#8D9098" }}>
+                      <CheckCircle style={{ width: "24px", height: "24px", margin: "0 auto 6px", opacity: 0.3 }} />
+                      <div style={{ fontSize: "12px", fontWeight: 600 }}>No AI-processed claims yet.</div>
+                    </div>
+                  ) : (
+                    <>
+                      {processedFraudQueue
+                        .filter((c: any) => filterResalable ? c.isResalable : true)
+                        .slice(0, visibleProcessedCount)
+                        .map((claim: any) => {
+                          const risk = getRiskLevel(claim.riskScore);
+                          const isSelected = selectedClaim?.id === claim.id;
+                          const itemStatus = claim.status || (claim.riskScore > 40 ? "REJECTED" : "APPROVED");
+                          return (
+                            <div
+                              key={claim.id}
+                              onClick={() => setSelectedClaim(claim)}
+                              style={{
+                                padding: "12px", borderBottom: "1px solid #F0F2F2", cursor: "pointer",
+                                background: isSelected ? "#FFF8E7" : "#FFF",
+                                borderLeft: isSelected ? "3px solid #FF9900" : "3px solid transparent",
+                                transition: "all 0.15s"
+                              }}
+                            >
+                              <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                                <div style={{ width: "44px", height: "44px", borderRadius: "6px", border: "1px solid #DDD", overflow: "hidden", flexShrink: 0, background: "#F7F8F8" }}>
+                                  {claim.fraudImage
+                                    ? <img src={claim.fraudImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><Package style={{ width: "20px", height: "20px", color: "#C8CBCF" }} /></div>
+                                  }
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{claim.itemName}</div>
+                                  <div style={{ fontSize: "11px", color: "#565959", marginTop: "2px" }}>Order: {claim.orderId || "N/A"}</div>
+                                  <div style={{ fontSize: "11px", color: "#565959" }}>Customer: {claim.userId}</div>
+                                  <div style={{ fontSize: "10px", color: "#8D9098", marginTop: "2px" }}>{new Date(claim.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px", flexShrink: 0, minWidth: "72px" }}>
+                                  <div style={{ fontSize: "20px", fontWeight: 900, color: risk.color, lineHeight: 1 }}>{claim.riskScore}</div>
+                                  <div style={{ fontSize: "8px", fontWeight: 700, color: "#8D9098", textTransform: "uppercase", letterSpacing: "0.04em" }}>RISK SCORE</div>
+                                  <span style={{ fontSize: "8px", fontWeight: 700, padding: "1px 5px", borderRadius: "99px", background: risk.bg, color: risk.color, border: `1px solid ${risk.border}` }}>{risk.label}</span>
+                                  {itemStatus === "REJECTED" ? (
+                                    <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#FEE8E4", color: "#B12704", border: "1px solid #F5B5AD", display: "flex", alignItems: "center", gap: "3px" }}>
+                                      <XCircle style={{ width: "9px", height: "9px" }} /> Rejected
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: risk.bg, color: risk.color, border: `1px solid ${risk.border}`, display: "flex", alignItems: "center", gap: "3px" }}>
+                                      <CheckCircle style={{ width: "9px", height: "9px" }} /> {itemStatus === "MANUAL_REVIEW" ? "In Review" : "Approved"}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {processedFraudQueue.filter((c: any) => filterResalable ? c.isResalable : true).length > visibleProcessedCount && (
+                        <div style={{ padding: "10px", textAlign: "center", borderTop: "1px solid #F0F2F2" }}>
+                          <button onClick={() => setVisibleProcessedCount(v => v + 5)} style={{ fontSize: "12px", color: "#007185", background: "none", border: "none", cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px", margin: "0 auto" }}>Load more ↓</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
           </div>
         </div>
 

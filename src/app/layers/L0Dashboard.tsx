@@ -431,7 +431,10 @@ export default function L0Dashboard() {
                   return (
                     <div key={item.sku + i} className="marketplace-item-card group relative flex flex-col" style={{border:"2px solid #E47911", borderRadius:"4px", overflow:"hidden"}}>
                       <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-                        <span style={{background:"#CC0C39", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px"}}>Grade {item.grade}</span>
+                        <span style={{background:"#CC0C39", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px"}}>
+                          {item.grade === "A" ? "As-New" : item.grade === "B" ? "Near-New" : `Grade ${item.grade}`}
+                        </span>
+
                         {isReturnedProduct && (
                           <span style={{background:"#007185", color:"#FFF", fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"2px", display:"flex", alignItems:"center", gap:"2px"}}>
                             <RotateCcw className="w-2.5 h-2.5" /> Returned

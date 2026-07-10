@@ -113,9 +113,10 @@ Perform two main checks:
    Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
 
 2. Damage check (only if isRelevant is true):
-   Check if the product has visible physical damage (e.g., cracks, tears, significant dents, broken parts) or if there are CLEARLY MISSING PARTS from a set (e.g., only one earbud instead of two).
-   Set "isDamaged" to true if clear damage or missing parts are visible, or if the customer's description strongly indicates missing parts that align with the photo.
-   Set "isDamaged" to false only if the product appears fully complete, pristine and undamaged in the photo.
+   Check if the product has visible physical damage (e.g., cracks, tears, significant dents, broken parts) OR if there are CLEARLY MISSING PARTS from a set (e.g., only one earbud shown instead of two, one glove from a pair, a single sock from a set).
+   IMPORTANT: A single item from a pair (e.g., one earbud, one shoe) IS considered damaged/incomplete — set "isDamaged" to true.
+   Set "isDamaged" to true if clear damage OR missing/incomplete parts are visible, OR if the customer's description strongly indicates missing parts that align with the photo (e.g., customer says "one earbud missing" and the photo shows only one earbud).
+   Set "isDamaged" to false ONLY if the product appears fully complete, pristine, and undamaged in the photo.
 
 3. Resalability check (only if isRelevant is true):
    Assess if the item appears to be in pristine, resalable condition (e.g., original packaging visible, tags attached, no visible wear/tear/damage).
@@ -429,8 +430,10 @@ Provide your analysis in the following strict JSON format:
     } else {
       // damaged_product
       if (!isDamaged) {
-        // Pristine item returned but claimed damaged -> flag but let admin decide
-        weightedRiskScore = Math.max(isResalable ? 10 : 85, baseRiskScore);
+        // Pristine item returned but claimed damaged -> flag but let admin decide.
+        // Use a softer floor (55) for the non-resalable case so that genuine missing-part
+        // claims (e.g. one earbud from a pair) get flagged for review, not auto-blocked.
+        weightedRiskScore = Math.max(isResalable ? 10 : 55, baseRiskScore);
         if (weightedRiskScore > 70) recommendedAction = "BLOCK";
         else if (weightedRiskScore >= 40) recommendedAction = "MANUAL_REVIEW";
         else recommendedAction = "APPROVE";
