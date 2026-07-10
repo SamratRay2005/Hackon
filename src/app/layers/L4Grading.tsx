@@ -196,12 +196,14 @@ export default function L4Grading() {
             const evidenceItems = (inspectQueue || []).filter((i: any) => i.source === "fraud");
             const directItems = (inspectQueue || []).filter((i: any) => i.source === "vibe");
 
-            const renderItem = (item: any) => (
-              <div key={item.id} style={{ borderBottom: "1px solid #F0F2F2" }}>
+            const renderItem = (item: any) => {
+              const itemKey = item.id || item.orderId || item.sku;
+              return (
+              <div key={itemKey} style={{ borderBottom: "1px solid #F0F2F2" }}>
                 <div style={{
                   padding: "12px", cursor: "pointer",
-                  background: gradingQueueId === item.id ? "#FFF8E7" : "#FFF",
-                  borderLeft: gradingQueueId === item.id ? "3px solid #FF9900" : "3px solid transparent",
+                  background: gradingQueueId === itemKey ? "#FFF8E7" : "#FFF",
+                  borderLeft: gradingQueueId === itemKey ? "3px solid #FF9900" : "3px solid transparent",
                   transition: "all 0.15s"
                 }}>
                   <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
@@ -231,7 +233,7 @@ export default function L4Grading() {
                   </div>
                   <button
                     onClick={() => {
-                      setGradingQueueId(item.id);
+                      setGradingQueueId(itemKey);
                       setGradingSku(item.sku);
                       setGradingItemName(item.itemName);
                       setGradingFraudImage(item.fraudImage || null);
@@ -245,18 +247,19 @@ export default function L4Grading() {
                     }}
                     style={{
                       marginTop: "8px", width: "100%", padding: "6px",
-                      background: gradingQueueId === item.id ? "#FF9900" : "#FFF",
-                      color: gradingQueueId === item.id ? "#0F1111" : "#007185",
-                      border: gradingQueueId === item.id ? "1px solid #e88c01" : "1px solid #007185",
+                      background: gradingQueueId === itemKey ? "#FF9900" : "#FFF",
+                      color: gradingQueueId === itemKey ? "#0F1111" : "#007185",
+                      border: gradingQueueId === itemKey ? "1px solid #e88c01" : "1px solid #007185",
                       borderRadius: "4px", fontSize: "11px", fontWeight: 700, cursor: "pointer",
                       transition: "all 0.15s"
                     }}
                   >
-                    {gradingQueueId === item.id ? "✓ Inspecting" : "INSPECT THIS ITEM"}
+                    {gradingQueueId === itemKey ? "✓ Inspecting" : "INSPECT THIS ITEM"}
                   </button>
                 </div>
               </div>
             );
+            };
 
             return (
               <>

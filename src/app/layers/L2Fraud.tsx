@@ -731,7 +731,8 @@ export default function L2Fraud() {
             </div>
           ) : (() => {
             const risk = getRiskLevel(displayClaim.riskScore);
-            const actualStatus = displayClaim.status || (adminTab === "manual" ? "MANUAL_REVIEW" : (displayClaim.riskScore > 40 ? "REJECTED" : "APPROVED"));
+            const isManual = manualReviewQueue.some((c: any) => c.id === displayClaim.id);
+            const actualStatus = displayClaim.status || (isManual ? "MANUAL_REVIEW" : (displayClaim.riskScore > 40 ? "REJECTED" : "APPROVED"));
             const isResalable = displayClaim.isResalable && actualStatus !== "REJECTED";
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>

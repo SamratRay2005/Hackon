@@ -571,6 +571,7 @@ export default function L6Orders() {
     setInspectQueue((prev: any[]) => {
       if (prev.find(item => item.orderId === order.orderId)) return prev;
       return [...prev, {
+        id: Math.random().toString(36).substr(2, 9),
         orderId: order.orderId,
         sku: order.sku,
         itemName: order.name,
