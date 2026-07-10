@@ -422,7 +422,7 @@ export default function Home() {
     { id: "fraud-mitigation", icon: ShieldCheck, label: "Verify Return", subtitle: "Scan & authenticate" },
     { id: "deflection", icon: MessageSquare, label: "Get Help", subtitle: "Chat before you return" },
     { id: "grading", icon: Camera, label: "Inspect Item", subtitle: "Grade condition" },
-    { id: "logistics", icon: Truck, label: "Arrange Shipping", subtitle: "Eco-route optimizer" },
+    { id: "logistics", icon: Truck, label: "P2P Routing", subtitle: "Eco-route optimizer" },
     { id: "orders", icon: ShoppingBag, label: "My Orders", subtitle: "Purchase history" },
     { id: "cart", icon: ShoppingCart, label: "Shopping Cart", subtitle: "Your bag" },
     { id: "rewards", icon: Wallet, label: "My Rewards", subtitle: "Cashback & vouchers" },
@@ -746,23 +746,25 @@ export default function Home() {
               >
                 <div className="relative flex items-center">
                   <ShoppingCart className="w-[30px] h-[25px] text-white" />
-                  <span style={{
-                    position:'absolute',
-                    top:'-6px',
-                    left:'14px',
-                    background:'#F08804',
-                    color:'#FFF',
-                    borderRadius:'50%',
-                    width:'16px',
-                    height:'16px',
-                    fontSize:'0.65rem',
-                    fontWeight:900,
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center'
-                  }}>
-                    {shoppingBag.length}
-                  </span>
+                  {shoppingBag.length > 0 && (
+                    <span style={{
+                      position:'absolute',
+                      top:'-6px',
+                      left:'14px',
+                      background:'#F08804',
+                      color:'#FFF',
+                      borderRadius:'50%',
+                      width:'16px',
+                      height:'16px',
+                      fontSize:'0.65rem',
+                      fontWeight:900,
+                      display:'flex',
+                      alignItems:'center',
+                      justifyContent:'center'
+                    }}>
+                      {shoppingBag.length}
+                    </span>
+                  )}
                 </div>
                 <span style={{fontSize:'0.78rem',fontWeight:700, marginBottom: '2px'}}>Cart</span>
               </button>
@@ -777,7 +779,7 @@ export default function Home() {
             {navItems
               .filter(item => globalMode === 'user'
                 ? false
-                : ['fraud-mitigation', 'grading'].includes(item.id)
+                : ['fraud-mitigation', 'grading', 'logistics'].includes(item.id)
               )
               .map(item => (
                 <button
@@ -829,25 +831,7 @@ export default function Home() {
               {/* ── PRODUCT CARD HAS BEEN MOVED TO INDIVIDUAL LAYERS ── */}
 
 
-              {/* ── METRICS STRIP ── */}
-              {globalMode === 'admin' && (
-                <div className="metrics-card-strip">
-                  {[
-                    { icon: ShoppingBag, color: "indigo", label: "Processed Audits", value: metrics.totalProcessed.toString() },
-                    { icon: TrendingDown, color: "emerald", label: "Return Deflection", value: `${metrics.deflectedRate}%` },
-                    { icon: Compass, color: "amber", label: "P2P Route Matches", value: metrics.p2pMatched.toString() },
-                    { icon: ShieldCheck, color: "rose", label: "Fraud Blocked", value: `${metrics.fraudAttemptsBlocked} blocked` },
-                  ].map(({ icon: Icon, color, label, value }) => (
-                    <div key={label} className="metric-strip-card">
-                      <div className={`metric-strip-icon-box ${color}`}><Icon className="w-5 h-5" /></div>
-                      <div>
-                        <div style={{fontSize:'0.68rem',color:'#565959',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
-                        <div style={{fontSize:'1rem',fontWeight:800,color:'#0F1111'}}>{value}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* ── METRICS STRIP REMOVED ── */}
 
               {/* ── BACK TO HOME (MOVED TO SUBNAV) ── */}
 

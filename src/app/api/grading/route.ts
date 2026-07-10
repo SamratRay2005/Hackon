@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { queryGemini, queryGroq, wasGeminiDailyQuotaExhausted, db } from "@/lib/services";
 import { PRODUCT_CATALOG } from "@/lib/catalog";
 import os from "os";
@@ -120,10 +120,10 @@ async function extractVideoFrames(videoBase64?: string, videoUrl?: string, sku?:
  * actual decoded pixel values (not compressed bytes).
  *
  * How it works:
- * 1. Decode each image to a tiny 64×64 raw RGB buffer using sharp
+ * 1. Decode each image to a tiny 64Ãƒâ€”64 raw RGB buffer using sharp
  * 2. Compute the Mean Absolute Difference (MAD) per pixel channel
  *    between every pair of images
- * 3. Greedy-select the pair with the highest MAD — those are the
+ * 3. Greedy-select the pair with the highest MAD Ã¢â‚¬â€ those are the
  *    two most visually distinct viewpoints
  *
  * This keeps the total image count within Groq's 3-image limit
@@ -132,7 +132,7 @@ async function extractVideoFrames(videoBase64?: string, videoUrl?: string, sku?:
 async function selectMostDiverseImages(images: string[], maxCount: number = 2): Promise<string[]> {
   if (images.length <= maxCount) return images;
 
-  // Decode each image to a small 64×64 raw RGB pixel buffer for comparison
+  // Decode each image to a small 64Ãƒâ€”64 raw RGB pixel buffer for comparison
   const THUMB_SIZE = 64;
   const pixelBuffers: Buffer[] = [];
 
@@ -206,10 +206,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing SKU" }, { status: 400 });
     }
 
-    // ── Select reference image ──
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Select reference image Ã¢â€â‚¬Ã¢â€â‚¬
     // "With Evidence" flow: customer submitted a photo that already passed the fraud check.
-    //   → Use the evidence photo as primary reference (is the physical arrival what they claimed to send?)
-    //   → Keep catalog image as secondary anchor only for variant/SKU sanity check.
+    //   Ã¢â€ â€™ Use the evidence photo as primary reference (is the physical arrival what they claimed to send?)
+    //   Ã¢â€ â€™ Keep catalog image as secondary anchor only for variant/SKU sanity check.
     // "Direct Return" flow: no evidence photo, compare against pristine catalog image.
     const catalogRefImage = db.getSKUReferenceImage(sku);
     const refImage = evidenceImage || catalogRefImage;
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing return inspection photos/video" }, { status: 400 });
     }
 
-    // ── Asymmetric image compression ──
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Asymmetric image compression Ã¢â€â‚¬Ã¢â€â‚¬
     // Reference image only needs coarse comparison (variant/completeness), so shrink it more.
     // Returned images need higher fidelity for defect scanning.
     async function compressForLLM(imgData: string, size: number, quality: number): Promise<string> {
@@ -258,11 +258,11 @@ export async function POST(req: NextRequest) {
       activeImages.map((img: string) => compressForLLM(img, 384, 65))
     );
 
-    // ── Pre-flight token estimation ──
-    // Crude heuristic: base64 bytes → approximate vision tokens
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Pre-flight token estimation Ã¢â€â‚¬Ã¢â€â‚¬
+    // Crude heuristic: base64 bytes Ã¢â€ â€™ approximate vision tokens
     // Used to decide whether we can afford 2 images or should default to 1.
     function estimateImageTokens(base64: string): number {
-      const bytes = base64.length * 0.75; // base64 → raw bytes
+      const bytes = base64.length * 0.75; // base64 Ã¢â€ â€™ raw bytes
       return Math.round(bytes / 130);     // conservative estimate, tune against observed usage
     }
 
@@ -283,10 +283,10 @@ export async function POST(req: NextRequest) {
 
     console.log(`Grading token estimate: ref=${refTokens}, returned=[${returnedTokens.join(",")}], sending ${imagesToSend.length} image(s), est total=${imagesToSend.length > 1 ? totalWith2 : totalWith1}/${TPM_BUDGET}`);
 
-    // ── Compact grading prompt ──
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Compact grading prompt Ã¢â€â‚¬Ã¢â€â‚¬
     const numReturned = imagesToSend.length;
 
-    // ── Product-specific context for the AI ──
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Product-specific context for the AI Ã¢â€â‚¬Ã¢â€â‚¬
     const catalogProduct = PRODUCT_CATALOG.find(p => p.sku === sku);
     const productCategory = catalogProduct?.category || "Unknown";
     const productFeatures = catalogProduct?.features?.join(", ") || "";
@@ -296,7 +296,7 @@ export async function POST(req: NextRequest) {
     let completenessHint = "";
     const productNameLower = (itemName || "").toLowerCase();
     if (productNameLower.includes("earbuds") || productNameLower.includes("earbud") || productNameLower.includes("tws") || productNameLower.includes("airpods")) {
-      completenessHint = `CRITICAL: This product is a pair of wireless earbuds. The set MUST include: LEFT earbud, RIGHT earbud, and charging case. If ANY of these three components is absent from the returned video/photos, it is an INCOMPLETE return — list the missing item in missingComponents and assign Grade D automatically. A single earbud in the case means one earbud is missing — this IS Grade D.`;
+      completenessHint = `CRITICAL: This product is a pair of wireless earbuds. The set MUST include: LEFT earbud, RIGHT earbud, and charging case. If ANY of these three components is absent from the returned video/photos, it is an INCOMPLETE return Ã¢â‚¬â€ list the missing item in missingComponents and assign Grade D automatically. A single earbud in the case means one earbud is missing Ã¢â‚¬â€ this IS Grade D.`;
     } else if (productNameLower.includes("shoe") || productNameLower.includes("sneaker") || productNameLower.includes("boot") || productNameLower.includes("slipper") || productNameLower.includes("sandal")) {
       completenessHint = `CRITICAL: This product is a pair of shoes. Both the left and right shoe must be present. If only one is visible, list the missing shoe in missingComponents and assign Grade D.`;
     } else if (productCategory === "Electronics") {
@@ -316,48 +316,49 @@ ${hasEvidenceRef ? `PRODUCT INFO:
 
 IMAGES:
 ${hasEvidenceRef
-  ? `- Image 1 = Customer's EVIDENCE PHOTO (already fraud-verified — this is what the customer claimed to send)
-- Image ${numReturned > 1 ? "2–" + (numReturned + 1) : "2"} = Physical item video frames received at the dark store
+        ? `- Image 1 = Customer's EVIDENCE PHOTO (already fraud-verified Ã¢â‚¬â€ this is what the customer claimed to send)
+- Image ${numReturned > 1 ? "2Ã¢â‚¬â€œ" + (numReturned + 1) : "2"} = Physical item video frames received at the dark store
 
-⚠️ COMPARISON CONTEXT — EVIDENCE MODE:
+Ã¢Å¡Â Ã¯Â¸Â COMPARISON CONTEXT Ã¢â‚¬â€ EVIDENCE MODE:
 The evidence photo (Image 1) has already been verified by our fraud system as showing the correct product in resalable condition. Your job is NOT to compare against the original catalog item. Instead, answer: does the physical item that arrived (video frames) match what the customer's evidence photo showed? Check that:
   a) It is the exact same item as shown in Image 1 (model, color, form factor match Image 1)
   b) The physical condition is not significantly WORSE than Image 1
   c) No components visible in Image 1 are missing from the physical item
 Do NOT penalize pre-existing wear that is consistent with what the evidence photo already showed.`
-  : `- Image 1 = Official catalog reference (what a COMPLETE, pristine product looks like)
-- Image ${numReturned > 1 ? "2–" + (numReturned + 1) : "2"} = Returned item video frames received at the dark store`
-}
+        : `- Image 1 = Official catalog reference (what a COMPLETE, pristine product looks like)
+- Image ${numReturned > 1 ? "2Ã¢â‚¬â€œ" + (numReturned + 1) : "2"} = Returned item video frames received at the dark store`
+      }
 
-${completenessHint ? `⚠️ PRODUCT-SPECIFIC RULE:
+${completenessHint ? `Ã¢Å¡Â Ã¯Â¸Â PRODUCT-SPECIFIC RULE:
 ${completenessHint}
 
 ` : ""}INSPECTION STEPS (perform ALL in order, be strict):
 1. VARIANT CHECK: Does the returned item match the reference in model, color, brand logos, and overall form factor? Set isCorrectVariant=false on any clear mismatch.
-2. COMPLETENESS: Count and list every component present in the reference that is absent in the returned item. Be explicit — "left earbud missing", "charging cable missing", etc. Do NOT give the benefit of the doubt if a component is not visible.
+2. COMPLETENESS: Count and list every component present in the reference that is absent in the returned item. Be explicit Ã¢â‚¬â€ "left earbud missing", "charging cable missing", etc. Do NOT give the benefit of the doubt if a component is not visible.
 3. SURFACE SCAN: Classify all visible defects:
    - MINOR: smudges, fingerprints, light dust
    - MODERATE: scratches <2cm, light scuffs, small chips
    - SEVERE: deep gouges, dents, cracks, warping, corrosion${hasEvidenceRef ? `
    NOTE: In evidence mode, only flag as SEVERE if the damage is clearly WORSE than what appeared in the evidence photo.` : ""}
 4. STRUCTURAL: Cracked housing, broken hinges, or exposed internals = automatic Grade D.
-5. SCORE each video frame viewpoint 0.0–10.0, then derive grade from the LOWEST score:
-   - 9.0–10.0 = A (Like New — matches reference with zero new defects)
-   - 7.0–8.9  = B (Very Good — matches reference with only minor cosmetic differences)
-   - 4.0–6.9  = C (Moderate — functional but noticeably worse than reference or minor missing accessories)
-   - 0.0–3.9  = D (Reject — wrong item, missing critical components, or significantly worse than reference)
+5. SCORE each video frame viewpoint 0.0Ã¢â‚¬â€œ10.0, then derive grade from the LOWEST score:
+   - 9.0Ã¢â‚¬â€œ10.0 = A (Like New Ã¢â‚¬â€ matches reference with zero new defects)
+   - 7.0Ã¢â‚¬â€œ8.9  = B (Very Good Ã¢â‚¬â€ matches reference with only minor cosmetic differences)
+   - 4.0Ã¢â‚¬â€œ6.9  = C (Moderate Ã¢â‚¬â€ functional but noticeably worse than reference or minor missing accessories)
+   - 0.0Ã¢â‚¬â€œ3.9  = D (Reject Ã¢â‚¬â€ wrong item, missing critical components, or significantly worse than reference)
 
 GRADE OVERRIDE RULES (non-negotiable, apply AFTER scoring):
-- isCorrectVariant=false → Grade D, no exceptions
-- missingComponents is non-empty AND contains a primary component → Grade D, no exceptions
-- Any severe structural defect → Grade D, no exceptions
+- isCorrectVariant=false Ã¢â€ â€™ Grade D, no exceptions
+- missingComponents is non-empty AND contains a primary component Ã¢â€ â€™ Grade D, no exceptions
+- Any severe structural defect Ã¢â€ â€™ Grade D, no exceptions
 
-Grade→Resale mapping: A="Excellent Open-Box", B="Refurbished", C="Discount Outlet", D="Liquidation Salvage"
+Grade->Resale mapping: A="As-New", B="Near-New", C="Donated", D="Recycled"
 
 Output ONLY raw JSON (no markdown, no backticks, no prose):
-{"chainOfThought":"concise 2-3 sentence reasoning covering completeness check first","isCorrectVariant":true,"variantNotes":"evidence for variant decision","missingComponents":[],"viewpoints":[{"viewpointIndex":1,"functionalScore":8.5,"severityBreakdown":{"minor":1,"moderate":0,"severe":0},"defects":["description"]}],"overallGrade":"B","resaleCategory":"Refurbished"}`;
+{"chainOfThought":"concise 2-3 sentence reasoning covering completeness check first","isCorrectVariant":true,"variantNotes":"evidence for variant decision","missingComponents":[],"viewpoints":[{"viewpointIndex":1,"functionalScore":8.5,"severityBreakdown":{"minor":1,"moderate":0,"severe":0},"defects":["description"]}],"overallGrade":"B","resaleCategory":"Near-New"}`;
 
-    // ── Build message content helper ──
+
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Build message content helper Ã¢â€â‚¬Ã¢â€â‚¬
     function buildMessageContent(ref: string, imgs: string[]) {
       const content: Array<any> = [
         { type: "text", text: prompt },
@@ -369,7 +370,7 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
       return content;
     }
 
-    // ── Call Gemini for grading ──
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Call Gemini for grading Ã¢â€â‚¬Ã¢â€â‚¬
     const geminiParams = {
       model: "gemini-2.5-flash",
       temperature: 0,
@@ -413,7 +414,7 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
           max_tokens: OUTPUT_TOKEN_BUDGET
         });
       }
-      
+
       if (mockResponse) {
         response = { content: mockResponse.content, fromMock: mockResponse.fromMock };
       } else {
@@ -421,7 +422,7 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
           content: JSON.stringify({
             grade: "B",
             defects: ["Minor smudges/fingerprints on the main body."],
-            resaleCategory: "Refurbished",
+            resaleCategory: "Near-New",
             functionalScore: 8.5,
             isCorrectVariant: true,
             missingComponents: [],
@@ -474,7 +475,7 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
     let viewpoints: Array<any> = [];
     let functionalScore = 10.0;
     let grade = "A";
-    let resaleCategory = "Excellent Open-Box";
+    let resaleCategory = "As-New";
     let defects: Array<string> = [];
 
     if (response.fromMock) {
@@ -505,7 +506,7 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
         else if (functionalScore >= 5.0) grade = "C";
         else grade = "D";
 
-        resaleCategory = grade === "A" ? "Excellent Open-Box" : grade === "B" ? "Refurbished" : grade === "C" ? "Discount Outlet" : "Liquidation Salvage";
+        resaleCategory = grade === "A" ? "As-New" : grade === "B" ? "Near-New" : grade === "C" ? "Donated" : "Recycled";
         defects = Array.from(new Set(viewpoints.flatMap(v => v.defects)));
       } else {
         viewpoints = [
@@ -517,14 +518,14 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
         ];
         functionalScore = 8.5;
         grade = "B";
-        resaleCategory = "Refurbished";
+        resaleCategory = "Near-New";
         defects = ["Slight cosmetic scuffing"];
       }
     } else {
       isCorrectVariant = result.isCorrectVariant !== undefined ? result.isCorrectVariant : true;
       missingComponents = result.missingComponents || [];
       viewpoints = result.viewpoints || [];
-      resaleCategory = result.resaleCategory || "Discount Outlet";
+      resaleCategory = result.resaleCategory || "Donated";
 
       if (viewpoints.length > 0) {
         // Worst-angle rule: grade is derived from the LOWEST individual viewpoint score
@@ -537,12 +538,12 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
         if (isCorrectVariant === false) {
           grade = "D";
         } else if (missingComponents.length > 0) {
-          // ── Server-side completeness enforcement ──
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Server-side completeness enforcement Ã¢â€â‚¬Ã¢â€â‚¬
           // Any non-empty missingComponents list means the return is incomplete.
           // The AI already has instructions to grade D for missing primary components,
           // but we enforce it here server-side as a hard rule to prevent prompt drift.
           grade = "D";
-          console.log(`[Grading] Grade forced to D — missingComponents: ${JSON.stringify(missingComponents)}`);
+          console.log(`[Grading] Grade forced to D Ã¢â‚¬â€ missingComponents: ${JSON.stringify(missingComponents)}`);
         } else {
           // Use the LLM's overallGrade if provided, otherwise derive from the worst-angle score
           if (result.overallGrade && ["A", "B", "C", "D"].includes(result.overallGrade)) {
@@ -556,12 +557,12 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
         }
 
         // Enforce resale category from grade
-        resaleCategory = grade === "A" ? "Excellent Open-Box" : grade === "B" ? "Refurbished" : grade === "C" ? "Discount Outlet" : "Liquidation Salvage";
+        resaleCategory = grade === "A" ? "As-New" : grade === "B" ? "Near-New" : grade === "C" ? "Donated" : "Recycled";
       } else {
         functionalScore = parseFloat(result.functionalScore) || 8.0;
         defects = result.defects || [];
         grade = result.grade || "B";
-        resaleCategory = grade === "A" ? "Excellent Open-Box" : grade === "B" ? "Refurbished" : grade === "C" ? "Discount Outlet" : "Liquidation Salvage";
+        resaleCategory = grade === "A" ? "As-New" : grade === "B" ? "Near-New" : grade === "C" ? "Donated" : "Recycled";
         viewpoints = [{ viewpointIndex: 1, functionalScore, defects }];
       }
     }
@@ -601,4 +602,9 @@ Output ONLY raw JSON (no markdown, no backticks, no prose):
     return NextResponse.json({ error: "Failed to grade returned product" }, { status: 500 });
   }
 }
+
+
+
+
+
 
