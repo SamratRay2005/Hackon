@@ -828,40 +828,6 @@ export default function Home() {
 
               {/* ── PRODUCT CARD HAS BEEN MOVED TO INDIVIDUAL LAYERS ── */}
 
-              {/* ── SIZING RESULT CARD ── */}
-              {sizingResult && (
-                <div className="glass-card flex flex-col gap-4">
-                  <div className="section-title-bar">
-                    <h2>AI Fit Proportions Breakdown</h2>
-                    <span className="section-badge badge-layer-1">L1: Sizing Result</span>
-                  </div>
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-3 rounded-xl flex items-start gap-2.5 shadow-sm">
-                    <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Powered by Amazon Bedrock Insights</div>
-                      <div className="text-xs text-amber-700 font-medium leading-relaxed"><strong>Predictive Warning:</strong> This exact SKU has a <strong>24% higher return velocity</strong> across Amazon fulfillment centers due to shoulder width mismatches. We highly recommend accepting the AI size below.</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100 py-2 px-5 rounded-xl font-mono">{sizingResult.recommendedSize}</div>
-                    <div className="flex-1">
-                      <div className="flex justify-between text-xs font-bold mb-1.5"><span className="text-slate-600">Match Confidence</span><span className="text-indigo-600">{sizingResult.confidenceScore}%</span></div>
-                      <div className="progress-bar-container"><div className="progress-bar-fill" style={{ width: `${sizingResult.confidenceScore}%` }} /></div>
-                    </div>
-                  </div>
-                  {sizingResult.predictedDimensions && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {Object.entries(sizingResult.predictedDimensions).map(([key, val]: any) => (
-                        <div key={key} className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-center">
-                          <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">{key}</span>
-                          <span className="text-sm font-bold text-slate-800 font-mono">{val} in</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-xs text-slate-500 italic bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed">"{sizingResult.reasoning}"</p>
-                </div>
-              )}
 
               {/* ── METRICS STRIP ── */}
               {globalMode === 'admin' && (

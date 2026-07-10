@@ -113,9 +113,9 @@ Perform two main checks:
    Set "isRelevant" to true only if the product in the customer photo appears to be the exact correct product matching the visual model type, design, and color of the catalog reference image.
 
 2. Damage check (only if isRelevant is true):
-   Check if the product has visible physical damage (e.g., cracks, tears, significant dents, broken parts).
-   Set "isDamaged" to true if clear damage is visible.
-   Set "isDamaged" to false if the product appears pristine and undamaged in the photo.
+   Check if the product has visible physical damage (e.g., cracks, tears, significant dents, broken parts) or if there are CLEARLY MISSING PARTS from a set (e.g., only one earbud instead of two).
+   Set "isDamaged" to true if clear damage or missing parts are visible, or if the customer's description strongly indicates missing parts that align with the photo.
+   Set "isDamaged" to false only if the product appears fully complete, pristine and undamaged in the photo.
 
 3. Resalability check (only if isRelevant is true):
    Assess if the item appears to be in pristine, resalable condition (e.g., original packaging visible, tags attached, no visible wear/tear/damage).
@@ -334,7 +334,11 @@ Provide your analysis in the following strict JSON format:
     const groqStagingSigns = Math.round((groqAnalysis.photoStagingSigns || 0) * 10);
     const isRelevant = groqAnalysis.isRelevant !== false;
     const isDamaged = groqAnalysis.isDamaged === true;
-    const isResalable = groqAnalysis.isResalable === true;
+    let isResalable = groqAnalysis.isResalable === true;
+    
+    if (isDamaged) {
+      isResalable = false; // A damaged or incomplete item cannot be resold as new
+    }
     const productNotes = groqAnalysis.productVerificationNotes || "";
 
     // Determine if photo should be retaken based on claimType rules:
@@ -402,26 +406,37 @@ Provide your analysis in the following strict JSON format:
     let weightedRiskScore = 0;
     let recommendedAction: "APPROVE" | "MANUAL_REVIEW" | "BLOCK" = "APPROVE";
 
+    const baseRiskScore = Math.round(
+      (finalAiScore * 0.5) +
+      (velocityScore * 0.3) +
+      (finalIpqsScore * 0.2)
+    );
+
     if (shouldRetake) {
       weightedRiskScore = 100;
       recommendedAction = "BLOCK";
+    } else if (finalAiScore >= 65 || groqStagingSigns >= 75) {
+      // Critical failure: High probability of AI generation/manipulation or extreme staging
+      weightedRiskScore = Math.max(90, baseRiskScore);
+      recommendedAction = "BLOCK";
     } else if (claimType === "different_product") {
       // Validated: different product claimed, and it IS different
-      weightedRiskScore = 10;
-      recommendedAction = "APPROVE";
+      // Apply base risk score so we don't blind-approve abusers with high velocity or minor AI signs
+      weightedRiskScore = 10 + Math.round(baseRiskScore * 0.5);
+      if (weightedRiskScore > 70) recommendedAction = "BLOCK";
+      else if (weightedRiskScore >= 40) recommendedAction = "MANUAL_REVIEW";
+      else recommendedAction = "APPROVE";
     } else {
       // damaged_product
       if (!isDamaged) {
         // Pristine item returned but claimed damaged -> flag but let admin decide
-        weightedRiskScore = isResalable ? 10 : 85;
-        recommendedAction = isResalable ? "APPROVE" : "MANUAL_REVIEW";
+        weightedRiskScore = Math.max(isResalable ? 10 : 85, baseRiskScore);
+        if (weightedRiskScore > 70) recommendedAction = "BLOCK";
+        else if (weightedRiskScore >= 40) recommendedAction = "MANUAL_REVIEW";
+        else recommendedAction = "APPROVE";
       } else {
         // Correct item returned and is indeed damaged
-        weightedRiskScore = Math.round(
-          (finalAiScore * 0.5) +
-          (velocityScore * 0.3) +
-          (finalIpqsScore * 0.2)
-        );
+        weightedRiskScore = baseRiskScore;
         const product = PRODUCT_CATALOG.find(p => p.sku === sku);
         const itemPrice = product ? product.price : 50.00;
         if (itemPrice > 200) {
@@ -432,6 +447,10 @@ Provide your analysis in the following strict JSON format:
           else if (weightedRiskScore >= 40) recommendedAction = "MANUAL_REVIEW";
         }
       }
+    }
+
+    if (recommendedAction === "BLOCK" || shouldRetake) {
+      isResalable = false; // Fraudulent, blocked, or invalid items should never be restocked
     }
 
     // Dynamic AI Signal list for back-office returns console

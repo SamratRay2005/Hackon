@@ -354,128 +354,212 @@ export default function L7Cart({ showOnlyRewards = false }: { showOnlyRewards?: 
     );
   };
 
-  const StandaloneRewardsDashboard = () => (
-    <div className="flex flex-col gap-6" style={{ minHeight: "calc(100vh - 120px)" }}>
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden" style={{ background: "linear-gradient(to right, #232F3E, #131A22)", padding: "40px", borderRadius: "12px", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}>
-        {/* Background decorative elements */}
-        <div className="absolute top-0 right-0 opacity-10 pointer-events-none" style={{ transform: "translate(20%, -30%) rotate(15deg)" }}>
-          <Leaf className="w-64 h-64 text-emerald-500" />
-        </div>
-        
-        <div className="relative z-10">
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <div style={{ background: "rgba(20, 184, 166, 0.2)", padding: "8px", borderRadius: "8px" }}>
-              <Leaf className="w-8 h-8 text-[#14b8a6]" />
+  const StandaloneRewardsDashboard = () => {
+    const totalCredits = Math.round(cashbackBalance * 100);
+    const recentActivity = [
+      { date: "12 May 2025", activity: "Purchased Grade C item", credits: 45 },
+      { date: "08 May 2025", activity: "Purchased Grade A item", credits: 12 },
+      { date: "02 May 2025", activity: "Purchased Grade B item", credits: 8 },
+    ];
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", height: "calc(100vh - 128px)", overflow: "hidden", background: "#F2F4F8" }}>
+
+        {/* ── ROW 1: Hero ── */}
+        <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div style={{ background: "#1a6b3c", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Leaf className="w-6 h-6 text-white" />
             </div>
-            <h1 style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-0.5px" }}>
-              Amazon Green Rewards
-            </h1>
+            <div>
+              <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#0F1111", lineHeight: 1.2, margin: 0 }}>Amazon Green Rewards</h1>
+              <p style={{ fontSize: "13px", color: "#565959", margin: "3px 0 0", lineHeight: 1.4 }}>Shop Pre-loved. Save the planet. Earn rewards that you can spend on your next purchase.</p>
+            </div>
           </div>
-          <p style={{ fontSize: "16px", color: "#d1d5db", maxWidth: "400px", lineHeight: "1.5" }}>
-            Shop Pre-loved. Save the planet. Earn rewards that you can spend on your next purchase.
-          </p>
-        </div>
-        
-        <div className="relative z-10" style={{ textAlign: "right", background: "rgba(255,255,255,0.08)", padding: "20px 30px", borderRadius: "12px", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end", marginBottom: "4px" }}>
-            <Wallet className="w-4 h-4 text-[#FF9900]" />
-            <div style={{ fontSize: "13px", textTransform: "uppercase", letterSpacing: "1px", color: "#9ca3af", fontWeight: 700 }}>Green Credits Available</div>
-          </div>
-          <div style={{ fontSize: "48px", fontWeight: 800, color: "#FF9900", lineHeight: "1", textShadow: "0 2px 10px rgba(255,153,0,0.3)" }}>
-            {Math.round(cashbackBalance * 100)}
-          </div>
-          <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>100 Credits = $1.00</div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: How it works */}
-        <div style={{ border: "1px solid #D5D9D9", borderRadius: "12px", padding: "24px", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-          <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#0F1111", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-            <Info className="w-5 h-5 text-[#007185]" /> How to earn credits
-          </h3>
-          <ul style={{ fontSize: "14px", color: "#0F1111", display: "flex", flexDirection: "column", gap: "16px" }}>
-            <li className="flex items-start gap-3">
-              <div className="bg-[#E7F5E7] p-1.5 rounded-full mt-0.5"><CheckCircle className="w-4 h-4 text-[#007600]" /></div>
-              <div><strong className="block text-[#0F1111]">Shop Pre-loved</strong>Buy verified pre-loved items from the marketplace.</div>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="bg-[#E7F5E7] p-1.5 rounded-full mt-0.5"><CheckCircle className="w-4 h-4 text-[#007600]" /></div>
-              <div><strong className="block text-[#0F1111]">Grade C = 10% Back</strong>Heavily used items earn the highest cashback to offset wear.</div>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="bg-[#E7F5E7] p-1.5 rounded-full mt-0.5"><CheckCircle className="w-4 h-4 text-[#007600]" /></div>
-              <div><strong className="block text-[#0F1111]">Grade A/B = 3-5% Back</strong>Like-new and Good condition items earn standard rates.</div>
-            </li>
-          </ul>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+            {/* Credits Box — live from walletInfo */}
+            <div style={{ background: "#F7F8F8", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "12px 20px", textAlign: "left", minWidth: "150px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 700, color: "#565959", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Green Credits Available</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "36px", fontWeight: 800, color: "#0F1111", lineHeight: 1 }}>{totalCredits}</span>
+                <Leaf className="w-4 h-4 text-[#1a6b3c]" />
+              </div>
+              <div style={{ fontSize: "11px", color: "#565959", marginTop: "4px" }}>100 Credits = $1.00</div>
+            </div>
+
+            {/* Globe SVG */}
+            <svg viewBox="0 0 120 95" style={{ width: "110px", height: "88px", flexShrink: 0 }}>
+              <ellipse cx="65" cy="48" rx="44" ry="44" fill="#d1e8d1" opacity="0.7" />
+              <ellipse cx="56" cy="37" rx="16" ry="10" fill="#9cc49c" opacity="0.8" />
+              <ellipse cx="78" cy="52" rx="12" ry="16" fill="#9cc49c" opacity="0.7" />
+              <ellipse cx="48" cy="58" rx="9" ry="7" fill="#9cc49c" opacity="0.6" />
+              <ellipse cx="65" cy="48" rx="44" ry="44" fill="none" stroke="#a8d5a8" strokeWidth="1.5" />
+              <ellipse cx="65" cy="48" rx="44" ry="15" fill="none" stroke="#b8d8b8" strokeWidth="0.7" opacity="0.5" />
+              <rect x="20" y="70" width="26" height="19" rx="2.5" fill="#c8a96e" />
+              <rect x="20" y="70" width="26" height="6" rx="2.5" fill="#a07840" />
+              <line x1="33" y1="70" x2="33" y2="89" stroke="#a07840" strokeWidth="0.8" />
+              <ellipse cx="22" cy="63" rx="8" ry="4" fill="#6aad6a" transform="rotate(-30 22 63)" />
+              <ellipse cx="45" cy="60" rx="8" ry="4" fill="#5a9d5a" transform="rotate(25 45 60)" />
+            </svg>
+          </div>
         </div>
 
-        {/* Card 2: Your Vouchers */}
-        <div style={{ border: "1px solid #D5D9D9", borderRadius: "12px", padding: "24px", background: "#fff", gridColumn: "span 2", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-          <div className="flex justify-between items-center mb-6">
-            <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#0F1111", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Tag className="w-5 h-5 text-[#FF9900]" /> Your Vouchers
+        {/* ── ROW 2: How to earn + Vouchers (side by side, flex-1) ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: "10px", flex: "1 1 0", minHeight: 0 }}>
+
+          {/* How to earn */}
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "16px 18px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px", flexShrink: 0 }}>
+              <Info className="w-3.5 h-3.5 text-[#565959]" /> How to earn credits
             </h3>
-            <span style={{ fontSize: "13px", background: "#F0F8FA", color: "#007185", padding: "6px 12px", borderRadius: "20px", fontWeight: 800, border: "1px solid #BEE3F0" }}>
-              {activeVouchers.length} Available
-            </span>
-          </div>
-          
-          {activeVouchers.length === 0 ? (
-            <div className="text-center py-10 text-[#565959] bg-[#F7F8F8] rounded-lg border border-dashed border-[#D5D9D9]">
-              <Tag className="w-10 h-10 mx-auto mb-3 text-[#C8CBCC]" />
-              <p className="font-bold text-[15px] text-[#0F1111]">No vouchers yet</p>
-              <p className="text-[13px] mt-1 mx-auto">Make qualifying pre-loved purchases over $50 to unlock special discounts.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeVouchers.map((v: any) => (
-                <div key={v.id} className="relative flex items-center border border-[#D5D9D9] rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden group h-[90px]">
-                  {/* Left Accent */}
-                  <div className="w-1.5 h-full bg-[#007185]"></div>
-                  
-                  {/* Icon Area */}
-                  <div className="px-4 flex items-center justify-center border-r border-dashed border-[#D5D9D9] h-full bg-[#F2F4F8]">
-                    <Tag className="w-7 h-7 text-[#007185]" />
-                  </div>
-                  
-                  {/* Content Area */}
-                  <div className="flex-1 px-4 py-2 flex flex-col justify-center min-w-0">
-                    <div className="font-bold text-[#0F1111] text-[15px] leading-tight mb-1 truncate" title={v.title}>
-                      {v.title}
-                    </div>
-                    <div className="text-[12px] text-[#565959]">
-                      Issued {new Date(v.issuedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  
-                  {/* Value Area */}
-                  <div className="px-5 flex flex-col items-end justify-center bg-[#F8F9FA] h-full border-l border-[#E3E6E6]">
-                    <div className="text-[10px] text-[#565959] uppercase tracking-wide font-bold mb-1">
-                      Voucher Value
-                    </div>
-                    <div className="text-[22px] font-extrabold text-[#007600] leading-none tracking-tight">
-                      ${v.discountAmount.toFixed(2)}
-                    </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+              {[
+                { icon: <ShoppingBag className="w-3.5 h-3.5 text-[#0F1111]" />, title: "Shop Pre-loved", desc: "Buy verified pre-loved items from the marketplace." },
+                { icon: <BadgePercent className="w-3.5 h-3.5 text-[#007185]" />, title: "Grade C = 10% Back", desc: "Heavily used items earn the highest cashback." },
+                { icon: <CheckCircle className="w-3.5 h-3.5 text-[#007600]" />, title: "Grade A/B = 3–5% Back", desc: "Like-new and Good condition earn standard rates." },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                  <div style={{ width: "30px", height: "30px", borderRadius: "7px", border: "1.5px solid #D5D9D9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "#F7F8F8" }}>{icon}</div>
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", marginBottom: "1px" }}>{title}</div>
+                    <div style={{ fontSize: "12px", color: "#565959", lineHeight: 1.4 }}>{desc}</div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
+            <div style={{ marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #E3E6E6", flexShrink: 0 }}>
+              <button style={{ fontSize: "12px", color: "#007185", fontWeight: 500, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: 0 }}>
+                View full terms &amp; conditions <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          {/* Your Vouchers — live from walletInfo */}
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "16px 18px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexShrink: 0 }}>
+              <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
+                <Tag className="w-3.5 h-3.5 text-[#565959]" /> Your Vouchers
+              </h3>
+              <span style={{ fontSize: "12px", color: "#007185", background: "#F0F8FA", border: "1px solid #BEE3F0", borderRadius: "20px", padding: "3px 10px", fontWeight: 700 }}>
+                {activeVouchers.length} Available
+              </span>
+            </div>
+
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: activeVouchers.length === 0 ? "center" : "flex-start" }}>
+              {activeVouchers.length === 0 ? (
+                <div style={{ textAlign: "center", border: "1px solid #D5D9D9", borderRadius: "8px", padding: "20px 16px" }}>
+                  <Tag style={{ width: "32px", height: "32px", color: "#C8CBCC", display: "block", margin: "0 auto 8px" }} />
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", marginBottom: "4px" }}>No vouchers yet</div>
+                  <div style={{ fontSize: "12px", color: "#565959" }}>Make qualifying pre-loved purchases over $50 to unlock special discounts.</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", overflow: "auto" }}>
+                  {activeVouchers.map((v: any) => (
+                    <div key={v.id} style={{ border: "1px solid #D5D9D9", borderRadius: "8px", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F7FAFD" }}>
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111" }}>{v.title}</div>
+                        <div style={{ fontSize: "11px", color: "#565959" }}>Issued {new Date(v.issuedAt).toLocaleDateString()}</div>
+                      </div>
+                      <div style={{ fontSize: "18px", fontWeight: 800, color: "#007600" }}>${v.discountAmount.toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid #E3E6E6", flexShrink: 0 }}>
+              <button style={{ fontSize: "12px", color: "#007185", fontWeight: 500, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: 0 }}>
+                How vouchers work <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* ── ROW 3: Recent Activity + Good for you (side by side, flex-1) ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: "10px", flex: "1 1 0", minHeight: 0 }}>
+
+          {/* Recent Activity */}
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "14px 18px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#0F1111", display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px", flexShrink: 0 }}>
+              <Wallet className="w-3.5 h-3.5 text-[#565959]" /> Recent activity
+            </h3>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #E3E6E6" }}>
+                  {["DATE", "ACTIVITY", "CREDITS EARNED", "TOTAL BALANCE"].map(h => (
+                    <th key={h} style={{ textAlign: "left", padding: "6px 10px", fontSize: "10px", color: "#565959", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {recentActivity.map((row, i) => (
+                  <tr key={i} style={{ borderBottom: "1px solid #F2F4F8" }}>
+                    <td style={{ padding: "9px 10px", color: "#0F1111" }}>{row.date}</td>
+                    <td style={{ padding: "9px 10px", color: "#0F1111" }}>{row.activity}</td>
+                    <td style={{ padding: "9px 10px", color: "#007600", fontWeight: 700 }}>+{row.credits}</td>
+                    <td style={{ padding: "9px 10px", color: "#0F1111" }}>0</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ marginTop: "auto", paddingTop: "10px", borderTop: "1px solid #E3E6E6" }}>
+              <button style={{ fontSize: "12px", color: "#007185", fontWeight: 500, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: 0 }}>
+                View all activity <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          {/* Good for you */}
+          <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <svg viewBox="0 0 100 90" style={{ width: "70px", height: "63px", marginBottom: "10px" }}>
+              <path d="M35 65 L40 85 L60 85 L65 65 Z" fill="#c8945a" />
+              <ellipse cx="50" cy="65" rx="15" ry="5" fill="#a07440" />
+              <ellipse cx="50" cy="64" rx="14" ry="4" fill="#6b4226" />
+              <line x1="50" y1="64" x2="50" y2="38" stroke="#4a8c3f" strokeWidth="3" strokeLinecap="round" />
+              <path d="M50 52 Q32 42 30 28 Q44 32 50 44" fill="#5aad50" />
+              <path d="M50 45 Q68 35 70 20 Q56 26 50 40" fill="#6abf60" />
+              <path d="M50 38 Q50 22 44 16 Q52 18 56 30 Q54 36 50 38" fill="#4a9e42" />
+              <circle cx="50" cy="72" r="3" fill="white" />
+            </svg>
+            <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#0F1111", lineHeight: 1.3, marginBottom: "8px" }}>Good for you.<br />Good for the planet.</h3>
+            <p style={{ fontSize: "12px", color: "#565959", lineHeight: 1.5, marginBottom: "12px" }}>Every pre-loved purchase helps reduce waste and build a greener future.</p>
+            <button style={{ fontSize: "12px", color: "#007185", fontWeight: 500, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: 0 }}>
+              Learn more about ReLoop <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── ROW 4: Footer trust strip ── */}
+        <div style={{ background: "#fff", border: "1px solid #D5D9D9", borderRadius: "10px", padding: "12px 24px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", flexShrink: 0 }}>
+          {[
+            { icon: <Info className="w-4 h-4 text-[#565959]" />, title: "Secure & Private", desc: "Your data is encrypted and never shared." },
+            { icon: <BadgePercent className="w-4 h-4 text-[#565959]" />, title: "Fewer Returns", desc: "Find the right size and shop with confidence." },
+            { icon: <Wallet className="w-4 h-4 text-[#565959]" />, title: "Need help?", desc: <span>Visit Help Center <ArrowRight className="inline w-3 h-3" /></span> },
+          ].map(({ icon, title, desc }) => (
+            <div key={title} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+              <div style={{ flexShrink: 0, marginTop: "1px" }}>{icon}</div>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F1111", marginBottom: "1px" }}>{title}</div>
+                <div style={{ fontSize: "12px", color: "#565959" }}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── Render ────────────────────────────────────────────────────
   if (showOnlyRewards) {
     return (
-      <div className="bg-[#F2F4F8] p-6 -mx-6 -mt-6">
+      <div style={{ background: "#F2F4F8", padding: "16px", margin: "-24px" }}>
         <StandaloneRewardsDashboard />
       </div>
     );
   }
+
 
   if (checkoutStep === "confirmed") {
     const displayOrderId = `407-${Math.floor(Math.random() * 10000000)}-${Math.floor(Math.random() * 10000000)}`;
