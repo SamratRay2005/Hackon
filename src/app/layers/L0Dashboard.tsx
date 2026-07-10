@@ -18,6 +18,7 @@ import {
   Shirt,
   Star,
   ChevronDown,
+  ChevronRight,
   Camera,
   Upload,
   ScanLine,
@@ -775,30 +776,30 @@ export default function L0Dashboard() {
       {/* Quick Add Modal */}
       {quickAddProduct && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }}>
-          <div className="bg-white shadow-xl w-full max-w-[540px] overflow-y-auto" style={{ maxHeight: "94vh", borderRadius: "12px" }} onClick={e => e.stopPropagation()}>
+          <div className="bg-white shadow-xl w-full max-w-[580px] overflow-y-auto" style={{ maxHeight: "94vh", borderRadius: "12px" }} onClick={e => e.stopPropagation()}>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-4">
-              <h2 className="text-[20px] font-bold text-[#0F1111]">Select Size</h2>
+            <div className="flex items-center justify-between px-8 pt-6 pb-4">
+              <h2 className="text-[24px] font-bold text-[#0F1111]">Select Size</h2>
               <button onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }} className="text-[#0F1111] hover:opacity-60">
-                <X className="w-6 h-6" />
+                <X className="w-7 h-7" />
               </button>
             </div>
             <div style={{ height: "1px", background: "#E3E6E6", margin: "0" }} />
 
             {/* Product Info */}
-            <div className="flex gap-6 px-6 py-6">
-              <div className="w-[120px] h-[120px] flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center border border-[#E3E6E6] bg-[#F7F8F8]">
+            <div className="flex gap-6 px-8 py-6">
+              <div className="w-[150px] h-[150px] flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center bg-[#F7F8F8]">
                 <img src={getSKUReferenceImage(quickAddProduct.sku)} alt={quickAddProduct.name} className="w-full h-full object-contain mix-blend-multiply p-2" />
               </div>
               <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
-                <div className="text-[16px] font-bold text-[#0F1111] leading-snug">{quickAddProduct.name}</div>
-                <div className="text-[14px] text-[#565959]">Colour: <span className="font-semibold text-[#0F1111]">{quickAddProduct.colors?.[0] || "Default"}</span></div>
+                <div className="text-[18px] font-bold text-[#0F1111] leading-snug">{quickAddProduct.name}</div>
+                <div className="text-[15px] text-[#565959]">Colour: <span className="font-semibold text-[#0F1111]">{quickAddProduct.colors?.[0] || "Navy"}</span></div>
                 {/* Price + FREE Returns */}
                 <div className="flex items-baseline gap-3 flex-wrap mt-1">
                   <div className="flex items-start text-[#B12704]">
                     <span className="text-[16px] mt-[2px]">₹</span>
-                    <span className="text-[26px] font-bold leading-none">{Math.floor(quickAddProduct.price * 83)}</span>
+                    <span className="text-[26px] font-bold leading-none">{Math.floor(quickAddProduct.price * 83).toLocaleString("en-IN")}</span>
                   </div>
                   <span className="text-[14px] text-[#007600] font-semibold">FREE Returns</span>
                 </div>
@@ -808,24 +809,26 @@ export default function L0Dashboard() {
                   <img src="/prime-logo-2.png" alt="Prime" style={{ height: "15px", objectFit: "contain", mixBlendMode: "multiply" }} />
                   <span className="text-[14px] text-[#0F1111]">FREE Delivery Today</span>
                 </div>
-                <span className="text-[14px] text-[#007185] hover:underline cursor-pointer font-medium mt-1 inline-block">See all details</span>
+                <span className="text-[14px] text-[#007185] hover:underline cursor-pointer font-medium mt-1 inline-flex items-center gap-0.5">
+                  See all details <ChevronRight className="w-4 h-4" />
+                </span>
               </div>
             </div>
             <div style={{ height: "1px", background: "#E3E6E6", margin: "0" }} />
 
             {/* Size Picker */}
-            <div className="px-6 pt-6 pb-10">
-              <div className="text-[18px] font-bold text-[#0F1111] mb-4">Choose your size</div>
+            <div className="px-8 pt-8 pb-10">
+              <div className="text-[20px] font-bold text-[#0F1111] mb-5">Choose your size</div>
 
-              <div id="quick-add-sizes" className="flex flex-wrap gap-4 mb-6 transition-all rounded-lg">
+              <div id="quick-add-sizes" className="flex flex-wrap gap-5 mb-8 transition-all rounded-lg">
                 {quickAddProduct.sizes.map((s: string) => (
                   <button
                     key={s}
                     onClick={() => setSelectedSize(s === selectedSize ? "" : s)}
                     style={{
-                      minWidth: "76px", height: "56px", borderRadius: "8px",
+                      minWidth: "96px", height: "56px", borderRadius: "8px",
                       border: selectedSize === s ? "1.5px solid #E47911" : "1px solid #D5D9D9",
-                      background: "white", fontSize: "16px",
+                      background: selectedSize === s ? "#FFF6ED" : "white", fontSize: "16px",
                       fontWeight: selectedSize === s ? 700 : 400,
                       color: selectedSize === s ? "#E47911" : "#0F1111", cursor: "pointer", transition: "all 0.15s",
                       boxShadow: selectedSize === s ? "0 0 0 1px #E47911" : "none"
@@ -836,62 +839,60 @@ export default function L0Dashboard() {
 
               {/* Not sure / View size chart */}
               <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2.5 text-[14px] text-[#565959]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E47911" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:"rotate(45deg)"}}><path d="M21 16H3"/><path d="M21 8H3"/><path d="M7 16V8"/><path d="M11 16V8"/><path d="M15 16V8"/><path d="M19 16V8"/></svg>
+                <div className="flex items-center gap-2.5 text-[15px] text-[#565959]">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E47911" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:"rotate(45deg)"}}><path d="M21 16H3"/><path d="M21 8H3"/><path d="M7 16V8"/><path d="M11 16V8"/><path d="M15 16V8"/><path d="M19 16V8"/></svg>
                   <span>Not sure which size is right for you?</span>
                 </div>
                 <button
                   onClick={() => { setQuickAddProduct(null); setSelectedSize(""); routeToSizing(quickAddProduct.sku); }}
-                  className="text-[14px] text-[#007185] hover:underline flex items-center gap-0.5 font-medium whitespace-nowrap"
-                >View size chart <ChevronDown className="w-3.5 h-3.5 -rotate-90" /></button>
+                  className="text-[15px] text-[#007185] hover:underline flex items-center gap-0.5 font-medium whitespace-nowrap"
+                >View size chart <ChevronRight className="w-4 h-4" /></button>
               </div>
 
               {/* OR divider */}
-              <div className="flex items-center gap-3 mb-8 relative">
+              <div className="flex items-center gap-4 mb-8 relative">
                 <div className="flex-1 border-t border-[#E3E6E6]" />
-                <span className="text-[12px] text-[#767676] font-bold uppercase bg-white px-3 tracking-wide">OR</span>
+                <span className="text-[13px] text-[#767676] font-bold uppercase bg-white px-3 tracking-wide">OR</span>
                 <div className="flex-1 border-t border-[#E3E6E6]" />
               </div>
 
               {/* AI Body Scanner Banner */}
               <button
                 onClick={() => { setQuickAddProduct(null); setSelectedSize(""); routeToSizing(quickAddProduct.sku); }}
-                className="w-full flex items-center gap-4 px-5 py-4 mb-4 rounded-xl text-left transition-all hover:bg-[#F3F8FC]"
+                className="w-full flex items-center gap-5 px-6 py-5 mb-2 rounded-xl text-left transition-all hover:bg-[#F3F8FC]"
                 style={{ background: "#F5F9FE", border: "1px solid #D6E6F8" }}
               >
-                <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#9ABDF8", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0, border: "2px solid #E4EFFF" }}>
-                  <div style={{ position: "absolute", inset: "4px", borderRadius: "50%", background: "#71A2F6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 4a2 2 0 100-4 2 2 0 000 4zM7.5 7.5A1.5 1.5 0 019 6h6a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H14v7.5a1.5 1.5 0 01-1.5 1.5h-1a1.5 1.5 0 01-1.5-1.5V15H9.5a1.5 1.5 0 01-1.5-1.5v-6z" fill="white"/>
-                    </svg>
-                  </div>
+                <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#71A2F6", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", flexShrink: 0 }}>
                   {/* Dashed circular outline */}
-                  <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", transform: "rotate(-45deg)" }} viewBox="0 0 56 56">
-                    <circle cx="28" cy="28" r="27" stroke="white" strokeWidth="1.5" strokeDasharray="18 6" fill="none" />
+                  <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", transform: "rotate(-45deg)" }} viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="30" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="16 4" fill="none" />
+                  </svg>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ zIndex: 1 }}>
+                    <path d="M12 4a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM7.5 7.5A1.5 1.5 0 019 6h6a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H14v6.5a1.5 1.5 0 01-1.5 1.5h-1a1.5 1.5 0 01-1.5-1.5V16.5H9.5a1.5 1.5 0 01-1.5-1.5v-7.5z" fill="white"/>
                   </svg>
                 </div>
                 <div className="flex-1 ml-1">
-                  <div className="text-[16px] font-bold text-[#0F1111] mb-1">Find your perfect fit with AI</div>
-                  <div className="text-[14px] text-[#565959] leading-relaxed">
+                  <div className="text-[18px] font-bold text-[#0F1111] mb-1">Find your perfect fit with AI</div>
+                  <div className="text-[15px] text-[#565959] leading-relaxed">
                     Use our AI Body Scanner to get your best size<br/>
                     — <span className="text-[#007185] font-semibold">68% fewer returns</span>
                   </div>
                 </div>
-                <ChevronDown className="w-5 h-5 text-[#0F1111] -rotate-90 flex-shrink-0" strokeWidth={2.5} />
+                <ChevronRight className="w-6 h-6 text-[#0F1111] flex-shrink-0" strokeWidth={2.5} />
               </button>
             </div>
 
             {/* Footer */}
-            <div style={{ borderTop: "1px solid #E3E6E6", background: "#F7F8F8" }} className="px-6 py-5 flex gap-4">
+            <div className="px-8 py-6 flex gap-5 bg-white border-t border-[#E3E6E6]">
               {selectedSize && shoppingBag?.some((b: any) => b.sku === quickAddProduct.sku && b.size === selectedSize) ? (
                 /* "X in cart" state */
                 <>
                   <button
                     onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }}
                     className="flex-1 py-3 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] text-[15px] font-medium transition-colors"
-                    style={{ borderRadius: "8px", color: "#0F1111", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}
+                    style={{ borderRadius: "8px", color: "#0F1111" }}
                   >Cancel</button>
-                  <div className="flex-[1.5] flex items-center" style={{ border: "1px solid #FCD200", borderRadius: "8px", overflow: "hidden", background: "#FFD814", height: "48px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" }}>
+                  <div className="flex-1 flex items-center" style={{ border: "1px solid #FCD200", borderRadius: "8px", overflow: "hidden", background: "#FFD814", height: "48px" }}>
                     <button
                       className="flex items-center justify-center hover:bg-[#F7CA00] transition-colors h-full"
                       style={{ width: "48px" }}
@@ -919,8 +920,8 @@ export default function L0Dashboard() {
                 <>
                   <button
                     onClick={() => { setQuickAddProduct(null); setSelectedSize(""); }}
-                    className="flex-1 py-3 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] text-[15px] font-medium transition-colors"
-                    style={{ borderRadius: "8px", color: "#0F1111", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}
+                    className="flex-[0.8] py-3.5 bg-white border border-[#D5D9D9] hover:bg-[#F7F8F8] text-[16px] font-medium transition-colors"
+                    style={{ borderRadius: "8px", color: "#0F1111" }}
                   >Cancel</button>
                   <button
                     onClick={() => {
@@ -932,8 +933,8 @@ export default function L0Dashboard() {
                       setShoppingBag((prev: any) => [...prev, { id: Math.random().toString(36).substr(2, 9), sku: quickAddProduct.sku, name: quickAddProduct.name, price: quickAddProduct.price, grade: quickAddProduct.isPreloved ? (quickAddProduct.grade || "B") : "A", originalPrice: quickAddProduct.originalPrice || quickAddProduct.price, size: selectedSize, isPreloved: !!quickAddProduct.isPreloved }]);
                       try { const confetti = (window as any).confetti; if (confetti) confetti({ particleCount: 50, spread: 40, origin: { y: 0.8 } }); } catch {}
                     }}
-                    className="flex-[1.5] py-3 text-[15px] font-bold transition-all hover:bg-[#F7CA00]"
-                    style={{ background: "#FFD814", border: "1px solid #FCD200", borderRadius: "8px", color: "#0F1111", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" }}
+                    className="flex-[1.2] py-3.5 text-[16px] font-bold transition-all hover:bg-[#F7CA00]"
+                    style={{ background: "#FFD814", border: "1px solid #FCD200", borderRadius: "8px", color: "#0F1111" }}
                   >Add to cart</button>
                 </>
               )}
